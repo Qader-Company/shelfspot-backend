@@ -101,6 +101,16 @@ class ApiResponseLogic
         );
     }
 
+    public function tooManyRequests(int $retryAfterSeconds)
+    {
+        return $this->message(
+            __('auth.throttle', ['seconds' => $retryAfterSeconds]),
+            Response::HTTP_TOO_MANY_REQUESTS
+        )->withHeaders([
+            'Retry-After' => $retryAfterSeconds,
+        ]);
+    }
+
     public function created($data = null, $message = 'apiMessages.created')
     {
         return ($data) ? 

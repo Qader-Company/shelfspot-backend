@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('workers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('phone')->unique();
             $table->foreignId('user_id')
                 ->constrained()
                 ->cascadeOnDelete();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

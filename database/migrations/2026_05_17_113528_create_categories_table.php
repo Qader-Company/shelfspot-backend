@@ -19,6 +19,15 @@ return new class extends Migration
             $table->foreignId('company_id')
                 ->constrained()
                 ->cascadeOnDelete();
+            $table->foreignId('brand_id')
+                ->nullable()
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->foreignId('sub_brand_id')
+                ->nullable()
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

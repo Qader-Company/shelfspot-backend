@@ -16,12 +16,21 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('image')->nullable();
-            $table->foreignId('category_id')
-                ->constrained()
-                ->cascadeOnDelete();
             $table->foreignId('company_id')
                 ->constrained()
                 ->cascadeOnDelete();
+            $table->foreignId('brand_id')
+                ->nullable()
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->foreignId('sub_brand_id')
+                ->nullable()
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->foreignId('category_id')
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

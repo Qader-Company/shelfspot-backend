@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static ApiResponseLogic created($data, $message = 'created successfully')
  * @method static ApiResponseLogic deleted($message = 'Deleted successfully')
  * @method static ApiResponseLogic updated($data,$message = 'Updated successfully')
+ * @method static \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Foundation\Application|\Illuminate\Http\Response tooManyRequests(int $retryAfterSeconds)
  */
 class ApiResponse extends Facade
 {

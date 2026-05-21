@@ -4,9 +4,7 @@ namespace App\Modules\V1\Authentication\Presentation\Http\Controller;
 
 
 use App\Facades\ApiResponse;
-use App\Modules\V1\Authentication\Application\UseCases\SendOtpUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\VerifyResetPasswordOTPUseCase;
-use App\Modules\V1\Authentication\Presentation\Http\Requests\EmailValidationRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\ResetPasswordRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\VerifyResetPasswordOTPRequest;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;

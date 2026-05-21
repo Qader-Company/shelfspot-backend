@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Authentication\Application\UseCases;
 
 use App\Modules\V1\Authentication\Domain\Services\OtpService;
+use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
@@ -41,7 +42,11 @@ class LogInUseCase
         ];
 
         if(is_null($user->email_verified_at)):
-            $this->otpService->generate($user->emai);
+            $this->otpService->generateAndSend(
+                $user->email,
+                OtpPurposeEnum::EMAIL_VERIFICATION,
+                $user->name
+            );
             $data['data']['verify_token'] = $this->tokenIssuer->create($user, $userType, TokenTypeEnum::VERIFY_TOKEN);
             $data['message'] = __('auth.verify_account');
             $data['code'] = Response::HTTP_UNAVAILABLE_FOR_LEGAL_REASONS;

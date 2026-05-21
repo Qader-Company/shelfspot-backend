@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Authentication\Application\UseCases;
 
 use App\Modules\V1\Authentication\Domain\Services\OtpService;
+use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Companies\Application\UseCases\CreateCompanyUserUseCase;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
@@ -28,7 +29,11 @@ class RegisterUseCase
                 PortalTypeEnum::COMPANY => $this->registerCompanyUser($attributes),
             };
 
-            $this->otpService->generate($attributes['email']);
+            $this->otpService->generateAndSend(
+                $attributes['email'],
+                OtpPurposeEnum::EMAIL_VERIFICATION,
+                $user->name
+            );
 
             $verification_token = $this->tokenIssuer->create(
                 $user,

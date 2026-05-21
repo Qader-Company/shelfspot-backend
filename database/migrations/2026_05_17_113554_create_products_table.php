@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->string('image')->nullable();
+            $table->text('description')->nullable();
+            $table->string('sku')->nullable();
             $table->foreignId('company_id')
                 ->constrained()
                 ->cascadeOnDelete();
@@ -35,6 +36,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

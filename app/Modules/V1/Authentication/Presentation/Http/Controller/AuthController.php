@@ -6,6 +6,7 @@ namespace App\Modules\V1\Authentication\Presentation\Http\Controller;
 use App\Facades\ApiResponse;
 use App\Modules\V1\Authentication\Application\UseCases\RegisterUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\SendOtpUseCase;
+use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\EmailValidationRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\RegisterRequest;
 use App\Modules\V1\Users\Application\Services\UserFormattingService;
@@ -70,9 +71,10 @@ class AuthController
         return ApiResponse::success($data, __('auth.verify_account'));
     }
 
-    public function sendOTP(EmailValidationRequest $request, SendOtpUseCase $sendOtpUseCase)
+    public function sendOTP(EmailValidationRequest $request, string $purpose, SendOtpUseCase $sendOtpUseCase)
     {
-        $sendOtpUseCase->execute($request->email);
+        $otpPurpose = OtpPurposeEnum::tryFrom($purpose);
+        $sendOtpUseCase->execute($request->email, $otpPurpose);
         return ApiResponse::message(__('auth.code_sent'));
     }
 }

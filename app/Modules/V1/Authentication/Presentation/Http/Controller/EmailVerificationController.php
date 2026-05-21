@@ -34,10 +34,4 @@ class EmailVerificationController
         );
     }
 
-    public function reSendOTP(EmailValidationRequest $request, SendOtpUseCase $sendOtpUseCase)
-    {
-        $sendOtpUseCase->execute($request->email);
-        return ApiResponse::message(__('auth.code_sent'));
-    }
-
 }

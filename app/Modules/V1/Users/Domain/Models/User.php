@@ -37,4 +37,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(CompanyUser::class);
     }
+
+    protected static function newFactory(): UserFactory
+    {
+        return UserFactory::new();
+    }
 }

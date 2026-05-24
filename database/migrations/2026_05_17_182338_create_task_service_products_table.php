@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('task_service_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->json('product_details')->nullable();
+            $table->unique(['task_service_id', 'product_id']);
             $table->timestamps();
         });
     }

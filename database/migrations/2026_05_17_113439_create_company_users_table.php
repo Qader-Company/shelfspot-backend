@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->boolean('is_active')->default(true);
             $table->boolean('is_owner')->default(false);
+            $table->unique(['company_id', 'user_id']);
             $table->timestamps();
         });
     }

@@ -18,9 +18,12 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone')->unique();
             $table->string('industry');
+            $table->string('timezone')->default('Asia/Riyadh');
             $table->boolean('is_active')->default(true);
             $table->string('logo')->nullable();
             $table->decimal('cash_on_hand', 10, 2)->default(0);
+            $table->string('slug')->nullable()->unique();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

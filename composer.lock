@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8bc55d28e7677a3c70231ff428aa515c",
+    "content-hash": "bfa9b426a824cbf223647cd986b19c22",
     "packages": [
         {
             "name": "astrotomic/laravel-translatable",
@@ -6794,6 +6794,71 @@
                 "source": "https://github.com/tijsverkoyen/CssToInlineStyles/tree/v2.4.0"
             },
             "time": "2025-12-02T11:56:42+00:00"
+        },
+        {
+            "name": "tucker-eric/eloquentfilter",
+            "version": "3.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Tucker-Eric/EloquentFilter.git",
+                "reference": "ede68306dbe5cd8ade472e05c6b2381d9d0093c4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Tucker-Eric/EloquentFilter/zipball/ede68306dbe5cd8ade472e05c6b2381d9d0093c4",
+                "reference": "ede68306dbe5cd8ade472e05c6b2381d9d0093c4",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/config": "~6.0|~7.0|~8.0|~9.0|~10.0|~11.0|~12.0|~13.0",
+                "illuminate/console": "~6.0|~7.0|~8.0|~9.0|~10.0|~11.0|~12.0|~13.0",
+                "illuminate/database": "~6.0|~7.0|~8.0|~9.0|~10.0|~11.0|~12.0|~13.0",
+                "illuminate/filesystem": "~6.0|~7.0|~8.0|~9.0|~10.0|~11.0|~12.0|~13.0",
+                "illuminate/pagination": "~6.0|~7.0|~8.0|~9.0|~10.0|~11.0|~12.0|~13.0",
+                "illuminate/support": "~6.0|~7.0|~8.0|~9.0|~10.0|~11.0|~12.0|~13.0",
+                "php": ">=7.2"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.3",
+                "phpunit/phpunit": "^8"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "EloquentFilter\\ServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "EloquentFilter\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Eric Tucker",
+                    "email": "tucker.ericm@gmail.com"
+                }
+            ],
+            "description": "An Eloquent way to filter Eloquent Models",
+            "keywords": [
+                "eloquent",
+                "filter",
+                "laravel",
+                "model",
+                "query",
+                "search"
+            ],
+            "support": {
+                "issues": "https://github.com/Tucker-Eric/EloquentFilter/issues",
+                "source": "https://github.com/Tucker-Eric/EloquentFilter/tree/3.6.0"
+            },
+            "time": "2026-03-10T02:15:33+00:00"
         },
         {
             "name": "vlucas/phpdotenv",

@@ -19,21 +19,10 @@ return new class extends Migration
 
             $table->unique('task_service_id');
         });
-
-        Schema::create('task_status_histories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('task_id')->constrained()->cascadeOnDelete();
-            $table->string('from_status')->nullable();
-            $table->string('to_status');
-            $table->foreignId('changed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->json('meta')->nullable();
-            $table->timestamps();
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('task_status_histories');
         Schema::dropIfExists('task_service_submissions');
     }
 };

@@ -13,30 +13,18 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('brand_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('sub_brand_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('sub_category_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
-            $table->string('slug')->unique();
+            $table->string('slug');
             $table->text('description')->nullable();
             $table->string('sku')->nullable();
-            $table->foreignId('company_id')
-                ->constrained()
-                ->cascadeOnDelete();
-            $table->foreignId('brand_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-            $table->foreignId('sub_brand_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-            $table->foreignId('category_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-            $table->foreignId('sub_category_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
             $table->boolean('is_active')->default(true);
+            $table->unique(['company_id', 'slug']);
+            $table->unique(['company_id', 'sku']);
             $table->timestamps();
         });
     }

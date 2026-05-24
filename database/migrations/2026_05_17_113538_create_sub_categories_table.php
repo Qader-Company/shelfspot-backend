@@ -13,24 +13,15 @@ return new class extends Migration
     {
         Schema::create('sub_categories', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('brand_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('sub_brand_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('slug')->unique();
+            $table->string('slug');
             $table->string('image')->nullable();
-            $table->foreignId('company_id')
-                ->constrained()
-                ->cascadeOnDelete();
-            $table->foreignId('brand_id')
-                ->nullable()
-                ->constrained()
-                ->cascadeOnDelete();
-            $table->foreignId('sub_brand_id')
-                ->nullable()
-                ->constrained()
-                ->cascadeOnDelete();
-            $table->foreignId('category_id')
-                ->constrained()
-                ->cascadeOnDelete();
             $table->boolean('is_active')->default(true);
+            $table->unique(['company_id', 'slug']);
             $table->timestamps();
         });
     }

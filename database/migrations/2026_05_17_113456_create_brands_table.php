@@ -13,13 +13,11 @@ return new class extends Migration
     {
         Schema::create('brands', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('slug')->unique();
-            $table->string('image')->nullable();
-            $table->foreignId('company_id')
-                ->constrained()
-                ->cascadeOnDelete();
+            $table->string('slug');
             $table->boolean('is_active')->default(true);
+            $table->unique(['company_id', 'slug']);
             $table->timestamps();
         });
     }

@@ -10,7 +10,7 @@ class MakeModuleCommand extends Command
 {
     protected $signature = 'make:module
                             {name : Module name (e.g. Companies)}
-                            {--version=V1 : API version namespace}
+                            {--api-version=V1 : API version namespace}
                             {--model= : Domain model name (defaults to module singular)}
                             {--force : Overwrite existing files}';
 
@@ -19,7 +19,7 @@ class MakeModuleCommand extends Command
     public function handle(Filesystem $files): int
     {
         $module = Str::studly((string) $this->argument('name'));
-        $version = Str::studly((string) $this->option('version'));
+        $version = Str::studly((string) $this->option('api-version'));
         $model = Str::studly((string) ($this->option('model') ?: Str::singular($module)));
 
         $moduleBasePath = app_path("Modules/{$version}/{$module}");

@@ -16,4 +16,12 @@ class Company extends Model
     {
         return $this->hasMany(CompanyUser::class);
     }
+
+    public static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            $model->slug = str($model->name.'-'.$model->industry->name.'-'.$model->cr_number)->slug();
+        });
+    }
 }

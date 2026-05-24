@@ -15,7 +15,7 @@ return [
         ],
 
         'company' => [
-//            ['prefix' => '', 'file' => '', 'middlewares' => []],
+            ['prefix' => 'brands', 'file' => 'brands.php', 'middlewares' => ['auth:sanctum', 'tenant']],
         ]
     ]
 ];

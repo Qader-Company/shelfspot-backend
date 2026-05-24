@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2);
             $table->boolean('is_active')->default(true);
+            $table->string('form_key')->nullable();
             $table->timestamps();
         });
     }

@@ -15,13 +15,10 @@ class SetTenantFromHeader
 
     public function handle(Request $request, Closure $next): Response
     {
-        $tenantSlug = $request->header('X-Tenant-Slug')
-            ?? $request->header('X-Company-Slug')
-            ?? $request->header('X-Tenant')
-            ?? $request->header('X-Company');
+        $tenantSlug = $request->header('X-Company-Slug');
 
-        if (filled($tenantSlug) && ! $this->tenantContext->setSlug($tenantSlug)) {
-            abort(404, 'Tenant not found.');
+        if (!filled($tenantSlug)  || ! $this->tenantContext->setSlug($tenantSlug)) {
+            abort(404, 'Company not found.');
         }
 
         return $next($request);

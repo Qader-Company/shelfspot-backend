@@ -18,6 +18,7 @@ class TokenIssuer
                 name: $portal->value,
                 abilities: [
                     $tokenType->value,
+                    $portal->value
                 ],
                 expiresAt: Carbon::now()->addMinutes(config('sanctum.' . $tokenType->value . '_token_TTL'))
             )->plainTextToken,

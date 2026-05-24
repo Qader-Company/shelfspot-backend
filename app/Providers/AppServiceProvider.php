@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Facades\ApiResponse;
+use App\Console\Commands\MakeModuleCommand;
 use App\Facades\FacadesLogic\ApiResponseLogic;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -21,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
             ApiResponse::class,
             ApiResponseLogic::class
         );
+
+        $this->commands([
+            MakeModuleCommand::class,
+        ]);
     }
 
     /**

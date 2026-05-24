@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Facades\ApiResponse;
+use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
+use App\Modules\Shared\Infrastructure\Tenant\TenantContext;
 use App\Console\Commands\MakeModuleCommand;
 use App\Facades\FacadesLogic\ApiResponseLogic;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
             ApiResponseLogic::class
         );
 
+        $this->app->singleton(TenantContextInterface::class, TenantContext::class);
+
         $this->commands([
             MakeModuleCommand::class,
         ]);
@@ -39,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
     private function registerRoutes(): void
     {
         foreach (config('routing.public') as $route) {
-            Route::middleware(['api', 'locale'])
+            Route::middleware(['api', 'locale', 'tenant'])
                 ->prefix('api/v1' . (!empty($route['prefix']) ? '/' . $route['prefix'] : ''))
                 ->group(base_path('routes/V1/' . $route['file']));
         }
@@ -47,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
         foreach (config('routing.portals') as $key => $portal) {
             foreach ($portal as $route){
                 $middlewares = array_merge(
-                    ['api', 'locale'],
+                    ['api', 'locale', 'tenant'],
                     $route['middlewares']
                 );
                 Route::middleware($middlewares)

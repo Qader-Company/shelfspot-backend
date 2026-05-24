@@ -51,8 +51,18 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
 
     private function query(array $relations, array $relationsCount, array $filters = [])
     {
-        return SubCategory::when($filters, fn($q) => $q->filter($filters))
-            ->when($relations, fn($q) => $q->with($relations))
-            ->when($relationsCount, fn($q) => $q->withCount($relationsCount));
+        return SubCategory::query()
+            ->when(
+                $filters,
+                fn($q) => $q->filter($filters)
+            )
+            ->when(
+                $relations,
+                fn($q) => $q->with($relations)
+            )
+            ->when(
+                $relationsCount,
+                fn($q) => $q->withCount($relationsCount)
+            );
     }
 }

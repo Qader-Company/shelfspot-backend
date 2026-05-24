@@ -10,7 +10,8 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
 {
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
-        return $this->query($relations, $relationsCount, $filters)->paginate(request('per_page', 15));
+        return $this->query($relations, $relationsCount, $filters)
+            ->paginate(request('per_page', 15));
     }
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?Category
@@ -36,8 +37,18 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
 
     private function query(array $relations, array $relationsCount, array $filters = [])
     {
-        return Category::when($filters, fn($q) => $q->filter($filters))
-            ->when($relations, fn($q) => $q->with($relations))
-            ->when($relationsCount, fn($q) => $q->withCount($relationsCount));
+        return Category::query()
+            ->when(
+                $filters,
+                fn($q) => $q->filter($filters)
+            )
+            ->when(
+                $relations,
+                fn($q) => $q->with($relations)
+            )
+            ->when(
+                $relationsCount,
+                fn($q) => $q->withCount($relationsCount)
+            );
     }
 }

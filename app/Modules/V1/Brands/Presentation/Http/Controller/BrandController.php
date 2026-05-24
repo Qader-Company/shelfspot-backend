@@ -4,22 +4,19 @@ namespace App\Modules\V1\Brands\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
-use App\Modules\V1\Brands\Application\UseCases\DeleteBrandUseCase;
-use App\Modules\V1\Brands\Application\UseCases\UpdateBrandUseCase;
 use App\Modules\V1\Brands\Domain\Repositories\BrandRepositoryInterface;
 use App\Modules\V1\Brands\Presentation\Http\Requests\StoreBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Requests\UpdateBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BrandController extends Controller
 {
     use Filterable;
 
     public function __construct(
-        private readonly BrandRepositoryInterface $brandRepository,
-        private readonly TenantContextInterface $tenantContext
+        private readonly BrandRepositoryInterface $brandRepository
     )
     {
     }
@@ -41,7 +38,7 @@ class BrandController extends Controller
 
     public function show(string $id)
     {
-        $brand = $this->brandRepository->getById($id, ['media']);
+        $brand = $this->getBrand($id);
         return ApiResponse::success(new BrandResource($brand));
     }
 
@@ -52,17 +49,30 @@ class BrandController extends Controller
         return ApiResponse::message(__('apiMessage.created'));
     }
 
-    public function update(UpdateBrandRequest $request, string $id, UpdateBrandUseCase $updateBrandUseCase)
+    public function update(UpdateBrandRequest $request, string $id)
     {
         $attributes = $request->validated();
-        $updateBrandUseCase->execute($id, $attributes);
+        $brand = $this->getBrand($id);
+        $this->brandRepository->update(
+            $brand,
+            $attributes,
+            logo: $attributes['logo'] ?? null
+        );
         return ApiResponse::message(__('apiMessage.updated'));
     }
 
-    public function destroy(string $id, DeleteBrandUseCase $deleteBrandUseCase)
+    public function destroy(string $id)
     {
-        $deleteBrandUseCase->execute($id);
+        $brand = $this->getBrand($id);
+        $this->brandRepository->delete($brand);
         return ApiResponse::deleted();
     }
 
+    private function getBrand(string $id)
+    {
+        $brand = $this->brandRepository->getById($id);
+        if(is_null($brand))
+            throw new ModelNotFoundException(__('brands.not_found'));
+        return $brand;
+    }
 }

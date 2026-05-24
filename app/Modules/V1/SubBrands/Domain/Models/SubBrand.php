@@ -3,6 +3,7 @@
 namespace App\Modules\V1\SubBrands\Domain\Models;
 
 use App\Modules\Shared\Support\Traits\BelongsToCompany;
+use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
@@ -11,7 +12,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 #[fillable(['name', 'company_id', 'brand_id', 'slug', 'is_active'])]
 class SubBrand extends Model implements HasMedia
 {
-    use BelongsToCompany, InteractsWithMedia;
+    use BelongsToCompany, InteractsWithMedia, Filterable;
 
     public function registerMediaCollections(): void
     {

@@ -43,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
     private function registerRoutes(): void
     {
         foreach (config('routing.public') as $route) {
-            Route::middleware(['api', 'locale', 'tenant'])
+            Route::middleware(['api', 'locale'])
                 ->prefix('api/v1' . (!empty($route['prefix']) ? '/' . $route['prefix'] : ''))
                 ->group(base_path('routes/V1/' . $route['file']));
         }
@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
         foreach (config('routing.portals') as $key => $portal) {
             foreach ($portal as $route){
                 $middlewares = array_merge(
-                    ['api', 'locale', 'tenant'],
+                    ['api', 'locale'],
                     $route['middlewares']
                 );
                 Route::middleware($middlewares)

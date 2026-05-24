@@ -11,6 +11,7 @@ use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class RegisterUseCase
 {
@@ -52,8 +53,11 @@ class RegisterUseCase
 
     private function registerCompanyUser(array $attributes): User
     {
+        $companySlug = $this->generateUniqueCompanySlug($attributes['name']);
+
         $company = app(CompanyRepositoryInterface::class)->create([
             'name' => $attributes['name'],
+            'slug' => $companySlug,
             'email' => $attributes['email'],
             'phone' => $attributes['phone'],
             'cr_number' => $attributes['cr_number'],
@@ -63,6 +67,23 @@ class RegisterUseCase
 
         $companyUser = app(CreateCompanyUserUseCase::class)->execute($company, $attributes, true);
 
-        return $companyUser->user;
+        return $companyUser->user->load('companyUser.company');
+    }
+
+    private function generateUniqueCompanySlug(string $name): string
+    {
+        $baseSlug = Str::slug($name);
+        $baseSlug = $baseSlug !== '' ? $baseSlug : 'company';
+
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (app(CompanyRepositoryInterface::class)->exists(['slug' => $slug])) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }
+

@@ -3,7 +3,7 @@
 namespace App\Modules\V1\Brands\Application\UseCases;
 
 use App\Modules\V1\Brands\Domain\Repositories\BrandRepositoryInterface;
-use Symfony\Component\Translation\Exception\NotFoundResourceException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UpdateBrandUseCase
 {
@@ -18,7 +18,7 @@ class UpdateBrandUseCase
     {
         $brand = $this->brandRepository->getById($id);
         if(is_null($brand))
-            throw new NotFoundResourceException(__('brands.not_found'));
+            throw new ModelNotFoundException(__('brands.not_found'));
 
         $this->brandRepository->update(
             $brand,

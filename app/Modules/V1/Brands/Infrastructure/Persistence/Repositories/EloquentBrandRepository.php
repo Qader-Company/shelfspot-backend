@@ -11,19 +11,31 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentBrandRepository implements BrandRepositoryInterface
 {
-    public function getByCompanyId(
-        int $companyId,
+    public function getAll(
         array $relations = [],
         array $relationsCount = [],
         array $filters = [],
-        bool $global = false
     ): LengthAwarePaginator
     {
         return $this->query(
             $relations,
             $relationsCount,
             $filters,
-            $global
+        )->paginate(request('per_page', 15));
+    }
+
+    public function getByCompanyId(
+        int $companyId,
+        array $relations = [],
+        array $relationsCount = [],
+        array $filters = [],
+    ): LengthAwarePaginator
+    {
+        return $this->query(
+            $relations,
+            $relationsCount,
+            $filters,
+            true
         )->where('company_id', $companyId)
         ->paginate(request('per_page', 15));
     }
@@ -33,7 +45,7 @@ class EloquentBrandRepository implements BrandRepositoryInterface
         return $this->query(
             relations: $relations,
             relationsCount: $relationsCount,
-            global:  true
+            global:  $global
         )->find($id);
     }
 

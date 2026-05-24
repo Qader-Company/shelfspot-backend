@@ -25,7 +25,7 @@ class UpdateBrandRequest extends FormRequest
         return [
             'name' => 'sometimes|string|max:255',
             'logo' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'active' => 'sometimes|boolean'
+            'is_active' => 'sometimes|boolean'
         ];
     }
 }

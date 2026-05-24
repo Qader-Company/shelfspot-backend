@@ -8,18 +8,26 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 interface BrandRepositoryInterface
 {
+    public function getAll(
+        array $relations = [],
+        array $relationsCount = [],
+        array $filters = [],
+    ): LengthAwarePaginator;
+
     public function getByCompanyId(
         int $companyId,
         array $relations = [],
         array $relationsCount = [],
         array $filters = [],
-        bool $global = false
     ): LengthAwarePaginator;
+
     public function getById(
         int $id,
         array $relations = [],
-        array $relationsCount = []
+        array $relationsCount = [],
+        bool $global = false
     ): ?Brand;
+
     public function create(array $attributes, UploadedFile $logo = null): Brand;
     public function update(Brand $brand, array $attributes, UploadedFile $logo = null): Brand;
     public function delete(Brand $brand);

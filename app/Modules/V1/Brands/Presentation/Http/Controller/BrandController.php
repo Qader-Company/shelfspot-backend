@@ -10,6 +10,7 @@ use App\Modules\V1\Brands\Application\UseCases\DeleteBrandUseCase;
 use App\Modules\V1\Brands\Application\UseCases\UpdateBrandUseCase;
 use App\Modules\V1\Brands\Domain\Repositories\BrandRepositoryInterface;
 use App\Modules\V1\Brands\Presentation\Http\Requests\StoreBrandRequest;
+use App\Modules\V1\Brands\Presentation\Http\Requests\UpdateBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
 
 class BrandController extends Controller
@@ -28,8 +29,7 @@ class BrandController extends Controller
         $filters = $this->acceptedFilters(
             request(), ['name', 'active']
         );
-        $brands = $this->brandRepository->getByCompanyId(
-            $this->tenantContext->getCompanyId(),
+        $brands = $this->brandRepository->getAll(
             relations: ['media'],
             filters: $filters
         );
@@ -42,8 +42,7 @@ class BrandController extends Controller
     public function show(string $id)
     {
         $brand = $this->brandRepository->getById($id, ['media']);
-        return ApiResponse::success(new BrandResource($brand)
-        );
+        return ApiResponse::success(new BrandResource($brand));
     }
 
     public function store(StoreBrandRequest $request)
@@ -53,7 +52,7 @@ class BrandController extends Controller
         return ApiResponse::message(__('apiMessage.created'));
     }
 
-    public function update(StoreBrandRequest $request, string $id, UpdateBrandUseCase $updateBrandUseCase)
+    public function update(UpdateBrandRequest $request, string $id, UpdateBrandUseCase $updateBrandUseCase)
     {
         $attributes = $request->validated();
         $updateBrandUseCase->execute($id, $attributes);

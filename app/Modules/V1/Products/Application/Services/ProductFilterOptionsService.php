@@ -82,7 +82,6 @@ class ProductFilterOptionsService
     {
         return [
             'id' => $model->id,
-            'value' => $model->id,
             'label' => $model->name,
         ];
     }

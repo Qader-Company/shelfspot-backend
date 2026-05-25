@@ -40,7 +40,11 @@ class ProductController extends Controller
 
     public function filterOptions(ProductFilterOptionsRequest $request)
     {
-        return ApiResponse::success($this->productFilterOptionsService->resolve($request->validated()));
+        return ApiResponse::success(
+            $this->productFilterOptionsService->resolve(
+                $request->validated()
+            )
+        );
     }
 
     public function show(string $id)

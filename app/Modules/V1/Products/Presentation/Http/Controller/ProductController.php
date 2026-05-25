@@ -21,8 +21,14 @@ class ProductController extends Controller
 
     public function index()
     {
-        $filters = $this->acceptedFilters(request(), ['name', 'is_active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id', 'sku']);
-        $products = $this->productRepository->getAll(relations: ['media'], filters: $filters);
+        $filters = $this->acceptedFilters(
+            request(),
+            ['name', 'is_active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id']
+        );
+        $products = $this->productRepository->getAll(
+            relations: ['media'],
+            filters: $filters
+        );
 
         return ApiResponse::success(ProductResource::collection($products)->response()->getData(true));
     }

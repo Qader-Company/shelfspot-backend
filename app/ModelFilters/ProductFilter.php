@@ -8,7 +8,9 @@ class ProductFilter extends ModelFilter
 {
     public function name($name)
     {
-        return $this->where('name', 'like', "%$name%");
+        return $this->where('name', 'like', "%$name%")
+            ->orWhere('sku', 'like', "%$sku%");
+
     }
 
     public function isActive($isActive)
@@ -38,6 +40,5 @@ class ProductFilter extends ModelFilter
 
     public function sku($sku)
     {
-        return $this->where('sku', 'like', "%$sku%");
     }
 }

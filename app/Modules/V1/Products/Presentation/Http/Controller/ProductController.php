@@ -5,7 +5,9 @@ namespace App\Modules\V1\Products\Presentation\Http\Controller;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Products\Application\Services\ProductFilterOptionsService;
 use App\Modules\V1\Products\Domain\Repositories\ProductRepositoryInterface;
+use App\Modules\V1\Products\Presentation\Http\Requests\ProductFilterOptionsRequest;
 use App\Modules\V1\Products\Presentation\Http\Requests\StoreProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Requests\UpdateProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Resources\ProductResource;
@@ -15,8 +17,10 @@ class ProductController extends Controller
 {
     use Filterable;
 
-    public function __construct(private readonly ProductRepositoryInterface $productRepository)
-    {
+    public function __construct(
+        private readonly ProductRepositoryInterface $productRepository,
+        private readonly ProductFilterOptionsService $productFilterOptionsService,
+    ) {
     }
 
     public function index()
@@ -25,6 +29,12 @@ class ProductController extends Controller
         $products = $this->productRepository->getAll(relations: ['media'], filters: $filters);
 
         return ApiResponse::success(ProductResource::collection($products)->response()->getData(true));
+    }
+
+
+    public function filterOptions(ProductFilterOptionsRequest $request)
+    {
+        return ApiResponse::success($this->productFilterOptionsService->resolve($request->validated()));
     }
 
     public function show(string $id)

@@ -66,7 +66,7 @@ class ProductController extends Controller
             $data,
             image: $data['image'] ?? null
         );
-        return ApiResponse::message(__('apiMessage.created'));
+        return ApiResponse::message(__('api.created'));
     }
 
     public function update(UpdateProductRequest $request, string $id)
@@ -77,7 +77,7 @@ class ProductController extends Controller
             $data,
             image: $data['image'] ?? null
         );
-        return ApiResponse::message(__('apiMessage.updated'));
+        return ApiResponse::message(__('api.updated'));
     }
 
     public function destroy(string $id)

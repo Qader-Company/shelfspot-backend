@@ -36,14 +36,14 @@ class SubCategoryController extends Controller
     {
         $data = $request->validated();
         $this->subCategoryRepository->create($data, $data['image'] ?? null);
-        return ApiResponse::message(__('apiMessage.created'));
+        return ApiResponse::message(__('api.created'));
     }
 
     public function update(UpdateSubCategoryRequest $request, string $id)
     {
         $data = $request->validated();
         $this->subCategoryRepository->update($this->getSubCategory($id), $data, $data['image'] ?? null);
-        return ApiResponse::message(__('apiMessage.updated'));
+        return ApiResponse::message(__('api.updated'));
     }
 
     public function destroy(string $id)

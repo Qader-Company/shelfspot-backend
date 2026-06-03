@@ -22,7 +22,7 @@ class CreateCompanyUserUseCase
         return DB::Transaction(function () use ($attributes, $company, $isOwner){
 
             $user = $this->userRepository->create([
-                'name' => 'Company Admin',
+                'name' => $attributes['user_name'] ?? $attributes['name'] ?? 'Company Admin',
                 'email' => $attributes['email'],
                 'password' => $attributes['password'],
                 'type' => PortalTypeEnum::COMPANY,

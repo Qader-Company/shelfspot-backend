@@ -41,14 +41,14 @@ class SubBrandController extends Controller
     {
         $data = $request->validated();
         $this->subBrandRepository->create($data, $data['logo']);
-        return ApiResponse::message(__('apiMessage.created'));
+        return ApiResponse::message(__('api.created'));
     }
     public function update(UpdateSubBrandRequest $request, string $id)
     {
         $data = $request->validated();
         $subBrand = $this->getSubBrand($id);
         $this->subBrandRepository->update($subBrand, $data, $data['logo'] ?? null);
-        return ApiResponse::message(__('apiMessage.updated'));
+        return ApiResponse::message(__('api.updated'));
     }
     public function destroy(string $id)
     {

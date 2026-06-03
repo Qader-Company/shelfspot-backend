@@ -10,6 +10,8 @@ interface TenantContextInterface
 
     public function setSlug(string $slug): bool;
 
+    public function setCompany(Company $company): void;
+
     public function getCompany(): ?Company;
 
     public function getCompanyId(): ?int;

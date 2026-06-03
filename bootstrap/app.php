@@ -3,6 +3,7 @@
 use App\Facades\ApiResponse;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetTenantFromHeader;
+use App\Http\Middleware\SetTenantFromRouteCompany;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'locale' => SetLocale::class,
             'role' => RoleMiddleware::class,
             'tenant' => SetTenantFromHeader::class,
+            'tenant.route-company' => SetTenantFromRouteCompany::class,
             'api.key' => \App\Http\Middleware\CheckApiKey::class,
         ]);
     })

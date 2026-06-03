@@ -35,13 +35,13 @@ class CategoryController extends Controller
     public function store(StoreCategoryRequest $request)
     {
         $this->categoryRepository->create($request->validated());
-        return ApiResponse::message(__('apiMessage.created'));
+        return ApiResponse::message(__('api.created'));
     }
 
     public function update(UpdateCategoryRequest $request, string $id)
     {
         $this->categoryRepository->update($this->getCategory($id), $request->validated());
-        return ApiResponse::message(__('apiMessage.updated'));
+        return ApiResponse::message(__('api.updated'));
     }
 
     public function destroy(string $id)

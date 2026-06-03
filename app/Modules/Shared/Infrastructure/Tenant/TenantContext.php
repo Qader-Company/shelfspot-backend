@@ -17,19 +17,26 @@ class TenantContext implements TenantContextInterface
 
     public function setSlug(string $slug): bool
     {
-        $this->slug = $slug;
-        $this->company = Company::withoutGlobalScopes()
+        $company = Company::withoutGlobalScopes()
             ->where('slug', $slug)
             ->first();
 
-        if (is_null($this->company)) {
+        if (is_null($company)) {
             return false;
         }
 
-        config(['tenant.slug' => $slug]);
-        config(['tenant.company_id' => $this->company->id]);
+        $this->setCompany($company);
 
         return true;
+    }
+
+    public function setCompany(Company $company): void
+    {
+        $this->company = $company;
+        $this->slug = $company->slug;
+
+        config(['tenant.slug' => $this->slug]);
+        config(['tenant.company_id' => $company->id]);
     }
 
     public function getCompany(): ?Company

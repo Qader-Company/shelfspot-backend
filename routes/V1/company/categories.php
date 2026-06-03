@@ -8,6 +8,9 @@ Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEn
     ->controller(CategoryController::class)->group(function (){
         Route::get('/', 'index');
         Route::post('/', 'store');
+        Route::get('/excel/template', 'excelTemplate');
+        Route::get('/excel/export', 'excelExport');
+        Route::post('/excel/import', 'excelImport');
         Route::get('/{id}', 'show');
         Route::match(['put','patch'],'/{id}','update');
         Route::delete('/{id}','destroy');

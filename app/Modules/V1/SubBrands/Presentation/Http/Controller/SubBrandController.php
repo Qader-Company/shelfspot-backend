@@ -3,18 +3,24 @@ namespace App\Modules\V1\SubBrands\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\SubBrands\Application\Services\SubBrandExcelService;
 use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
 use App\Modules\V1\SubBrands\Presentation\Http\Requests\StoreSubBrandRequest;
 use App\Modules\V1\SubBrands\Presentation\Http\Requests\UpdateSubBrandRequest;
 use App\Modules\V1\SubBrands\Presentation\Http\Resources\SubBrandResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SubBrandController extends Controller
 {
     use Filterable;
 
-    public function __construct(private readonly SubBrandRepositoryInterface $subBrandRepository) {}
+    public function __construct(
+        private readonly SubBrandRepositoryInterface $subBrandRepository,
+        private readonly SubBrandExcelService $subBrandExcelService,
+    ) {}
 
     public function index()
     {
@@ -55,6 +61,27 @@ class SubBrandController extends Controller
         $subBrand = $this->getSubBrand($id);
         $this->subBrandRepository->delete($subBrand);
         return ApiResponse::deleted();
+    }
+
+
+    public function excelTemplate(): BinaryFileResponse
+    {
+        return $this->subBrandExcelService->template();
+    }
+
+    public function excelExport(): BinaryFileResponse
+    {
+        return $this->subBrandExcelService->export();
+    }
+
+    public function excelImport(ImportExcelRequest $request)
+    {
+        $result = $this->subBrandExcelService->import($request->file('file'));
+        $message = $result->hasErrors()
+            ? __('Imported with row-level validation errors. Please review the errors array.')
+            : __('Imported successfully.');
+
+        return ApiResponse::success($result->toArray(), $message);
     }
 
     private function getSubBrand(string $id)

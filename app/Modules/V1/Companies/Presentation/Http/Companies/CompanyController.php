@@ -5,7 +5,7 @@ namespace App\Modules\V1\Companies\Presentation\Http\Companies;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Support\Traits\Filterable;
-use App\Modules\V1\Companies\Application\UseCases\CreateCompanyUserUseCase;
+use App\Modules\V1\Companies\Application\UseCases\CreateCompanyWithOwnerUseCase;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
 use App\Modules\V1\Companies\Presentation\Http\Requests\RegisterCompanyRequest;
 use App\Modules\V1\Companies\Presentation\Http\Requests\UpdateCompanyRequest;
@@ -37,11 +37,9 @@ class CompanyController extends Controller
         $company = $this->getCompany($id, ['users']);
         return ApiResponse::success(new CompanyResource($company));
     }
-    public function create(RegisterCompanyRequest $request, CreateCompanyUserUseCase $createCompanyUserUseCase)
+    public function create(RegisterCompanyRequest $request, CreateCompanyWithOwnerUseCase $createCompanyWithOwnerUseCase)
     {
-        $data = $request->validated();
-        $company = $this->companyRepository->create($data);
-        $createCompanyUserUseCase->execute($company, $data, true);
+        $createCompanyWithOwnerUseCase->execute($request->validated());
         return ApiResponse::message(__('api.created'));
     }
 

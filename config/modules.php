@@ -22,18 +22,18 @@ return [
         ],
 
         'company' => [
-            ['prefix' => 'company/brands', 'file' => 'brands.php', 'middlewares' => ['auth:sanctum', 'tenant']],
-            ['prefix' => 'company/sub-brands', 'file' => 'sub-brands.php', 'middlewares' => ['auth:sanctum', 'tenant']],
-            ['prefix' => 'company/categories', 'file' => 'categories.php', 'middlewares' => ['auth:sanctum', 'tenant']],
-            ['prefix' => 'company/sub-categories', 'file' => 'sub-categories.php', 'middlewares' => ['auth:sanctum', 'tenant']],
-            ['prefix' => 'company/products', 'file' => 'products.php', 'middlewares' => ['auth:sanctum', 'tenant']],
+            ['prefix' => 'company/brands', 'file' => 'brands.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
+            ['prefix' => 'company/sub-brands', 'file' => 'sub-brands.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
+            ['prefix' => 'company/categories', 'file' => 'categories.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
+            ['prefix' => 'company/sub-categories', 'file' => 'sub-categories.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
+            ['prefix' => 'company/products', 'file' => 'products.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
             ['prefix' => 'company/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum']],
         ]
     ],
 
     'providers' => [
         \App\Modules\V1\Brands\Infrastructure\Providers\BrandsModuleServiceProvider::class,
-        \App\Modules\V1\Companies\Infrastructure\Providers\CompanyModuleServiceProvider::class,
+        \App\Modules\V1\Companies\Infrastructure\Providers\CompaniesModuleServiceProvider::class,
         \App\Modules\V1\Users\Infrastructure\Providers\UserModuleServiceProvider::class,
         \App\Modules\V1\SubBrands\Infrastructure\Providers\SubBrandsModuleServiceProvider::class,
         \App\Modules\V1\Categories\Infrastructure\Providers\CategoriesModuleServiceProvider::class,

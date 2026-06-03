@@ -9,7 +9,7 @@ use App\Modules\V1\Companies\Domain\Repositories\CompanyUserRepositoryInterface;
 use App\Modules\V1\Companies\Infrastructure\Persistence\Repositories\EloquentCompanyUserRepository;
 use App\Providers\AppServiceProvider;
 
-class CompanyModuleServiceProvider extends AppServiceProvider
+class CompaniesModuleServiceProvider extends AppServiceProvider
 {
     public function register(): void
     {

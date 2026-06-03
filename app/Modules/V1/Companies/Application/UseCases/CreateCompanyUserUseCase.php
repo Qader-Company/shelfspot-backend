@@ -19,7 +19,7 @@ class CreateCompanyUserUseCase
 
     public function execute(Company $company, array $attributes, bool $isOwner = false)
     {
-        return DB::Transaction(function () use ($attributes, $company, $isOwner){
+        return DB::transaction(function () use ($attributes, $company, $isOwner){
 
             $user = $this->userRepository->create([
                 'name' => $attributes['user_name'] ?? $attributes['name'] ?? 'Company Admin',

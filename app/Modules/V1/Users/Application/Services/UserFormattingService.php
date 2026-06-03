@@ -6,7 +6,7 @@ use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Users\Presentation\Http\Resources\AdminUserResource;
 use App\Modules\V1\Users\Presentation\Http\Resources\CompanyUserResource;
-use App\Modules\V1\Workers\Presentation\Http\Resourcses\WorkerResource;
+use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 
 class UserFormattingService
 {

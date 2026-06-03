@@ -6,7 +6,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSubBrandRequest extends FormRequest
 {
-
     public function authorize(): bool { return true; }
     public function rules(): array
     {
@@ -17,4 +16,5 @@ class UpdateSubBrandRequest extends FormRequest
             'is_active' => 'sometimes|boolean',
         ];
     }
+
 }

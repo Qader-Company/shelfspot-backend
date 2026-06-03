@@ -3,11 +3,12 @@
 namespace App\Modules\V1\Products\Presentation\Http\Requests;
 
 use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
-use App\Modules\Shared\Support\Traits\ValidatesTenantOwnership;
+use App\Modules\Shared\Support\Traits\ValidatesCatalogHierarchy;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProductRequest extends FormRequest
 {
+    use ValidatesCatalogHierarchy;
 
     public function authorize(): bool { return true; }
 
@@ -24,5 +25,11 @@ class StoreProductRequest extends FormRequest
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'is_active' => 'required|boolean',
         ];
+    }
+
+
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $this->addCatalogHierarchyValidation($validator);
     }
 }

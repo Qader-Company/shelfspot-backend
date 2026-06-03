@@ -2,12 +2,10 @@
 namespace App\Modules\V1\SubBrands\Presentation\Http\Requests;
 
 use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
-use App\Modules\Shared\Support\Traits\ValidatesTenantOwnership;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSubBrandRequest extends FormRequest
 {
-
     public function authorize(): bool { return true; }
     public function rules(): array
     {
@@ -18,4 +16,5 @@ class StoreSubBrandRequest extends FormRequest
             'is_active' => 'required|boolean',
         ];
     }
+
 }

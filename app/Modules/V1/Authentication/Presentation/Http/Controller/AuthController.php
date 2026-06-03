@@ -4,6 +4,7 @@ namespace App\Modules\V1\Authentication\Presentation\Http\Controller;
 
 
 use App\Facades\ApiResponse;
+use App\Http\Controllers\Controller;
 use App\Modules\V1\Authentication\Application\UseCases\RegisterUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\SendOtpUseCase;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
@@ -16,7 +17,7 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\LoginRequest;
 use Illuminate\Http\Request;
 
-class AuthController
+class AuthController extends Controller
 {
     public function login(LoginRequest $loginRequest, string $type, LogInUseCase $loginUseCase)
     {
@@ -66,7 +67,7 @@ class AuthController
         $data['user'] = UserFormattingService::userFormat(
             $data['user'],
             $portalType
-        );;
+        );
 
         return ApiResponse::success($data, __('auth.verify_account'));
     }

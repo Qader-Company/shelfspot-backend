@@ -4,19 +4,23 @@ namespace App\Modules\V1\Brands\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Brands\Application\Services\BrandExcelService;
 use App\Modules\V1\Brands\Domain\Repositories\BrandRepositoryInterface;
 use App\Modules\V1\Brands\Presentation\Http\Requests\StoreBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Requests\UpdateBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BrandController extends Controller
 {
     use Filterable;
 
     public function __construct(
-        private readonly BrandRepositoryInterface $brandRepository
+        private readonly BrandRepositoryInterface $brandRepository,
+        private readonly BrandExcelService $brandExcelService,
     )
     {
     }
@@ -66,6 +70,27 @@ class BrandController extends Controller
         $brand = $this->getBrand($id);
         $this->brandRepository->delete($brand);
         return ApiResponse::deleted();
+    }
+
+
+    public function excelTemplate(): BinaryFileResponse
+    {
+        return $this->brandExcelService->template();
+    }
+
+    public function excelExport(): BinaryFileResponse
+    {
+        return $this->brandExcelService->export();
+    }
+
+    public function excelImport(ImportExcelRequest $request)
+    {
+        $result = $this->brandExcelService->import($request->file('file'));
+        $message = $result->hasErrors()
+            ? __('Imported with row-level validation errors. Please review the errors array.')
+            : __('Imported successfully.');
+
+        return ApiResponse::success($result->toArray(), $message);
     }
 
     private function getBrand(string $id, $relations = [], $relationsCount = [])

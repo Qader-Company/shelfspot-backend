@@ -4,18 +4,24 @@ namespace App\Modules\V1\SubCategories\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\SubCategories\Application\Services\SubCategoryExcelService;
 use App\Modules\V1\SubCategories\Domain\Repositories\SubCategoryRepositoryInterface;
 use App\Modules\V1\SubCategories\Presentation\Http\Requests\StoreSubCategoryRequest;
 use App\Modules\V1\SubCategories\Presentation\Http\Requests\UpdateSubCategoryRequest;
 use App\Modules\V1\SubCategories\Presentation\Http\Resources\SubCategoryResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SubCategoryController extends Controller
 {
     use Filterable;
 
-    public function __construct(private readonly SubCategoryRepositoryInterface $subCategoryRepository)
+    public function __construct(
+        private readonly SubCategoryRepositoryInterface $subCategoryRepository,
+        private readonly SubCategoryExcelService $subCategoryExcelService,
+    )
     {
     }
 
@@ -50,6 +56,27 @@ class SubCategoryController extends Controller
     {
         $this->subCategoryRepository->delete($this->getSubCategory($id));
         return ApiResponse::deleted();
+    }
+
+
+    public function excelTemplate(): BinaryFileResponse
+    {
+        return $this->subCategoryExcelService->template();
+    }
+
+    public function excelExport(): BinaryFileResponse
+    {
+        return $this->subCategoryExcelService->export();
+    }
+
+    public function excelImport(ImportExcelRequest $request)
+    {
+        $result = $this->subCategoryExcelService->import($request->file('file'));
+        $message = $result->hasErrors()
+            ? __('Imported with row-level validation errors. Please review the errors array.')
+            : __('Imported successfully.');
+
+        return ApiResponse::success($result->toArray(), $message);
     }
 
     private function getSubCategory(string $id)

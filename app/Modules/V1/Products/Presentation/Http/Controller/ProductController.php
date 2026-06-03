@@ -4,7 +4,9 @@ namespace App\Modules\V1\Products\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Products\Application\Services\ProductExcelService;
 use App\Modules\V1\Products\Application\Services\ProductFilterOptionsService;
 use App\Modules\V1\Products\Domain\Repositories\ProductRepositoryInterface;
 use App\Modules\V1\Products\Presentation\Http\Requests\ProductFilterOptionsRequest;
@@ -12,6 +14,7 @@ use App\Modules\V1\Products\Presentation\Http\Requests\StoreProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Requests\UpdateProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Resources\ProductResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductController extends Controller
 {
@@ -19,6 +22,7 @@ class ProductController extends Controller
 
     public function __construct(
         private readonly ProductRepositoryInterface $productRepository,
+        private readonly ProductExcelService $productExcelService,
     ) {
     }
 
@@ -86,6 +90,27 @@ class ProductController extends Controller
             $this->getProduct($id)
         );
         return ApiResponse::deleted();
+    }
+
+
+    public function excelTemplate(): BinaryFileResponse
+    {
+        return $this->productExcelService->template();
+    }
+
+    public function excelExport(): BinaryFileResponse
+    {
+        return $this->productExcelService->export();
+    }
+
+    public function excelImport(ImportExcelRequest $request)
+    {
+        $result = $this->productExcelService->import($request->file('file'));
+        $message = $result->hasErrors()
+            ? __('Imported with row-level validation errors. Please review the errors array.')
+            : __('Imported successfully.');
+
+        return ApiResponse::success($result->toArray(), $message);
     }
 
     private function getProduct(string $id, $relations = [], $relationsCount = [])

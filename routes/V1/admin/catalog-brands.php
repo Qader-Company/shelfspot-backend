@@ -9,6 +9,9 @@ Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::A
     ->controller(BrandController::class)
     ->group(function () {
         Route::get('/', 'index');
+        Route::get('/excel/template', 'excelTemplate');
+        Route::get('/excel/export', 'excelExport');
+        Route::post('/excel/import', 'excelImport');
         Route::post('/', 'store');
         Route::get('/{id}', 'show');
         Route::match(['put', 'patch'], '/{id}', 'update');

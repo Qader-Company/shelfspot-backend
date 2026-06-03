@@ -49,6 +49,6 @@ class Product extends Model implements HasMedia
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn ($model) => $model->slug = str($model->name.'-'.$model->company_id.'-'.Str::random(6))->slug());
+        static::creating(fn ($model) => $model->slug = str($model->name.'-'.$model->company_id.'-'.$model->sku.'-'.Str::random(6))->slug());
     }
 }

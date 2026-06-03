@@ -46,7 +46,7 @@ class BrandController extends Controller
     {
         $data = $request->validated();
         $this->brandRepository->create($data, $data['logo']);
-        return ApiResponse::message(__('apiMessage.created'));
+        return ApiResponse::message(__('api.created'));
     }
 
     public function update(UpdateBrandRequest $request, string $id)
@@ -58,7 +58,7 @@ class BrandController extends Controller
             $attributes,
             logo: $attributes['logo'] ?? null
         );
-        return ApiResponse::message(__('apiMessage.updated'));
+        return ApiResponse::message(__('api.updated'));
     }
 
     public function destroy(string $id)

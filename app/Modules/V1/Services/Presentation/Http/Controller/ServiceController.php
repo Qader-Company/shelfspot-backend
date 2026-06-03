@@ -34,7 +34,7 @@ class ServiceController extends Controller
 
     public function show(string $key)
     {
-        $service = $this->getService($key, ['translations']);
+        $service = $this->getServiceByKey($key, ['translations']);
         return ApiResponse::success(ServiceResource::withTranslations($service));
     }
 
@@ -51,8 +51,17 @@ class ServiceController extends Controller
         if(is_null($service)) throw new ModelNotFoundException(__('api.not_found'));
         return $service;
     }
+
+    private function getServiceByKey(string $key, $relations = [], $relationsCount = [])
+    {
+        $service = $this->serviceRepository->getByKey($key, $relations, $relationsCount);
+        if(is_null($service)) throw new ModelNotFoundException(__('api.not_found'));
+        return $service;
+    }
     private function ifUserNotAdmin(&$filters)
     {
-        $filters['active'] = (Auth::user()->type !== PortalTypeEnum::ADMIN) ? true : $filters['active'];
+        if (Auth::user()->type !== PortalTypeEnum::ADMIN) {
+            $filters['active'] = true;
+        }
     }
 }

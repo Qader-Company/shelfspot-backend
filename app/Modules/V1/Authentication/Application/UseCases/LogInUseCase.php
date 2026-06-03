@@ -41,7 +41,7 @@ class LogInUseCase
         );
     }
 
-    private function userDataDependedOnVerificationStatus(User $user, PortalTypeEnum $userType, bool $isVerified)
+    private function userDataDependedOnVerificationStatus(User $user, PortalTypeEnum $userType, bool $needsVerification)
     {
         $data = [
             'data' => ['user' => $user,],
@@ -49,7 +49,7 @@ class LogInUseCase
             'code' => Response::HTTP_OK,
         ];
 
-        if($isVerified){
+        if($needsVerification){
             $data['data']['verify_token'] = $this->tokenIssuer->create($user, $userType, TokenTypeEnum::VERIFY_TOKEN);
             $data['message'] = __('auth.verify_account');
             $data['code'] = Response::HTTP_FORBIDDEN;

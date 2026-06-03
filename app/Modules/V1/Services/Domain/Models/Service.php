@@ -15,6 +15,6 @@ class Service extends Model
 
     public $translatedAttributes = ['description'];
     public $casts = [
-        'key' => serviceTypeEnum::class,
+        'key' => ServiceTypeEnum::class,
     ];
 }

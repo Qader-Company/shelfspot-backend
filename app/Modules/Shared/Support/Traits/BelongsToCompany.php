@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Modules\Shared\Support\Traits;
+
 use App\Models\Scopes\CompanyScope;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Companies\Domain\Models\Company;
@@ -25,14 +26,23 @@ trait BelongsToCompany
         });
     }
 
-    public function platform(): BelongsTo
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function getPlatformId(): int
+    public function getCompanyId(): int
     {
         return $this->company_id;
     }
 
+    public function platform(): BelongsTo
+    {
+        return $this->company();
+    }
+
+    public function getPlatformId(): int
+    {
+        return $this->getCompanyId();
+    }
 }

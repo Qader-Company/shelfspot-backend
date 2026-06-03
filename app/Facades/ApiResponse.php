@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static ApiResponseLogic apiFormat($info, $message = null, $code= Response::HTTP_OK)
- * @method static ApiResponseLogic notFound($message = 'apiMessages.not_found')
+ * @method static ApiResponseLogic notFound($message = 'api.not_found')
  * @method static ApiResponseLogic serverError($message = 'Faild to process this action, please try again.')
  * @method static ApiResponseLogic validationError($errors,$message = 'validation error')
  * @method static ApiResponseLogic unauthorized($message = 'unauthorized process', $code = Response::HTTP_UNAUTHORIZED)

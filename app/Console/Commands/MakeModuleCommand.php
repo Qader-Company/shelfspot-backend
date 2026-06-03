@@ -80,35 +80,60 @@ class MakeModuleCommand extends Command
         $configPath = config_path('modules.php');
 
         if (! $files->exists($configPath)) {
-            $content = "<?php\n\nreturn [\n    'providers' => [\n        {$providerClass},\n    ],\n];\n";
+            $content = <<<PHP
+<?php
+
+return [
+
+    'providers' => [
+        {$providerClass},
+    ],
+];
+
+PHP;
+
             $files->put($configPath, $content);
+
             $this->line('Created config/modules.php and registered provider.');
 
             return;
         }
 
-        $config = require $configPath;
-        $providers = (array) ($config['providers'] ?? []);
+        $content = $files->get($configPath);
 
-        $providerFqcn = trim($providerClass, '\\:class');
-        if (in_array($providerFqcn, $providers, true)) {
-            $this->line('Provider already registered in config/modules.php.');
+        preg_match("/'providers'\s*=>\s*\[(.*?)\]/s", $content, $matches);
+
+        if (! isset($matches[1])) {
+            $this->error('Could not find providers array.');
+
             return;
         }
 
-        $providers[] = $providerFqcn;
-        sort($providers);
+        $providersBlock = $matches[1];
 
-        $lines = array_map(fn (string $provider) => "        \\{$provider}::class,", $providers);
-        $content = "<?php\n\nreturn [\n    'providers' => [\n".implode("\n", $lines)."\n    ],\n];\n";
+        $providerFqcn = trim($providerClass, '\\');
+        $providerCheck = $providerFqcn . '::class';
 
-        $files->put($configPath, $content);
+        if (str_contains($providersBlock, $providerCheck)) {
+            $this->line('Provider already registered in config/modules.php.');
+
+            return;
+        }
+
+        $newProvidersBlock = rtrim($providersBlock) . "\n        {$providerClass},";
+
+        $updatedContent = str_replace(
+            $providersBlock,
+            $newProvidersBlock,
+            $content
+        );
+
+        $files->put($configPath, $updatedContent);
+
         $this->line('Registered provider in config/modules.php.');
-    }
-
-    protected function interfaceStub(string $moduleNamespace, string $interfaceName): string
-    {
-        return <<<PHP
+    }    protected function interfaceStub(string $moduleNamespace, string $interfaceName): string
+{
+    return <<<PHP
 <?php
 
 namespace {$moduleNamespace}\Domain\Repositories;
@@ -117,7 +142,7 @@ interface {$interfaceName}
 {
 }
 PHP;
-    }
+}
 
     protected function repositoryStub(string $moduleNamespace, string $repositoryName, string $interfaceName): string
     {

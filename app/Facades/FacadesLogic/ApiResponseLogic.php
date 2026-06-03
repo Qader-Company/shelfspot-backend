@@ -2,106 +2,113 @@
 
 namespace App\Facades\FacadesLogic;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
 class ApiResponseLogic
 {
-    /**
-     * @param $info
-     * @param $message
-     * @param $code
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Foundation\Application|Response
-     */
-    function apiFormat($info, $message = null, $code = Response::HTTP_OK)
-    {
+    public function apiFormat(
+        ?array $info = null,
+        ?string $message = null,
+        int $code = Response::HTTP_OK
+    ): JsonResponse {
         $response = [
-            'success' => ($code >= 200 && $code < 300),
+            'success' => $code >= 200 && $code < 300,
         ];
 
-        if ($message) {
+        if ($message !== null) {
             $response['message'] = $message;
         }
 
-        if ($info) {
-            $key = key($info);
-            $response[$key] = $info[$key];
+        if ($info !== null) {
+            $response = array_merge($response, $info);
         }
 
-        return response($response, $code);
+        return response()->json($response, $code);
     }
 
-    public function failed($errors, $message, $code)
-    {
-        $errors = $errors ? ['errors' => $errors] : null;
+    public function failed(
+        mixed $errors = null,
+        ?string $message = null,
+        int $code = Response::HTTP_BAD_REQUEST
+    ): JsonResponse {
         return $this->apiFormat(
-            $errors,
-            $message,
-            $code
+            info: $errors !== null ? ['errors' => $errors] : null,
+            message: $message,
+            code: $code
         );
     }
 
-    public function success($data, $message = null, $code = Response::HTTP_OK)
-    {
+    public function success(
+        mixed $data = null,
+        ?string $message = null,
+        int $code = Response::HTTP_OK
+    ): JsonResponse {
         return $this->apiFormat(
-            ['data' => $data],
-            __($message),
-            $code
+            info: ['data' => $data],
+            message: $message,
+            code: $code
         );
     }
 
-    public function message($message, $code = Response::HTTP_OK)
-    {
+    public function message(
+        ?string $message = null,
+        int $code = Response::HTTP_OK
+    ): JsonResponse {
         return $this->apiFormat(
-            null,
-            __($message),
-            $code
+            message: $message,
+            code: $code
         );
     }
 
-    public function notFound($message = 'apiMessages.not_found')
+    public function notFound(?string $message = null): JsonResponse
     {
-        return $this->apiFormat(
-            null,
-            __($message),
+        return $this->message(
+            $message ?? __('api.not_found'),
             Response::HTTP_NOT_FOUND
         );
     }
 
-    public function serverError($message = 'apiMessages.server_error')
+    public function serverError(?string $message = null): JsonResponse
     {
-        return $this->apiFormat(
-            null,
-            __($message),
+        return $this->message(
+            $message ?? __('api.server_error'),
             Response::HTTP_INTERNAL_SERVER_ERROR
         );
     }
 
-    public function validationError($errors, $message = 'apiMessages.validation_error')
-    {
+    public function validationError(
+        mixed $errors,
+        ?string $message = null
+    ): JsonResponse {
         return $this->failed(
-            $errors,
-            __($message),
-            Response::HTTP_UNPROCESSABLE_ENTITY
+            errors: $errors,
+            message: $message ?? __('api.validation_error'),
+            code: Response::HTTP_UNPROCESSABLE_ENTITY
         );
     }
 
-    public function unauthorized($message = 'apiMessages.unauthorized', $code = Response::HTTP_UNAUTHORIZED)
-    {
+    public function unauthorized(
+        ?string $message = null,
+        int $code = Response::HTTP_UNAUTHORIZED
+    ): JsonResponse {
         return $this->message(
-            __($message), 
+            $message ?? __('api.unauthorized'),
             $code
         );
     }
 
-    public function forbidden($message = 'apiMessages.forbidden', $code = Response::HTTP_FORBIDDEN)
-    {
+    public function forbidden(
+        ?string $message = null,
+        int $code = Response::HTTP_FORBIDDEN
+    ): JsonResponse {
         return $this->message(
-            __($message), 
+            $message ?? __('api.forbidden'),
             $code
         );
     }
 
-    public function tooManyRequests(int $retryAfterSeconds)
+    public function tooManyRequests(int $retryAfterSeconds): JsonResponse
     {
         return $this->message(
             __('auth.throttle', ['seconds' => $retryAfterSeconds]),
@@ -111,38 +118,29 @@ class ApiResponseLogic
         ]);
     }
 
-    public function created($data = null, $message = 'apiMessages.created')
-    {
-        return ($data) ? 
-            $this->success(
-                $data,
-                __($message),
-                Response::HTTP_CREATED
-            ) : 
-            $this->message(
-                __($message),
-                Response::HTTP_CREATED
-            );
-    }
-
-    public function updated($data = null, $message = 'apiMessages.updated')
-    {
-        return ($data) ? 
-            $this->success(
-                $data,
-                __($message)
-            ) :
-            $this->message(
-                __($message)
-            );
-    }
-
-    public function deleted($message = 'apiMessages.deleted')
-    {
-        return $this->message( 
-            __($message), 
-            Response::HTTP_NO_CONTENT
+    public function created(
+        mixed $data = null,
+        ?string $message = null
+    ): JsonResponse {
+        return $this->apiFormat(
+            info: $data !== null ? ['data' => $data] : null,
+            message: $message ?? __('api.created'),
+            code: Response::HTTP_CREATED
         );
     }
-}
 
+    public function updated(
+        mixed $data = null,
+        ?string $message = null
+    ): JsonResponse {
+        return $this->apiFormat(
+            info: $data !== null ? ['data' => $data] : null,
+            message: $message ?? __('api.updated')
+        );
+    }
+
+    public function deleted(?string $message = null): JsonResponse
+    {
+        return $this->message($message ?? __('api.deleted'));
+    }
+}

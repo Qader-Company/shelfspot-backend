@@ -1,6 +1,31 @@
 <?php
 
 return [
+    "routes" => [
+        'public' => [
+            ['prefix' => 'auth', 'file' => 'auth.php'],
+            ['prefix' => 'enums', 'file' => 'enums.php'],
+        ],
+
+        'admin' => [
+            ['prefix' => 'admin/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum']],
+            ['prefix' => 'admin/companies', 'file' => 'companies.php', 'middlewares' => ['auth:sanctum']],
+        ],
+
+        'worker' => [
+//            ['prefix' => '', 'file' => '', 'middlewares' => []],
+        ],
+
+        'company' => [
+            ['prefix' => 'company/brands', 'file' => 'brands.php', 'middlewares' => ['auth:sanctum', 'tenant']],
+            ['prefix' => 'company/sub-brands', 'file' => 'sub-brands.php', 'middlewares' => ['auth:sanctum', 'tenant']],
+            ['prefix' => 'company/categories', 'file' => 'categories.php', 'middlewares' => ['auth:sanctum', 'tenant']],
+            ['prefix' => 'company/sub-categories', 'file' => 'sub-categories.php', 'middlewares' => ['auth:sanctum', 'tenant']],
+            ['prefix' => 'company/products', 'file' => 'products.php', 'middlewares' => ['auth:sanctum', 'tenant']],
+            ['prefix' => 'company/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum']],
+        ]
+    ],
+
     'providers' => [
         \App\Modules\V1\Brands\Infrastructure\Providers\BrandsModuleServiceProvider::class,
         \App\Modules\V1\Companies\Infrastructure\Providers\CompanyModuleServiceProvider::class,
@@ -9,5 +34,7 @@ return [
         \App\Modules\V1\Categories\Infrastructure\Providers\CategoriesModuleServiceProvider::class,
         \App\Modules\V1\SubCategories\Infrastructure\Providers\SubCategoriesModuleServiceProvider::class,
         \App\Modules\V1\Products\Infrastructure\Providers\ProductsModuleServiceProvider::class,
+        \App\Modules\V1\Services\Infrastructure\Providers\ServicesModuleServiceProvider::class,
+        \App\Modules\V1\Admins\Infrastructure\Providers\AdminsModuleServiceProvider::class,
     ],
 ];

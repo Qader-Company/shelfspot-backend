@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Modules\V1\Companies\Presentation\Http\Requests;
+use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterCompanyRequest extends FormRequest
@@ -32,7 +34,11 @@ class RegisterCompanyRequest extends FormRequest
                 'confirmed'
             ],
             'cr_number' => 'required|string|max:255',
-            'industry' => 'required|string|max:255',
+            'industry' => [
+                'required',
+                'string',
+                Rule::in(CompanyIndustryEnum::values())
+            ],
         ];
     }
 }

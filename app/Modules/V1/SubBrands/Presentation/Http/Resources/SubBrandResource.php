@@ -1,6 +1,7 @@
 <?php
 namespace App\Modules\V1\SubBrands\Presentation\Http\Resources;
 
+use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,10 +11,13 @@ class SubBrandResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'brand_id' => $this->brand_id,
             'name' => $this->name,
             'logo' => $this->getMedia('logo')->first()?->getUrl(),
             'active' => (bool) $this->is_active,
+            'brand' => $this->whenLoaded(
+                relationship: 'brand',
+                value:fn() =>new BrandResource($this->brand)
+            ),
         ];
     }
 }

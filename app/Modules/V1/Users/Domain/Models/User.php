@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Users\Domain\Models;
 
+use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
 use App\Modules\V1\Companies\Domain\Models\CompanyUser;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Database\Factories\UserFactory;
@@ -36,6 +37,11 @@ class User extends Authenticatable
     public function companyUser()
     {
         return $this->hasOne(CompanyUser::class);
+    }
+
+    public function admin()
+    {
+        return $this->hasOne(ShelfSpotAdmin::class);
     }
 
     protected static function newFactory(): UserFactory

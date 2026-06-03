@@ -13,14 +13,22 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->decimal('price', 10, 2);
+            $table->string('key');
+            $table->decimal('minimum_price', 10, 2);
+            $table->smallInteger('minimum_execution_time');
             $table->boolean('is_active')->default(true);
-            $table->string('form_key')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('service_translations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('service_id')->constrained()->cascadeOnDelete();
+            $table->text('description')->nullable();
+            $table->char('locale', 2);
+            $table->unique(['service_id', 'locale']);
+        });
+
+
     }
 
     /**
@@ -28,6 +36,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('service_translations');
         Schema::dropIfExists('services');
     }
 };

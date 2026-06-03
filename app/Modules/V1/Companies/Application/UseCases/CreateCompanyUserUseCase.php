@@ -17,12 +17,12 @@ class CreateCompanyUserUseCase
     {
     }
 
-    public function execute( Company $company, array $attributes, bool $isOwner = false)
+    public function execute(Company $company, array $attributes, bool $isOwner = false)
     {
         return DB::Transaction(function () use ($attributes, $company, $isOwner){
 
             $user = $this->userRepository->create([
-                'name' => $attributes['name'],
+                'name' => 'Company Admin',
                 'email' => $attributes['email'],
                 'password' => $attributes['password'],
                 'type' => PortalTypeEnum::COMPANY,

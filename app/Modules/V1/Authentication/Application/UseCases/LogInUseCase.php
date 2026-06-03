@@ -6,6 +6,7 @@ use App\Modules\V1\Authentication\Domain\Services\OtpService;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
+use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Http\Response;
@@ -33,28 +34,34 @@ class LogInUseCase
         if(!$user || !Hash::check($credentials['password'], $user->password))
             throw new UnauthorizedHttpException('', __('auth.credentials_mismatch'));
 
+        return $this->userDataDependedOnVerificationStatus(
+            $user,
+            $userType,
+            is_null($user->email_verified_at)
+        );
+    }
+
+    private function userDataDependedOnVerificationStatus(User $user, PortalTypeEnum $userType, bool $isVerified)
+    {
         $data = [
-            'data' => [
-                'user' => $user,
-            ],
+            'data' => ['user' => $user,],
             'message' => __('auth.login_success'),
             'code' => Response::HTTP_OK,
         ];
 
-        if(is_null($user->email_verified_at)):
+        if($isVerified){
+            $data['data']['verify_token'] = $this->tokenIssuer->create($user, $userType, TokenTypeEnum::VERIFY_TOKEN);
+            $data['message'] = __('auth.verify_account');
+            $data['code'] = Response::HTTP_FORBIDDEN;
             $this->otpService->generateAndSend(
                 $user->email,
                 OtpPurposeEnum::EMAIL_VERIFICATION,
                 $user->name
             );
-            $data['data']['verify_token'] = $this->tokenIssuer->create($user, $userType, TokenTypeEnum::VERIFY_TOKEN);
-            $data['message'] = __('auth.verify_account');
-            $data['code'] = Response::HTTP_UNAVAILABLE_FOR_LEGAL_REASONS;
-        else:
+        } else {
             $data['data'] = array_merge($data['data'], $this->tokenIssuer->refreshToken($user, $userType));
-        endif;
+        }
 
         return $data;
-
     }
 }

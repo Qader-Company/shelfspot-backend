@@ -19,7 +19,6 @@ class ProductController extends Controller
 
     public function __construct(
         private readonly ProductRepositoryInterface $productRepository,
-        private readonly ProductFilterOptionsService $productFilterOptionsService,
     ) {
     }
 
@@ -30,18 +29,22 @@ class ProductController extends Controller
             ['name', 'is_active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id']
         );
         $products = $this->productRepository->getAll(
-            relations: ['media'],
+            relations: ['media', 'brand', 'subBrand', 'category', 'subCategory'],
             filters: $filters
         );
 
-        return ApiResponse::success(ProductResource::collection($products)->response()->getData(true));
+        return ApiResponse::success(
+            ProductResource::collection($products)
+                ->response()
+                ->getData(true)
+        );
     }
 
 
-    public function filterOptions(ProductFilterOptionsRequest $request)
+    public function filterOptions(ProductFilterOptionsRequest $request, ProductFilterOptionsService $productFilterOptionsService)
     {
         return ApiResponse::success(
-            $this->productFilterOptionsService->resolve(
+            $productFilterOptionsService->resolve(
                 $request->validated()
             )
         );
@@ -49,32 +52,45 @@ class ProductController extends Controller
 
     public function show(string $id)
     {
-        return ApiResponse::success(new ProductResource($this->getProduct($id)));
+        $product = $this->getProduct(
+            $id,
+            ['media', 'brand', 'subBrand', 'category', 'subCategory']
+        );
+        return ApiResponse::success(new ProductResource($product));
     }
 
     public function store(StoreProductRequest $request)
     {
         $data = $request->validated();
-        $this->productRepository->create($data, $data['image'] ?? null);
+        $this->productRepository->create(
+            $data,
+            image: $data['image'] ?? null
+        );
         return ApiResponse::message(__('apiMessage.created'));
     }
 
     public function update(UpdateProductRequest $request, string $id)
     {
         $data = $request->validated();
-        $this->productRepository->update($this->getProduct($id), $data, $data['image'] ?? null);
+        $this->productRepository->update(
+            $this->getProduct($id),
+            $data,
+            image: $data['image'] ?? null
+        );
         return ApiResponse::message(__('apiMessage.updated'));
     }
 
     public function destroy(string $id)
     {
-        $this->productRepository->delete($this->getProduct($id));
+        $this->productRepository->delete(
+            $this->getProduct($id)
+        );
         return ApiResponse::deleted();
     }
 
-    private function getProduct(string $id)
+    private function getProduct(string $id, $relations = [], $relationsCount = [])
     {
-        $product = $this->productRepository->getById($id, ['media']);
+        $product = $this->productRepository->getById($id, $relations, $relationsCount);
         if (is_null($product)) {
             throw new ModelNotFoundException(__('products.not_found'));
         }

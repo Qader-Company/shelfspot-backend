@@ -68,9 +68,9 @@ class BrandController extends Controller
         return ApiResponse::deleted();
     }
 
-    private function getBrand(string $id)
+    private function getBrand(string $id, $relations = [], $relationsCount = [])
     {
-        $brand = $this->brandRepository->getById($id);
+        $brand = $this->brandRepository->getById($id, $relations, $relationsCount);
         if(is_null($brand))
             throw new ModelNotFoundException(__('brands.not_found'));
         return $brand;

@@ -3,16 +3,23 @@
 namespace App\Modules\V1\Companies\Domain\Repositories;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 interface CompanyRepositoryInterface
 {
-    public function list(bool $active, array $filters);
+    public function getAll(
+        array $relations = [],
+        array $relationsCount = [],
+        array $filters = [],
+    ): LengthAwarePaginator;
 
-    public function findById(int $id): Company;
+    public function getById(
+        int $id,
+        array $relations = [],
+        array $relationsCount = [],
+    ): ?Company;
 
     public function create(array $attributes): Company;
-
-    public function update(Company $course, array $attributes): Company;
-
-    public function delete(Company $course): void;
+    public function update(Company $company, array $attributes): Company;
+    public function delete(Company $company);
 }

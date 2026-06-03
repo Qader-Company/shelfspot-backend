@@ -33,9 +33,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'locale' => SetLocale::class,
             'role' => RoleMiddleware::class,
             'tenant' => SetTenantFromHeader::class,
+            'api.key' => \App\Http\Middleware\CheckApiKey::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+
         $exceptions->render(function (ValidationException $e, $request) {
             return ApiResponse::validationError(
                 $e->errors(),
@@ -53,7 +55,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (AccessDeniedHttpException|AuthorizationException $e, $request) {
             $message = $e->getMessage() ?: 'apiMessages.forbidden';
-
             return ApiResponse::forbidden($message);
         });
 
@@ -78,4 +79,5 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (HttpException $e, $request) {
             return ApiResponse::message($e->getMessage(), $e->getStatusCode());
         });
+
     })->create();

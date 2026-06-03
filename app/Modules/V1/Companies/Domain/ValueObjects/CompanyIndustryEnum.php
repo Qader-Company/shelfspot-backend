@@ -17,4 +17,19 @@ enum CompanyIndustryEnum: string
             self::cases()
         );
     }
+
+    public function label() : string
+    {
+        return __("company.industry.{$this->value}");
+    }
+
+    public static function getIndustries() : array
+    {
+        return array_map(
+            fn(self $item) => [
+                'value' => $item->value,
+                'label' => $item->label(),
+            ], self::cases()
+        );
+    }
 }

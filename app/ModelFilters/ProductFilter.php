@@ -6,15 +6,15 @@ use EloquentFilter\ModelFilter;
 
 class ProductFilter extends ModelFilter
 {
-    public function name($name)
+    public function search($value)
     {
-        return $this->where(function ($query) use ($name) {
-            $query->where('name', 'like', "%$name%")
-                ->orWhere('sku', 'like', "%$name%");
+        return $this->where(function ($query) use ($value) {
+            $query->where('name', 'like', "%$value%")
+                ->orWhere('sku', 'like', "%$value%");
         });
     }
 
-    public function isActive($isActive)
+    public function active($isActive)
     {
         return $this->where('is_active', $isActive);
     }
@@ -37,10 +37,5 @@ class ProductFilter extends ModelFilter
     public function subCategoryId($subCategoryId)
     {
         return $this->where('sub_category_id', $subCategoryId);
-    }
-
-    public function sku($sku)
-    {
-        return $this->where('sku', 'like', "%$sku%");
     }
 }

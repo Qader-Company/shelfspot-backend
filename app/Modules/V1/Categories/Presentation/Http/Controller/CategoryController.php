@@ -21,7 +21,7 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $filters = $this->acceptedFilters(request(), ['name', 'is_active', 'brand_id', 'sub_brand_id']);
+        $filters = $this->acceptedFilters(request(), ['name', 'active', 'brand_id', 'sub_brand_id']);
         $categories = $this->categoryRepository->getAll(filters: $filters);
 
         return ApiResponse::success(CategoryResource::collection($categories)->response()->getData(true));

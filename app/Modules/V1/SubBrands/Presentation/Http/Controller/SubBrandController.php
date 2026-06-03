@@ -19,7 +19,7 @@ class SubBrandController extends Controller
     public function index()
     {
         $filters = $this->acceptedFilters(
-            request(), ['name', 'is_active', 'brand_id']
+            request(), ['name', 'active', 'brand_id']
         );
         $subBrands = $this->subBrandRepository->getAll(
             relations: ['media'],

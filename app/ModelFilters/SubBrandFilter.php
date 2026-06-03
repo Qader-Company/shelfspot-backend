@@ -19,12 +19,8 @@ class SubBrandFilter extends ModelFilter
         return $this->where('name', 'like', "%$name%");
     }
 
-    public function active($active)
-    {
-        return $this->isActive($active);
-    }
 
-    public function isActive($isActive)
+    public function active($isActive)
     {
         return $this->where('is_active', $isActive);
     }

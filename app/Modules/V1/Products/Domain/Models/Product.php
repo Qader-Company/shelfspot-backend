@@ -12,6 +12,7 @@ use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -23,11 +24,6 @@ class Product extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('image')->singleFile();
-    }
-
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(Company::class);
     }
 
     public function brand(): BelongsTo
@@ -53,6 +49,6 @@ class Product extends Model implements HasMedia
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn ($model) => $model->slug = str($model->name.'-'.$model->company_id)->slug());
+        static::creating(fn ($model) => $model->slug = str($model->name.'-'.$model->company_id.'-'.Str::random(6))->slug());
     }
 }

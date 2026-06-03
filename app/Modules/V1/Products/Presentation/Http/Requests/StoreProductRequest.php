@@ -2,12 +2,12 @@
 
 namespace App\Modules\V1\Products\Presentation\Http\Requests;
 
+use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
 use App\Modules\Shared\Support\Traits\ValidatesTenantOwnership;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProductRequest extends FormRequest
 {
-    use ValidatesTenantOwnership;
 
     public function authorize(): bool { return true; }
 
@@ -15,10 +15,10 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'brand_id' => ['nullable', $this->existsInCurrentCompany('brands')],
-            'sub_brand_id' => ['nullable', $this->existsInCurrentCompany('sub_brands')],
-            'category_id' => ['nullable', $this->existsInCurrentCompany('categories')],
-            'sub_category_id' => ['nullable', $this->existsInCurrentCompany('sub_categories')],
+            'brand_id' => ['nullable', new ExistsInCurrentCompany('brands')],
+            'sub_brand_id' => ['nullable', new ExistsInCurrentCompany('sub_brands')],
+            'category_id' => ['nullable', new ExistsInCurrentCompany('categories')],
+            'sub_category_id' => ['nullable', new ExistsInCurrentCompany('sub_categories')],
             'description' => 'nullable|string',
             'sku' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',

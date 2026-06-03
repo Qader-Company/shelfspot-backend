@@ -11,7 +11,7 @@ class CategoryFilter extends ModelFilter
         return $this->where('name', 'like', "%$name%");
     }
 
-    public function isActive($isActive)
+    public function active($isActive)
     {
         return $this->where('is_active', $isActive);
     }

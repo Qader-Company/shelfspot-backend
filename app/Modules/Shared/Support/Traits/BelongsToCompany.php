@@ -36,13 +36,4 @@ trait BelongsToCompany
         return $this->company_id;
     }
 
-    public function platform(): BelongsTo
-    {
-        return $this->company();
-    }
-
-    public function getPlatformId(): int
-    {
-        return $this->getCompanyId();
-    }
 }

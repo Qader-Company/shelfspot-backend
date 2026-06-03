@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -24,11 +25,6 @@ class SubBrand extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('logo')->singleFile();
-    }
-
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(Company::class);
     }
 
     public function brand(): BelongsTo
@@ -55,7 +51,7 @@ class SubBrand extends Model implements HasMedia
     {
         parent::boot();
         static::creating(function ($model) {
-            $model->slug = str($model->name.'-'.$model->company_id)->slug();
+            $model->slug = str($model->name.'-'.$model->company_id.'-'.Str::random(6))->slug();
         });
     }
 }

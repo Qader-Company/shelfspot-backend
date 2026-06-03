@@ -21,7 +21,7 @@ class SubCategoryController extends Controller
 
     public function index()
     {
-        $filters = $this->acceptedFilters(request(), ['name', 'is_active', 'brand_id', 'sub_brand_id', 'category_id']);
+        $filters = $this->acceptedFilters(request(), ['name', 'active', 'brand_id', 'sub_brand_id', 'category_id']);
         $subCategories = $this->subCategoryRepository->getAll(relations: ['media'], filters: $filters);
 
         return ApiResponse::success(SubCategoryResource::collection($subCategories)->response()->getData(true));

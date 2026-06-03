@@ -21,11 +21,7 @@ class BrandFilter extends ModelFilter
 
     public function active($active)
     {
-        return $this->isActive($active);
+        return $this->where('is_active', $active);
     }
 
-    public function isActive($isActive)
-    {
-        return $this->where('is_active', $isActive);
-    }
 }

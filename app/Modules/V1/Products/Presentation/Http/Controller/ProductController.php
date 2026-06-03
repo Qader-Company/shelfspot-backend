@@ -26,7 +26,7 @@ class ProductController extends Controller
     {
         $filters = $this->acceptedFilters(
             request(),
-            ['name', 'is_active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id']
+            ['name', 'active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id']
         );
         $products = $this->productRepository->getAll(
             relations: ['media', 'brand', 'subBrand', 'category', 'subCategory'],

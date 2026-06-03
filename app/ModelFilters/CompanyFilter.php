@@ -20,12 +20,12 @@ class CompanyFilter extends ModelFilter
         return $this->where('is_active', $active);
     }
 
-    public function search($search)
+    public function search($value)
     {
-        return $this->where(function ($query) use ($search) {
-            $query->where('name', 'like', "%$search%")
-                ->orWhere('email', 'like', "%$search%")
-                ->orWhere('phone', 'like', "%$search%");
+        return $this->where(function ($query) use ($value) {
+            $query->where('name', 'like', "%$value%")
+                ->orWhere('email', 'like', "%$value%")
+                ->orWhere('phone', 'like', "%$value%");
         });
     }
 

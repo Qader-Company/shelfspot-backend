@@ -8,7 +8,7 @@ use App\Modules\V1\Authentication\Application\UseCases\SendOtpUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\VerifyEmailUseCase;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\EmailValidationRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\OTPValidationRequest;
-use App\Modules\V1\Users\Application\Services\UserFormattingService;
+use App\Modules\V1\Users\Application\Services\UserResourceResolver;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 
 class EmailVerificationController
@@ -23,7 +23,7 @@ class EmailVerificationController
             $portalType
         );
 
-        $data['user'] = UserFormattingService::userFormat(
+        $data['user'] = UserResourceResolver::resolve(
             $data['user'],
             $portalType
         );

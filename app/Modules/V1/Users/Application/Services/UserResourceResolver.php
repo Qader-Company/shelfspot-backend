@@ -7,10 +7,11 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Users\Presentation\Http\Resources\AdminUserResource;
 use App\Modules\V1\Users\Presentation\Http\Resources\CompanyUserResource;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
+use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserFormattingService
+class UserResourceResolver
 {
-    public static function userFormat(User $user, PortalTypeEnum $userType)
+    public static function resolve(User $user, PortalTypeEnum $userType): JsonResource
     {
          return match ($userType){
             PortalTypeEnum::ADMIN => new AdminUserResource($user),

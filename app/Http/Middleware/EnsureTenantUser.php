@@ -8,6 +8,7 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class EnsureTenantUser
 {
@@ -19,9 +20,8 @@ class EnsureTenantUser
     {
         $user = $request->user();
         $company = $this->tenantContext->getCompany();
-
         if (! $user || ! $company || $user->type !== PortalTypeEnum::COMPANY) {
-            return ApiResponse::forbidden('apiMessages.forbidden');
+            throw new AccessDeniedHttpException();
         }
 
         $belongsToCompany = $user->companyUser()
@@ -31,7 +31,7 @@ class EnsureTenantUser
             ->exists();
 
         if (! $belongsToCompany) {
-            return ApiResponse::forbidden('apiMessages.forbidden');
+            throw new AccessDeniedHttpException();
         }
 
         return $next($request);

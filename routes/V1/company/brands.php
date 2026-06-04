@@ -14,5 +14,4 @@ Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEn
         Route::get('/{id}', 'show');
         Route::match(['put', 'patch'],'/{id}', 'update');
         Route::delete('/{id}', 'destroy');
-
     });

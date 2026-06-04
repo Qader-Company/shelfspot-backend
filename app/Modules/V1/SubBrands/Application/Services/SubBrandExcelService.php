@@ -18,8 +18,8 @@ class SubBrandExcelService extends AbstractCatalogExcelService
             'model' => SubBrand::class,
             'filename' => 'sub-brands',
             'sheet' => 'Sub Brands',
-            'headings' => ['id', 'name', 'brand', 'is_active'],
-            'sample' => [null, 'Example Sub Brand', null, 'yes'],
+            'headings' => ['name', 'brand', 'is_active'],
+            'sample' => ['Example Sub Brand', null, 'yes'],
             'fillable' => ['name', 'brand_id', 'is_active'],
             'required' => ['name', 'brand_id'],
             'parents' => [

@@ -43,8 +43,14 @@ abstract class AbstractCatalogTemplateExport implements FromArray, WithHeadings,
                 $sheet = $event->sheet->getDelegate();
                 $sheet->freezePane('A2');
                 $highestColumn = Coordinate::stringFromColumnIndex(count($this->headings()));
-                $sheet->getStyle("A1:{$highestColumn}1")->getFont()->setBold(true);
-                $sheet->getStyle("A1:{$highestColumn}1")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFEAF2F8');
+                $sheet->getStyle("A1:{$highestColumn}1")
+                    ->getFont()
+                    ->setBold(true);
+                $sheet->getStyle("A1:{$highestColumn}1")
+                    ->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()
+                    ->setARGB('FFEAF2F8');
                 $sheet->setAutoFilter("A1:{$highestColumn}1");
 
                 $this->addOptionsSheet($sheet);

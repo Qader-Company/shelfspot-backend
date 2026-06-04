@@ -16,49 +16,9 @@ class CompanyCatalogSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
 
-        $companies = [
-            [
-                'name' => 'Nile Foods',
-                'cr_number' => 'CR-100200',
-                'email' => 'contact@nilefoods.com',
-                'phone' => '+966500000001',
-                'industry' => 'FMCG',
-                'timezone' => 'Asia/Riyadh',
-                'is_active' => true,
-                'cash_on_hand' => 0,
-            ],
-            [
-                'name' => 'Atlas Care',
-                'cr_number' => 'CR-300400',
-                'email' => 'contact@atlascare.com',
-                'phone' => '+966500000002',
-                'industry' => 'Personal Care',
-                'timezone' => 'Asia/Riyadh',
-                'is_active' => true,
-                'cash_on_hand' => 0,
-            ],
-        ];
+        $this->seedCompanyCatalog((int) 1, 'name', now());
 
-        foreach ($companies as $companyData) {
-            DB::table('companies')->updateOrInsert(
-                ['email' => $companyData['email']],
-                array_merge($companyData, [
-                    'slug' => Str::slug($companyData['name']),
-                    'updated_at' => $now,
-                    'created_at' => $now,
-                ])
-            );
-
-            $company = DB::table('companies')->where('email', $companyData['email'])->first();
-
-            if (! $company) {
-                continue;
-            }
-
-            $this->seedCompanyCatalog((int) $company->id, $companyData['name'], $now);
-        }
     }
 
     private function seedCompanyCatalog(int $companyId, string $companyName, $now): void

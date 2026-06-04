@@ -19,8 +19,8 @@ class CategoryExcelService extends AbstractCatalogExcelService
             'model' => Category::class,
             'filename' => 'categories',
             'sheet' => 'Categories',
-            'headings' => ['id', 'name', 'brand', 'sub_brand', 'is_active'],
-            'sample' => [null, 'Example Category', null, null, 'yes'],
+            'headings' => ['name', 'brand', 'sub_brand', 'is_active'],
+            'sample' => ['Example Category', null, null, 'yes'],
             'fillable' => ['name', 'brand_id', 'sub_brand_id', 'is_active'],
             'required' => ['name'],
             'parents' => [

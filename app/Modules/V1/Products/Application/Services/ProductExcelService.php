@@ -21,8 +21,8 @@ class ProductExcelService extends AbstractCatalogExcelService
             'model' => Product::class,
             'filename' => 'products',
             'sheet' => 'Products',
-            'headings' => ['id', 'name', 'brand', 'sub_brand', 'category', 'sub_category', 'sku', 'description', 'is_active'],
-            'sample' => [null, 'Example Product', null, null, null, null, 'SKU-001', 'Optional description', 'yes'],
+            'headings' => ['name', 'brand', 'sub_brand', 'category', 'sub_category', 'sku', 'description', 'is_active'],
+            'sample' => ['Example Product', null, null, null, null, 'SKU-001', 'Optional description', 'yes'],
             'fillable' => ['name', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id', 'sku', 'description', 'is_active'],
             'required' => ['name'],
             'parents' => [

@@ -20,8 +20,8 @@ class SubCategoryExcelService extends AbstractCatalogExcelService
             'model' => SubCategory::class,
             'filename' => 'sub-categories',
             'sheet' => 'Sub Categories',
-            'headings' => ['id', 'name', 'brand', 'sub_brand', 'category', 'is_active'],
-            'sample' => [null, 'Example Sub Category', null, null, null, 'yes'],
+            'headings' => ['name', 'brand', 'sub_brand', 'category', 'is_active'],
+            'sample' => ['Example Sub Category', null, null, null, 'yes'],
             'fillable' => ['name', 'brand_id', 'sub_brand_id', 'category_id', 'is_active'],
             'required' => ['name', 'category_id'],
             'parents' => [

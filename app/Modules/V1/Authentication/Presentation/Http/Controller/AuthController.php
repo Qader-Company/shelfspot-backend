@@ -10,7 +10,7 @@ use App\Modules\V1\Authentication\Application\UseCases\SendOtpUseCase;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\EmailValidationRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\RegisterRequest;
-use App\Modules\V1\Users\Application\Services\UserFormattingService;
+use App\Modules\V1\Users\Application\Services\UserResourceResolver;
 use App\Modules\V1\Authentication\Application\UseCases\LogInUseCase;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
@@ -29,7 +29,7 @@ class AuthController extends Controller
 
         $loginData = $data['data'];
 
-        $loginData['user'] = UserFormattingService::userFormat(
+        $loginData['user'] = UserResourceResolver::resolve(
             $loginData['user'],
             $portalType
         );
@@ -64,7 +64,7 @@ class AuthController extends Controller
             $portalType
         );
 
-        $data['user'] = UserFormattingService::userFormat(
+        $data['user'] = UserResourceResolver::resolve(
             $data['user'],
             $portalType
         );

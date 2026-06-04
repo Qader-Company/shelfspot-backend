@@ -6,6 +6,7 @@ use App\Modules\V1\Authentication\Domain\Services\OtpService;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
+use App\Modules\V1\Users\Application\Services\UserActivationChecker;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
@@ -31,8 +32,15 @@ class LogInUseCase
             'type' => $userType,
         ]);
 
-        if(!$user || !Hash::check($credentials['password'], $user->password))
+        $isValidCredentials = (
+            $user &&
+            UserActivationChecker::isActive($user, $userType) &&
+            Hash::check($credentials['password'], $user->password)
+        );
+
+        if (! $isValidCredentials) {
             throw new UnauthorizedHttpException('', __('auth.credentials_mismatch'));
+        }
 
         return $this->userDataDependedOnVerificationStatus(
             $user,

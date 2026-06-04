@@ -5,6 +5,7 @@ namespace App\Modules\V1\Users\Domain\Models;
 use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
 use App\Modules\V1\Companies\Domain\Models\CompanyUser;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
+use App\Modules\V1\Workers\Domain\Models\Worker;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -42,6 +43,11 @@ class User extends Authenticatable
     public function admin()
     {
         return $this->hasOne(ShelfSpotAdmin::class);
+    }
+
+    public function worker()
+    {
+        return $this->hasOne(Worker::class);
     }
 
     protected static function newFactory(): UserFactory

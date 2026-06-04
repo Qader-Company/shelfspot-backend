@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\SubCategories\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use App\Modules\V1\SubCategories\Domain\Repositories\SubCategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -10,6 +11,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
 {
+    use HandlesTrash;
+
+    protected function trashableModel(): string
+    {
+        return SubCategory::class;
+    }
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)->paginate(request('per_page', 15));
@@ -45,7 +52,6 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
 
     public function delete(SubCategory $subCategory): void
     {
-        $subCategory->clearMediaCollection('image');
         $subCategory->delete();
     }
 

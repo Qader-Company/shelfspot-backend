@@ -11,10 +11,11 @@ use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 #[fillable(['name','slug','email','phone','cr_number','industry', 'is_active'])]
 class Company extends Model
 {
-    use Filterable;
+    use Filterable, SoftDeletes;
     protected $casts = [
         'industry' => CompanyIndustryEnum::class,
     ];

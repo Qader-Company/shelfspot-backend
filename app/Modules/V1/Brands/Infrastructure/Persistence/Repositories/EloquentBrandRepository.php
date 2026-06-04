@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Brands\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
 use App\Models\Scopes\CompanyScope;
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Brands\Domain\Repositories\{BrandRepositoryInterface};
@@ -11,6 +12,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentBrandRepository implements BrandRepositoryInterface
 {
+    use HandlesTrash;
+
+    protected function trashableModel(): string
+    {
+        return Brand::class;
+    }
     public function getAll(
         array $relations = [],
         array $relationsCount = [],
@@ -76,7 +83,6 @@ class EloquentBrandRepository implements BrandRepositoryInterface
 
     public function delete(Brand $brand): void
     {
-        $brand->clearMediaCollection('logo');
         $brand->delete();
     }
 

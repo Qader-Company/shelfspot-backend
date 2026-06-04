@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Products\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Products\Domain\Repositories\ProductRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -10,6 +11,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentProductRepository implements ProductRepositoryInterface
 {
+    use HandlesTrash;
+
+    protected function trashableModel(): string
+    {
+        return Product::class;
+    }
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)->paginate(request('per_page', 15));
@@ -45,7 +52,6 @@ class EloquentProductRepository implements ProductRepositoryInterface
 
     public function delete(Product $product): void
     {
-        $product->clearMediaCollection('image');
         $product->delete();
     }
 

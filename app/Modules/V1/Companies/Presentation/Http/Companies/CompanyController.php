@@ -4,6 +4,8 @@ namespace App\Modules\V1\Companies\Presentation\Http\Companies;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Companies\Application\UseCases\CreateCompanyWithOwnerUseCase;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
@@ -11,11 +13,12 @@ use App\Modules\V1\Companies\Presentation\Http\Requests\RegisterCompanyRequest;
 use App\Modules\V1\Companies\Presentation\Http\Requests\UpdateCompanyRequest;
 use App\Modules\V1\Companies\Presentation\Http\Resources\CompanyResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
-    use Filterable;
+    use Filterable, ManagesTrash;
 
     public function __construct(private readonly CompanyRepositoryInterface $companyRepository)
     {
@@ -56,6 +59,16 @@ class CompanyController extends Controller
         $company = $this->getCompany($id);
         $this->companyRepository->delete($company);
         return ApiResponse::deleted();
+    }
+
+    protected function trashRepository(): TrashableRepositoryInterface
+    {
+        return $this->companyRepository;
+    }
+
+    protected function trashResourceCollection(LengthAwarePaginator $items): mixed
+    {
+        return CompanyResource::collection($items)->response()->getData(true);
     }
 
     private function getCompany(string $id, $relations = [], $relationsCount = [])

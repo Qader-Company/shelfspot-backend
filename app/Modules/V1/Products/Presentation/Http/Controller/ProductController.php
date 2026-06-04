@@ -5,6 +5,8 @@ namespace App\Modules\V1\Products\Presentation\Http\Controller;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Products\Application\Services\ProductExcelService;
 use App\Modules\V1\Products\Application\Services\ProductFilterOptionsService;
@@ -14,11 +16,12 @@ use App\Modules\V1\Products\Presentation\Http\Requests\StoreProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Requests\UpdateProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Resources\ProductResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductController extends Controller
 {
-    use Filterable;
+    use Filterable, ManagesTrash;
 
     public function __construct(
         private readonly ProductRepositoryInterface $productRepository,
@@ -111,6 +114,16 @@ class ProductController extends Controller
             : __('Imported successfully.');
 
         return ApiResponse::success($result->toArray(), $message);
+    }
+
+    protected function trashRepository(): TrashableRepositoryInterface
+    {
+        return $this->productRepository;
+    }
+
+    protected function trashResourceCollection(LengthAwarePaginator $items): mixed
+    {
+        return ProductResource::collection($items)->response()->getData(true);
     }
 
     private function getProduct(string $id, $relations = [], $relationsCount = [])

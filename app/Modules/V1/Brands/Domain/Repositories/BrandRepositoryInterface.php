@@ -2,11 +2,12 @@
 
 namespace App\Modules\V1\Brands\Domain\Repositories;
 
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-interface BrandRepositoryInterface
+interface BrandRepositoryInterface extends TrashableRepositoryInterface
 {
     public function getAll(
         array $relations = [],

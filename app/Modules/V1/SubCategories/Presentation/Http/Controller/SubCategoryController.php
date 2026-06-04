@@ -5,6 +5,8 @@ namespace App\Modules\V1\SubCategories\Presentation\Http\Controller;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\SubCategories\Application\Services\SubCategoryExcelService;
 use App\Modules\V1\SubCategories\Domain\Repositories\SubCategoryRepositoryInterface;
@@ -12,11 +14,12 @@ use App\Modules\V1\SubCategories\Presentation\Http\Requests\StoreSubCategoryRequ
 use App\Modules\V1\SubCategories\Presentation\Http\Requests\UpdateSubCategoryRequest;
 use App\Modules\V1\SubCategories\Presentation\Http\Resources\SubCategoryResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SubCategoryController extends Controller
 {
-    use Filterable;
+    use Filterable, ManagesTrash;
 
     public function __construct(
         private readonly SubCategoryRepositoryInterface $subCategoryRepository,
@@ -77,6 +80,16 @@ class SubCategoryController extends Controller
             : __('Imported successfully.');
 
         return ApiResponse::success($result->toArray(), $message);
+    }
+
+    protected function trashRepository(): TrashableRepositoryInterface
+    {
+        return $this->subCategoryRepository;
+    }
+
+    protected function trashResourceCollection(LengthAwarePaginator $items): mixed
+    {
+        return SubCategoryResource::collection($items)->response()->getData(true);
     }
 
     private function getSubCategory(string $id)

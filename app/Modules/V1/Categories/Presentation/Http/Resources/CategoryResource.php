@@ -13,6 +13,7 @@ class CategoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'deleted_at' => $this->deleted_at?->toISOString(),
             'name' => $this->name,
             'active' => (bool) $this->is_active,
             'brand' => $this->whenLoaded(

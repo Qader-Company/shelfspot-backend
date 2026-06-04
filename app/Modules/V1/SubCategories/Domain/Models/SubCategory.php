@@ -3,6 +3,7 @@
 namespace App\Modules\V1\SubCategories\Domain\Models;
 
 use App\Modules\Shared\Support\Traits\BelongsToCompany;
+use App\Modules\Shared\Support\Traits\DeletesMediaOnForceDelete;
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Companies\Domain\Models\Company;
@@ -11,6 +12,7 @@ use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -20,7 +22,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 #[Fillable(['name', 'company_id', 'brand_id', 'sub_brand_id', 'category_id', 'slug', 'is_active'])]
 class SubCategory extends Model implements HasMedia
 {
-    use BelongsToCompany, InteractsWithMedia, Filterable;
+    use BelongsToCompany, InteractsWithMedia, DeletesMediaOnForceDelete, Filterable, SoftDeletes;
 
     public function registerMediaCollections(): void
     {

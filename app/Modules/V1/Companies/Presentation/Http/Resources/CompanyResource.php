@@ -17,6 +17,7 @@ class CompanyResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'deleted_at' => $this->deleted_at?->toISOString(),
             'name' => $this->name ,
             'slug' => $this->slug ,
             'email' => $this->email ,

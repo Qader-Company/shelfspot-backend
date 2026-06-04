@@ -11,6 +11,7 @@ use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 #[Fillable(['name', 'company_id', 'brand_id', 'sub_brand_id', 'slug', 'is_active'])]
 class Category extends Model
 {
-    use BelongsToCompany, Filterable;
+    use BelongsToCompany, Filterable, SoftDeletes;
 
     public function brand(): BelongsTo
     {

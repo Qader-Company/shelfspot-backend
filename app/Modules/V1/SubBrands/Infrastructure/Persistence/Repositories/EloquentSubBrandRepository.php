@@ -1,6 +1,7 @@
 <?php
 namespace App\Modules\V1\SubBrands\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -9,6 +10,12 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentSubBrandRepository implements SubBrandRepositoryInterface
 {
+    use HandlesTrash;
+
+    protected function trashableModel(): string
+    {
+        return SubBrand::class;
+    }
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)->paginate(request('per_page', 15));
@@ -42,7 +49,6 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
 
     public function delete(SubBrand $subBrand): void
     {
-        $subBrand->clearMediaCollection('logo');
         $subBrand->delete();
     }
 

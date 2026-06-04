@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Companies\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -9,6 +10,12 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentCompanyRepository implements CompanyRepositoryInterface
 {
+    use HandlesTrash;
+
+    protected function trashableModel(): string
+    {
+        return Company::class;
+    }
     public function getAll(
         array $relations = [],
         array $relationsCount = [],

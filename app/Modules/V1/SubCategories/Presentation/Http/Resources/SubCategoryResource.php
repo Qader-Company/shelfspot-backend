@@ -14,6 +14,7 @@ class SubCategoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'deleted_at' => $this->deleted_at?->toISOString(),
             'name' => $this->name,
             'image' => $this->getMedia('image')->first()?->getUrl(),
             'active' => (bool) $this->is_active,

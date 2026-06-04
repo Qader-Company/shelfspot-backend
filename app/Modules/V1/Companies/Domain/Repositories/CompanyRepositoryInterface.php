@@ -2,10 +2,11 @@
 
 namespace App\Modules\V1\Companies\Domain\Repositories;
 
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-interface CompanyRepositoryInterface
+interface CompanyRepositoryInterface extends TrashableRepositoryInterface
 {
     public function getAll(
         array $relations = [],

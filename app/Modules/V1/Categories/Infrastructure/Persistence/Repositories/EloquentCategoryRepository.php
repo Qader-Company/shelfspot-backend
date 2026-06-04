@@ -2,12 +2,19 @@
 
 namespace App\Modules\V1\Categories\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class EloquentCategoryRepository implements CategoryRepositoryInterface
 {
+    use HandlesTrash;
+
+    protected function trashableModel(): string
+    {
+        return Category::class;
+    }
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)

@@ -5,6 +5,8 @@ namespace App\Modules\V1\Brands\Presentation\Http\Controller;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Brands\Application\Services\BrandExcelService;
 use App\Modules\V1\Brands\Domain\Repositories\BrandRepositoryInterface;
@@ -12,11 +14,12 @@ use App\Modules\V1\Brands\Presentation\Http\Requests\StoreBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Requests\UpdateBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BrandController extends Controller
 {
-    use Filterable;
+    use Filterable, ManagesTrash;
 
     public function __construct(
         private readonly BrandRepositoryInterface $brandRepository,
@@ -91,6 +94,16 @@ class BrandController extends Controller
             : __('Imported successfully.');
 
         return ApiResponse::success($result->toArray(), $message);
+    }
+
+    protected function trashRepository(): TrashableRepositoryInterface
+    {
+        return $this->brandRepository;
+    }
+
+    protected function trashResourceCollection(LengthAwarePaginator $items): mixed
+    {
+        return BrandResource::collection($items)->response()->getData(true);
     }
 
     private function getBrand(string $id, $relations = [], $relationsCount = [])

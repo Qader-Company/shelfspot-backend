@@ -15,6 +15,7 @@ class ProductResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'deleted_at' => $this->deleted_at?->toISOString(),
             'name' => $this->name,
             'description' => $this->description,
             'sku' => $this->sku,

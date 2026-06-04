@@ -4,6 +4,8 @@ namespace App\Modules\V1\SubBrands\Presentation\Http\Controller;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\SubBrands\Application\Services\SubBrandExcelService;
 use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
@@ -11,11 +13,12 @@ use App\Modules\V1\SubBrands\Presentation\Http\Requests\StoreSubBrandRequest;
 use App\Modules\V1\SubBrands\Presentation\Http\Requests\UpdateSubBrandRequest;
 use App\Modules\V1\SubBrands\Presentation\Http\Resources\SubBrandResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SubBrandController extends Controller
 {
-    use Filterable;
+    use Filterable, ManagesTrash;
 
     public function __construct(
         private readonly SubBrandRepositoryInterface $subBrandRepository,
@@ -82,6 +85,16 @@ class SubBrandController extends Controller
             : __('Imported successfully.');
 
         return ApiResponse::success($result->toArray(), $message);
+    }
+
+    protected function trashRepository(): TrashableRepositoryInterface
+    {
+        return $this->subBrandRepository;
+    }
+
+    protected function trashResourceCollection(LengthAwarePaginator $items): mixed
+    {
+        return SubBrandResource::collection($items)->response()->getData(true);
     }
 
     private function getSubBrand(string $id)

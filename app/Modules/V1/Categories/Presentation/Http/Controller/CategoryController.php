@@ -5,6 +5,8 @@ namespace App\Modules\V1\Categories\Presentation\Http\Controller;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Categories\Application\Services\CategoryExcelService;
 use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
@@ -12,11 +14,12 @@ use App\Modules\V1\Categories\Presentation\Http\Requests\StoreCategoryRequest;
 use App\Modules\V1\Categories\Presentation\Http\Requests\UpdateCategoryRequest;
 use App\Modules\V1\Categories\Presentation\Http\Resources\CategoryResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CategoryController extends Controller
 {
-    use Filterable;
+    use Filterable, ManagesTrash;
 
     public function __construct(
         private readonly CategoryRepositoryInterface $categoryRepository,
@@ -75,6 +78,16 @@ class CategoryController extends Controller
             : __('Imported successfully.');
 
         return ApiResponse::success($result->toArray(), $message);
+    }
+
+    protected function trashRepository(): TrashableRepositoryInterface
+    {
+        return $this->categoryRepository;
+    }
+
+    protected function trashResourceCollection(LengthAwarePaginator $items): mixed
+    {
+        return CategoryResource::collection($items)->response()->getData(true);
     }
 
     private function getCategory(string $id)

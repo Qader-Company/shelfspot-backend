@@ -11,6 +11,7 @@ use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -20,7 +21,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 #[Fillable(['name', 'company_id', 'brand_id', 'slug', 'is_active'])]
 class SubBrand extends Model implements HasMedia
 {
-    use BelongsToCompany, InteractsWithMedia, Filterable;
+    use BelongsToCompany, InteractsWithMedia, Filterable, SoftDeletes;
 
     public function registerMediaCollections(): void
     {

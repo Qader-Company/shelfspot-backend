@@ -11,13 +11,15 @@ Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEn
         Route::get('/excel/template', 'excelTemplate');
         Route::get('/excel/export', 'excelExport');
         Route::post('/excel/import', 'excelImport');
+
         Route::get('/trash', 'trash');
-        Route::post('/bulk-delete', 'bulkDelete');
-        Route::post('/trash/bulk-restore', 'bulkRestore');
-        Route::delete('/trash/bulk-force-delete', 'bulkForceDelete');
         Route::post('/trash/{id}/restore', 'restore');
+        Route::post('/trash/bulk-restore', 'bulkRestore');
         Route::delete('/trash/{id}', 'forceDelete');
+        Route::delete('/trash/bulk-force-delete', 'bulkForceDelete');
+
         Route::get('/{id}', 'show');
         Route::match(['put', 'patch'],'/{id}', 'update');
+        Route::post('/bulk-delete', 'bulkDelete');
         Route::delete('/{id}', 'destroy');
     });

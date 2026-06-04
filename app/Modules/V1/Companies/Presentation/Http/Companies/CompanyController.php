@@ -34,7 +34,6 @@ class CompanyController extends Controller
                 ->getData(true)
         );
     }
-
     public function show(string $id)
     {
         $company = $this->getCompany($id, ['users']);
@@ -45,7 +44,6 @@ class CompanyController extends Controller
         $createCompanyWithOwnerUseCase->execute($request->validated());
         return ApiResponse::message(__('api.created'));
     }
-
     public function update(UpdateCompanyRequest $request, string $id)
     {
         $data = $request->validated();
@@ -53,7 +51,6 @@ class CompanyController extends Controller
         $this->companyRepository->update($company, $data);
         return ApiResponse::message(__('api.updated'));
     }
-
     public function destroy(string $id)
     {
         $company = $this->getCompany($id);

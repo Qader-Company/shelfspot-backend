@@ -9,18 +9,20 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
     ->controller(BrandController::class)
     ->group(function () {
-        Route::get('/', 'index');
         Route::get('/excel/template', 'excelTemplate');
         Route::get('/excel/export', 'excelExport');
         Route::post('/excel/import', 'excelImport');
+
+        Route::get('/', 'index');
         Route::post('/', 'store');
-        Route::get('/trash', fn (string $company) => app(BrandController::class)->trash());
-        Route::post('/bulk-delete', fn (BulkActionRequest $request, string $company) => app(BrandController::class)->bulkDelete($request));
-        Route::post('/trash/bulk-restore', fn (BulkActionRequest $request, string $company) => app(BrandController::class)->bulkRestore($request));
-        Route::delete('/trash/bulk-force-delete', fn (BulkActionRequest $request, string $company) => app(BrandController::class)->bulkForceDelete($request));
-        Route::post('/trash/{id}/restore', fn (string $company, string $id) => app(BrandController::class)->restore($id));
-        Route::delete('/trash/{id}', fn (string $company, string $id) => app(BrandController::class)->forceDelete($id));
         Route::get('/{id}', 'show');
         Route::match(['put', 'patch'], '/{id}', 'update');
         Route::delete('/{id}', 'destroy');
+
+        Route::get('/trash', 'trash');
+        Route::post('/bulk-delete', 'bulkDelete');
+        Route::post('/trash/bulk-restore', 'bulkRestore');
+        Route::delete('/trash/bulk-force-delete', 'bulkForceDelete');
+        Route::post('/trash/{id}/restore', 'restore');
+        Route::delete('/trash/{id}', 'forceDelete');
     });

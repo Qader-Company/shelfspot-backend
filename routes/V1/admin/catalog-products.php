@@ -12,20 +12,24 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
+    ->controller(ProductController::class)
     ->group(function () {
-        Route::get('/excel/template', fn (string $company) => app(ProductController::class)->excelTemplate());
-        Route::get('/excel/export', fn (string $company) => app(ProductController::class)->excelExport());
-        Route::post('/excel/import', fn (ImportExcelRequest $request, string $company) => app(ProductController::class)->excelImport($request));
-        Route::get('/', fn () => app(ProductController::class)->index());
-        Route::get('/filter-options', fn (ProductFilterOptionsRequest $request, ProductFilterOptionsService $service) => app(ProductController::class)->filterOptions($request, $service));
-        Route::post('/', fn (StoreProductRequest $request) => app(ProductController::class)->store($request));
-        Route::get('/trash', fn (string $company) => app(ProductController::class)->trash());
-        Route::post('/bulk-delete', fn (BulkActionRequest $request, string $company) => app(ProductController::class)->bulkDelete($request));
-        Route::post('/trash/bulk-restore', fn (BulkActionRequest $request, string $company) => app(ProductController::class)->bulkRestore($request));
-        Route::delete('/trash/bulk-force-delete', fn (BulkActionRequest $request, string $company) => app(ProductController::class)->bulkForceDelete($request));
-        Route::post('/trash/{id}/restore', fn (string $company, string $id) => app(ProductController::class)->restore($id));
-        Route::delete('/trash/{id}', fn (string $company, string $id) => app(ProductController::class)->forceDelete($id));
-        Route::get('/{id}', fn (string $company, string $id) => app(ProductController::class)->show($id));
-        Route::match(['put', 'patch'], '/{id}', fn (UpdateProductRequest $request, string $company, string $id) => app(ProductController::class)->update($request, $id));
-        Route::delete('/{id}', fn (string $company, string $id) => app(ProductController::class)->destroy($id));
+        Route::get('/filter-options', 'filterOptions');
+
+        Route::get('/excel/template', 'excelTemplate');
+        Route::get('/excel/export', 'excelExport');
+        Route::post('/excel/import', 'excelImport');
+
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::get('/{id}', 'show');
+        Route::match(['put', 'patch'], '/{id}', 'update');
+        Route::delete('/{id}', 'destroy');
+
+        Route::get('/trash', 'trash');
+        Route::post('/bulk-delete', 'bulkDelete');
+        Route::post('/trash/bulk-restore', 'bulkRestore');
+        Route::delete('/trash/bulk-force-delete', 'bulkForceDelete');
+        Route::post('/trash/{id}/restore', 'restore');
+        Route::delete('/trash/{id}', 'forceDelete');
     });

@@ -16,11 +16,7 @@ class EloquentCompanyRepository implements CompanyRepositoryInterface
     {
         return Company::class;
     }
-    public function getAll(
-        array $relations = [],
-        array $relationsCount = [],
-        array $filters = [],
-    ): LengthAwarePaginator
+    public function getAll(array $relations = [], array $relationsCount = [], array $filters = [],): LengthAwarePaginator
     {
         return $this->query(
             $relations,

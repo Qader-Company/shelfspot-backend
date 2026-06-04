@@ -10,19 +10,22 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
+    ->controller(SubBrandController::class)
     ->group(function () {
-        Route::get('/excel/template', fn (string $company) => app(SubBrandController::class)->excelTemplate());
-        Route::get('/excel/export', fn (string $company) => app(SubBrandController::class)->excelExport());
-        Route::post('/excel/import', fn (ImportExcelRequest $request, string $company) => app(SubBrandController::class)->excelImport($request));
-        Route::get('/', fn () => app(SubBrandController::class)->index());
-        Route::post('/', fn (StoreSubBrandRequest $request) => app(SubBrandController::class)->store($request));
-        Route::get('/trash', fn (string $company) => app(SubBrandController::class)->trash());
-        Route::post('/bulk-delete', fn (BulkActionRequest $request, string $company) => app(SubBrandController::class)->bulkDelete($request));
-        Route::post('/trash/bulk-restore', fn (BulkActionRequest $request, string $company) => app(SubBrandController::class)->bulkRestore($request));
-        Route::delete('/trash/bulk-force-delete', fn (BulkActionRequest $request, string $company) => app(SubBrandController::class)->bulkForceDelete($request));
-        Route::post('/trash/{id}/restore', fn (string $company, string $id) => app(SubBrandController::class)->restore($id));
-        Route::delete('/trash/{id}', fn (string $company, string $id) => app(SubBrandController::class)->forceDelete($id));
-        Route::get('/{id}', fn (string $company, string $id) => app(SubBrandController::class)->show($id));
-        Route::match(['put', 'patch'], '/{id}', fn (UpdateSubBrandRequest $request, string $company, string $id) => app(SubBrandController::class)->update($request, $id));
-        Route::delete('/{id}', fn (string $company, string $id) => app(SubBrandController::class)->destroy($id));
+        Route::get('/excel/template', 'excelTemplate');
+        Route::get('/excel/export', 'excelExport');
+        Route::post('/excel/import', 'excelImport');
+
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::get('/{id}', 'show');
+        Route::match(['put', 'patch'], '/{id}', 'update');
+        Route::delete('/{id}', 'destroy');
+
+        Route::get('/trash', 'trash');
+        Route::post('/bulk-delete', 'bulkDelete');
+        Route::post('/trash/bulk-restore', 'bulkRestore');
+        Route::delete('/trash/bulk-force-delete', 'bulkForceDelete');
+        Route::post('/trash/{id}/restore', 'restore');
+        Route::delete('/trash/{id}', 'forceDelete');
     });

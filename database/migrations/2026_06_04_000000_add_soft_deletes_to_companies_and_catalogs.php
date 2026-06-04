@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     private const TABLES = [
-        'companies',
         'brands',
         'sub_brands',
         'categories',

@@ -2,30 +2,22 @@
 
 namespace App\Modules\V1\CompaniesWallets\Application\UseCases;
 
+use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
 use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
-use App\Modules\V1\CompaniesWallets\Domain\Services\WalletBalanceCalculator;
 use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
 
 class RechargeWalletUseCase
 {
-
     public function __construct(readonly private CompaniesWalletRepositoryInterface $walletRepository)
     {
     }
 
-    public function execute(array $data): mixed
+    public function execute(array $data): CompanyWalletTransaction
     {
-        $balanceAfter = WalletBalanceCalculator::calculateBalance(
-            $data['amount'],
-            CompanyWalletTransactionTypeEnum::ADMIN_GRANT
-        );
-        $this->walletRepository->create([
+        return $this->walletRepository->createTransaction([
             'amount' => $data['amount'],
-            'type' => CompanyWalletTransactionTypeEnum::ADMIN_GRANT,
-            'description' => 'Recharge Wallet',
+            'description' => $data['description'] ?? __('company.wallet.manual_recharge_description'),
             'performed_by' => auth()->id(),
-            'balance_after' => $balanceAfter,
-        ]);
-        return $balanceAfter;
+        ], CompanyWalletTransactionTypeEnum::ADMIN_GRANT);
     }
 }

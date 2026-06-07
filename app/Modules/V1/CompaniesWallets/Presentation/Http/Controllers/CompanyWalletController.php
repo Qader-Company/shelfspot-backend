@@ -6,8 +6,11 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\CompaniesWallets\Application\UseCases\RechargeWalletUseCase;
+use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
 use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
 use App\Modules\V1\CompaniesWallets\Presentation\Http\Requests\RechargeWalletRequest;
+use App\Modules\V1\Coupons\Application\UseCases\RedeemWalletCouponUseCase;
+use App\Modules\V1\Coupons\Presentation\Http\Requests\RedeemWalletCouponRequest;
 use App\Modules\V1\CompaniesWallets\Presentation\Http\Resources\CompanyWalletResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -15,45 +18,59 @@ use Illuminate\Http\Request;
 class CompanyWalletController extends Controller
 {
     use Filterable;
+
     public function __construct(readonly private CompaniesWalletRepositoryInterface $walletRepository)
     {
     }
 
-   public function index(Request $request)
-   {
+    public function index(Request $request)
+    {
         $filter = $this->acceptedFilters($request, ['type']);
         $transactions = $this->walletRepository->getAll(
             relations: ['performedBy'],
             filters: $filter
         );
-        return ApiResponse::success(
-            CompanyWalletResource::collection($transactions)
-                ->additional(['balance' => $transactions->first()?->balance_after ?? 0])
-                ->response()
-                ->getData(true)
-        );
-   }
 
-   public function show(int $id)
-   {
-       $transaction = $this->getTransaction($id, ['performedBy']);
+        return ApiResponse::success([
+            'balance' => $this->walletRepository->currentBalance(),
+            'transactions' => CompanyWalletResource::collection($transactions)->response()->getData(true),
+        ]);
+    }
 
-       return ApiResponse::success(
-           new CompanyWalletResource($transaction)
-       );
-   }
+    public function show(int $id)
+    {
+        $transaction = $this->getTransaction($id, ['performedBy']);
 
-   public function recharge(RechargeWalletRequest $request, RechargeWalletUseCase $rechargeUseCase)
-   {
-        $rechargeUseCase->execute($request->validated());
-        return ApiResponse::message(__('company.wallet.transaction.success'));
-   }
+        return ApiResponse::success(new CompanyWalletResource($transaction));
+    }
 
-    private function getTransaction(int $id, array $relations = [], array $relationsCount = []): string
+    public function recharge(RechargeWalletRequest $request, RechargeWalletUseCase $rechargeUseCase)
+    {
+        $transaction = $rechargeUseCase->execute($request->validated())->load('performedBy');
+
+        return ApiResponse::success([
+            'balance' => (float) $transaction->balance_after,
+            'transaction' => new CompanyWalletResource($transaction),
+        ], __('company.wallet.transaction.success'));
+    }
+
+    public function redeemCoupon(RedeemWalletCouponRequest $request, RedeemWalletCouponUseCase $redeemWalletCouponUseCase)
+    {
+        $transaction = $redeemWalletCouponUseCase->execute($request->validated('code'))->load('performedBy');
+
+        return ApiResponse::success([
+            'balance' => (float) $transaction->balance_after,
+            'transaction' => new CompanyWalletResource($transaction),
+        ], __('company.wallet.coupons.redeemed'));
+    }
+
+    private function getTransaction(int $id, array $relations = [], array $relationsCount = []): CompanyWalletTransaction
     {
         $transaction = $this->walletRepository->getById($id, $relations, $relationsCount);
-        if(is_null($transaction))
+        if (is_null($transaction)) {
             throw new ModelNotFoundException(__('api.not_found'));
+        }
+
         return $transaction;
     }
 }

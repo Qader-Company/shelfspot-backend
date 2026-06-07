@@ -10,6 +10,7 @@ return [
         'admin' => [
             ['prefix' => 'admin/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum']],
             ['prefix' => 'admin/companies', 'file' => 'companies.php', 'middlewares' => ['auth:sanctum']],
+            ['prefix' => 'admin/wallet-coupons', 'file' => 'wallet-coupons.php', 'middlewares' => ['auth:sanctum']],
             ['prefix' => 'admin/companies/{company}/brands', 'file' => 'catalog-brands.php', 'middlewares' => ['auth:sanctum', 'tenant.route-company']],
             ['prefix' => 'admin/companies/{company}/sub-brands', 'file' => 'catalog-sub-brands.php', 'middlewares' => ['auth:sanctum', 'tenant.route-company']],
             ['prefix' => 'admin/companies/{company}/categories', 'file' => 'catalog-categories.php', 'middlewares' => ['auth:sanctum', 'tenant.route-company']],

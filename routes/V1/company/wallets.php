@@ -8,6 +8,7 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEnum::ACCESS_TOKEN->value)
     ->controller(CompanyWalletController::class)->group(function (){
         Route::get('/', 'index');
-        Route::get('/{id}', 'show');
         Route::post('/recharge', 'recharge');
+        Route::post('/coupons/redeem', 'redeemCoupon');
+        Route::get('/{id}', 'show');
     });

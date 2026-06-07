@@ -8,6 +8,7 @@ use App\Modules\V1\Users\Domain\Models\User;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 #[Fillable([
     'company_id',
@@ -15,7 +16,9 @@ use Illuminate\Database\Eloquent\Model;
     'amount',
     'balance_after',
     'performed_by',
-    'description'
+    'description',
+    'reference_type',
+    'reference_id'
 ])]
 
 class CompanyWalletTransaction extends Model
@@ -28,5 +31,10 @@ class CompanyWalletTransaction extends Model
     public function performedBy()
     {
         return $this->belongsTo(User::class, 'performed_by');
+    }
+
+    public function reference(): MorphTo
+    {
+        return $this->morphTo();
     }
 }

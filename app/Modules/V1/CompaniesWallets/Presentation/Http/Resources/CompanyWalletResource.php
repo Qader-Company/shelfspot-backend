@@ -10,11 +10,23 @@ class CompanyWalletResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'type' => $this->type->label(),
+            'id' => $this->id,
+            'type' => $this->type?->value,
+            'type_label' => $this->type?->label(),
             'amount' => $this->amount,
             'balance_after' => $this->balance_after,
-            'performed_by' => $this->performedBy->name,
+            'performed_by' => $this->whenLoaded('performedBy', fn () => $this->performedBy ? [
+                'id' => $this->performedBy->id,
+                'name' => $this->performedBy->name,
+                'email' => $this->performedBy->email,
+            ] : null),
             'description' => $this->description,
+            'reference' => $this->reference_type && $this->reference_id ? [
+                'type' => $this->reference_type,
+                'id' => $this->reference_id,
+            ] : null,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

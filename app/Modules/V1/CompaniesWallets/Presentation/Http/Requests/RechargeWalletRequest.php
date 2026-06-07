@@ -14,7 +14,8 @@ class RechargeWalletRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => 'required|numeric|min:1'
+            'amount' => 'required|numeric|min:1',
+            'description' => 'sometimes|nullable|string|max:1000',
         ];
     }
 }

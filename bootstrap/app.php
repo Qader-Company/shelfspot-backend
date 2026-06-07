@@ -1,6 +1,7 @@
 <?php
 
 use App\Facades\ApiResponse;
+use App\Http\Middleware\CheckApiKey;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetTenantFromHeader;
 use App\Http\Middleware\SetTenantFromRouteCompany;
@@ -37,7 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => SetTenantFromHeader::class,
             'tenant.route-company' => SetTenantFromRouteCompany::class,
             'tenant.user' => EnsureTenantUser::class,
-            'api.key' => \App\Http\Middleware\CheckApiKey::class,
+            'api.key' => CheckApiKey::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

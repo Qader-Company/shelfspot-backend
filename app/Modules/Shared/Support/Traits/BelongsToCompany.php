@@ -2,9 +2,9 @@
 
 namespace App\Modules\Shared\Support\Traits;
 
-use App\Models\Scopes\CompanyScope;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Companies\Domain\Models\Company;
+use App\Modules\V1\Companies\Domain\Models\Scopes\CompanyScope;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 trait BelongsToCompany

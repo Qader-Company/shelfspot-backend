@@ -1,0 +1,15 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ interface_namespace }}\{{ interface }};
+use {{ repository_namespace }}\{{ repository }};
+use Illuminate\Support\ServiceProvider;
+
+class {{ class }} extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->app->bind({{ interface }}::class, {{ repository }}::class);
+    }
+}

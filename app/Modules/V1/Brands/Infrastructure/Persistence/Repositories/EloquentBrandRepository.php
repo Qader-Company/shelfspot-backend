@@ -3,9 +3,9 @@
 namespace App\Modules\V1\Brands\Infrastructure\Persistence\Repositories;
 
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
-use App\Models\Scopes\CompanyScope;
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Brands\Domain\Repositories\{BrandRepositoryInterface};
+use App\Modules\V1\Companies\Domain\Models\Scopes\CompanyScope;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\File\UploadedFile;

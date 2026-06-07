@@ -1,0 +1,57 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ model_namespace }}\{{ model }};
+use {{ interface_namespace }}\{{ interface }};
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+
+class {{ class }} implements {{ interface }}
+{
+
+    public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
+    {
+        return $this->query($relations, $relationsCount, $filters)
+            ->paginate(request('per_page', 15));
+    }
+
+    public function getById(int $id, array $relations = [], array $relationsCount = []): ?{{ model }}
+    {
+        return $this->query($relations, $relationsCount)
+            ->where('id', $id)
+            ->first();
+    }
+
+    public function create(array $attributes): {{ model }}
+    {
+        return DB::transaction(function () use ($attributes) {
+            ${{ model_variable }} = {{ model }}::create($attributes);
+
+            return ${{ model_variable }};
+        });
+    }
+
+    public function update({{ model }} ${{ model_variable }}, array $attributes): {{ model }}
+    {
+        return DB::transaction(function () use (${{ model_variable }}, $attributes) {
+            ${{ model_variable }}->update($attributes);
+
+            return ${{ model_variable }};
+        });
+    }
+
+    public function delete({{ model }} ${{ model_variable }}): void
+    {
+        ${{ model_variable }}->delete();
+    }
+
+    private function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder
+    {
+        return {{ model }}::query()
+            ->when($filters, fn (Builder $query) => $query->filter($filters))
+            ->when($relations, fn (Builder $query) => $query->with($relations))
+            ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
+    }
+}

@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Facades\ApiResponse;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Infrastructure\Tenant\TenantContext;
-use App\Console\Commands\MakeModuleCommand;
 use App\Facades\FacadesLogic\ApiResponseLogic;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -27,9 +26,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(TenantContextInterface::class, TenantContext::class);
 
-        $this->commands([
-            MakeModuleCommand::class,
-        ]);
+
     }
 
     /**

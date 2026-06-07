@@ -28,6 +28,7 @@ return [
             ['prefix' => 'company/sub-categories', 'file' => 'sub-categories.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
             ['prefix' => 'company/products', 'file' => 'products.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
             ['prefix' => 'company/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum']],
+            ['prefix' => 'company/wallets', 'file' => 'wallets.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
         ]
     ],
 
@@ -41,5 +42,7 @@ return [
         \App\Modules\V1\Products\Infrastructure\Providers\ProductsModuleServiceProvider::class,
         \App\Modules\V1\Services\Infrastructure\Providers\ServicesModuleServiceProvider::class,
         \App\Modules\V1\Admins\Infrastructure\Providers\AdminsModuleServiceProvider::class,
-    ],
+        \App\Modules\V1\CompaniesWallets\Infrastructure\Providers\CompaniesWalletsModuleServiceProvider::class,
+        \App\Modules\V1\WorkersWallets\Infrastructure\Providers\WorkersWalletsModuleServiceProvider::class,
+        \App\Modules\V1\Coupons\Infrastructure\Providers\CouponsModuleServiceProvider::class,],
 ];

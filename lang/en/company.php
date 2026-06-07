@@ -7,4 +7,11 @@ return [
         'industry_three' => 'industry three',
         'industry_four' => 'industry four',
     ],
+
+    'wallet' => [
+        'admin_grant' => 'admin_grant',
+        'task_payment' => 'task_payment',
+        'task_refund' => 'task_refund',
+        'adjustment' => 'adjustment',
+    ],
 ];

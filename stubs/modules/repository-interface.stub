@@ -1,0 +1,19 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ model_namespace }}\{{ model }};
+use Illuminate\Pagination\LengthAwarePaginator;
+
+interface {{ interface }}
+{
+    public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator;
+
+    public function getById(int $id, array $relations = [], array $relationsCount = []): ?{{ model }};
+
+    public function create(array $attributes): {{ model }};
+
+    public function update({{ model }} ${{ model_variable }}, array $attributes): {{ model }};
+
+    public function delete({{ model }} ${{ model_variable }}): void;
+}

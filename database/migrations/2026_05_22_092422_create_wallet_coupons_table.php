@@ -17,7 +17,6 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->foreignId('assigned_company_id')->nullable()->constrained('companies')->nullOnDelete();
-            $table->boolean('once_per_company')->default(true);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('notes')->nullable();
             $table->timestamps();

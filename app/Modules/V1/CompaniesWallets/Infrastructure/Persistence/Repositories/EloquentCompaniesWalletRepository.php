@@ -2,6 +2,8 @@
 
 namespace App\Modules\V1\CompaniesWallets\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
+use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
 use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
 use App\Modules\V1\CompaniesWallets\Domain\Services\WalletBalanceCalculator;
@@ -26,17 +28,17 @@ class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInte
             ->first();
     }
 
-    public function latestTransaction(bool $lockForUpdate = false): ?CompanyWalletTransaction
+    public function latestTransaction(?int $companyId = null, bool $lockForUpdate = false): ?CompanyWalletTransaction
     {
-        return $this->query()
+        return $this->queryForCompany($companyId)
             ->latest('id')
             ->when($lockForUpdate, fn (Builder $query) => $query->lockForUpdate())
             ->first();
     }
 
-    public function currentBalance(): float
+    public function currentBalance(?int $companyId = null): float
     {
-        return (float) ($this->latestTransaction()?->balance_after ?? 0);
+        return (float) ($this->latestTransaction($companyId)?->balance_after ?? 0);
     }
 
     public function create(array $attributes): CompanyWalletTransaction
@@ -47,7 +49,18 @@ class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInte
     public function createTransaction(array $attributes, CompanyWalletTransactionTypeEnum $type): CompanyWalletTransaction
     {
         return DB::transaction(function () use ($attributes, $type) {
-            $currentBalance = (float) ($this->latestTransaction(lockForUpdate: true)?->balance_after ?? 0);
+            $companyId = isset($attributes['company_id'])
+                ? (int) $attributes['company_id']
+                : app(TenantContextInterface::class)->getCompanyId();
+
+            if ($companyId !== null) {
+                Company::withoutGlobalScopes()
+                    ->whereKey($companyId)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            $currentBalance = (float) ($this->latestTransaction($companyId, lockForUpdate: true)?->balance_after ?? 0);
             $balanceAfter = WalletBalanceCalculator::calculateBalance(
                 currentBalance: $currentBalance,
                 amount: $attributes['amount'],
@@ -81,5 +94,15 @@ class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInte
             ->when($filters, fn (Builder $query) => $query->filter($filters))
             ->when($relations, fn (Builder $query) => $query->with($relations))
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
+    }
+
+    private function queryForCompany(?int $companyId = null): Builder
+    {
+        if ($companyId === null) {
+            return CompanyWalletTransaction::query();
+        }
+
+        return CompanyWalletTransaction::withoutGlobalScopes()
+            ->where('company_id', $companyId);
     }
 }

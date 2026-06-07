@@ -12,9 +12,9 @@ interface CompaniesWalletRepositoryInterface
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?CompanyWalletTransaction;
 
-    public function latestTransaction(bool $lockForUpdate = false): ?CompanyWalletTransaction;
+    public function latestTransaction(?int $companyId = null, bool $lockForUpdate = false): ?CompanyWalletTransaction;
 
-    public function currentBalance(): float;
+    public function currentBalance(?int $companyId = null): float;
 
     public function create(array $attributes): CompanyWalletTransaction;
 

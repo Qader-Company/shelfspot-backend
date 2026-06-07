@@ -21,6 +21,10 @@ class CompanyWalletResource extends JsonResource
                 'email' => $this->performedBy->email,
             ] : null),
             'description' => $this->description,
+            'reference' => $this->reference_type && $this->reference_id ? [
+                'type' => $this->reference_type,
+                'id' => $this->reference_id,
+            ] : null,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

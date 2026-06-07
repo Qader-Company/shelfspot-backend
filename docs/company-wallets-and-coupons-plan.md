@@ -66,6 +66,10 @@ We will close the company wallets and wallet coupons scope without integrating a
 
 ## Phase 3: Company coupon redemption
 
+### Implementation status
+
+Implemented in the follow-up PR with a company wallet coupon redemption endpoint, row-level coupon locking, one redemption per company, wallet ledger crediting, and transaction references back to the redemption row.
+
 ### Goals
 
 - Allow a company user to redeem an active wallet coupon code.
@@ -82,6 +86,10 @@ We will close the company wallets and wallet coupons scope without integrating a
 6. Add tests for successful redemption and all failure cases.
 
 ## Phase 4: Task wallet integration
+
+### Implementation status
+
+Implemented as reusable task wallet charge/refund use cases. The task module can call these hooks when task creation, cancellation, rejection, or refund flows are finalized.
 
 ### Goals
 

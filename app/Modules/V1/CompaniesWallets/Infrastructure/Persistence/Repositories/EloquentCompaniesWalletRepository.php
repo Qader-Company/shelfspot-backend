@@ -4,13 +4,14 @@ namespace App\Modules\V1\CompaniesWallets\Infrastructure\Persistence\Repositorie
 
 use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
 use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Modules\V1\CompaniesWallets\Domain\Services\WalletBalanceCalculator;
+use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInterface
 {
-
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)
@@ -25,12 +26,38 @@ class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInte
             ->first();
     }
 
+    public function latestTransaction(bool $lockForUpdate = false): ?CompanyWalletTransaction
+    {
+        return $this->query()
+            ->latest('id')
+            ->when($lockForUpdate, fn (Builder $query) => $query->lockForUpdate())
+            ->first();
+    }
+
+    public function currentBalance(): float
+    {
+        return (float) ($this->latestTransaction()?->balance_after ?? 0);
+    }
+
     public function create(array $attributes): CompanyWalletTransaction
     {
-        return DB::transaction(function () use ($attributes) {
-            $companiesWallet = CompanyWalletTransaction::create($attributes);
+        return DB::transaction(fn () => CompanyWalletTransaction::create($attributes));
+    }
 
-            return $companiesWallet;
+    public function createTransaction(array $attributes, CompanyWalletTransactionTypeEnum $type): CompanyWalletTransaction
+    {
+        return DB::transaction(function () use ($attributes, $type) {
+            $currentBalance = (float) ($this->latestTransaction(lockForUpdate: true)?->balance_after ?? 0);
+            $balanceAfter = WalletBalanceCalculator::calculateBalance(
+                currentBalance: $currentBalance,
+                amount: $attributes['amount'],
+                type: $type
+            );
+
+            return CompanyWalletTransaction::create(array_merge($attributes, [
+                'type' => $type,
+                'balance_after' => $balanceAfter,
+            ]));
         });
     }
 
@@ -55,6 +82,4 @@ class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInte
             ->when($relations, fn (Builder $query) => $query->with($relations))
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
     }
-
-
 }

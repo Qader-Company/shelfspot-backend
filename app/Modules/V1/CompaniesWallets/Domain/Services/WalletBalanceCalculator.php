@@ -2,29 +2,28 @@
 
 namespace App\Modules\V1\CompaniesWallets\Domain\Services;
 
-use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
 use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
+use InvalidArgumentException;
 
 class WalletBalanceCalculator
 {
-    public static function calculateBalance(int $amount, CompanyWalletTransactionTypeEnum $type): int
+    public static function calculateBalance(float|int|string $currentBalance, float|int|string $amount, CompanyWalletTransactionTypeEnum $type): float
     {
-        $latestTransaction = CompanyWalletTransaction::latest()->first() ?? 0;
-        return match ($type){
-            CompanyWalletTransactionTypeEnum::ADMIN_GRANT => static::addToBalance($latestTransaction, $amount),
-            CompanyWalletTransactionTypeEnum::COUPON_REDEMPTION => static::addToBalance($latestTransaction, $amount),
-            CompanyWalletTransactionTypeEnum::TASK_PAYMENT => static::subtractFromBalance($latestTransaction, $amount),
-            CompanyWalletTransactionTypeEnum::TASK_REFUND => static::addToBalance($latestTransaction, $amount),
+        $currentBalance = (float) $currentBalance;
+        $amount = (float) $amount;
+
+        $balance = match ($type) {
+            CompanyWalletTransactionTypeEnum::ADMIN_GRANT,
+            CompanyWalletTransactionTypeEnum::COUPON_REDEMPTION,
+            CompanyWalletTransactionTypeEnum::TASK_REFUND => $currentBalance + $amount,
+            CompanyWalletTransactionTypeEnum::TASK_PAYMENT => $currentBalance - $amount,
+            CompanyWalletTransactionTypeEnum::ADJUSTMENT => $currentBalance + $amount,
         };
-    }
 
-    private static function addToBalance($latestTransaction, $amount): int
-    {
-        return $latestTransaction + $amount;
-    }
+        if ($balance < 0) {
+            throw new InvalidArgumentException(__('company.wallet.insufficient_balance'));
+        }
 
-    private static function subtractFromBalance($latestTransaction, $amount): int
-    {
-        return $latestTransaction - $amount;
+        return round($balance, 2);
     }
 }

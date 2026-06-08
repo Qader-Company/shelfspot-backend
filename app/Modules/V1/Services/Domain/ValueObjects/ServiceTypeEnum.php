@@ -15,4 +15,19 @@ enum ServiceTypeEnum: string
         return __("service.type.{$this->value}");
     }
 
+    public function catalog(): array
+    {
+        return config("shelfspot_services.catalog.{$this->value}", []);
+    }
+
+    public function requestForm(): array
+    {
+        return $this->catalog()['request_form'] ?? [];
+    }
+
+    public function submissionForm(): array
+    {
+        return $this->catalog()['submission_form'] ?? [];
+    }
+
 }

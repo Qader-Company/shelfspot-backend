@@ -30,6 +30,7 @@ return [
             ['prefix' => 'company/products', 'file' => 'products.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
             ['prefix' => 'company/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum']],
             ['prefix' => 'company/wallets', 'file' => 'wallets.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
+            ['prefix' => 'company/tasks', 'file' => 'tasks.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
         ]
     ],
 

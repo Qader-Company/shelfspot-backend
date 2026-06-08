@@ -50,7 +50,11 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     private function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder
     {
         return Task::query()
-            ->when($filters, fn (Builder $query) => $query->filter($filters))
+            ->when($filters['company_id'] ?? null, fn (Builder $query, int $companyId) => $query->where('company_id', $companyId))
+            ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when($filters['payment_status'] ?? null, fn (Builder $query, string $paymentStatus) => $query->where('payment_status', $paymentStatus))
+            ->when($filters['date_from'] ?? null, fn (Builder $query, string $dateFrom) => $query->whereDate('date', '>=', $dateFrom))
+            ->when($filters['date_to'] ?? null, fn (Builder $query, string $dateTo) => $query->whereDate('date', '<=', $dateTo))
             ->when($relations, fn (Builder $query) => $query->with($relations))
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
     }

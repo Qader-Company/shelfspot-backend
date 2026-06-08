@@ -3,13 +3,14 @@
 namespace App\Modules\V1\Tasks\Domain\Models;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
-use App\Modules\V1\Tasksold\Domain\ValueObjects\TaskPaymentStatusEnum;
-use App\Modules\V1\Tasksold\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'company_id',
@@ -71,5 +72,10 @@ class Task extends Model
     public function rescheduledFromTask(): BelongsTo
     {
         return $this->belongsTo(self::class, 'rescheduled_from_task_id');
+    }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(TaskService::class);
     }
 }

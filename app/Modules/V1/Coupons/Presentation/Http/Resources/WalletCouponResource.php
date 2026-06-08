@@ -15,7 +15,7 @@ class WalletCouponResource extends JsonResource
             'amount' => $this->amount,
             'max_redemptions' => $this->max_redemptions,
             'redemptions_count' => $this->redemptions_count,
-            'expires_at' => $this->expires_at?->toISOString(),
+            'expires_at' => $this->expires_at?->diffForHumans(),
             'is_active' => (bool) $this->is_active,
             'is_expired' => $this->isExpired(),
             'has_remaining_redemptions' => $this->hasRemainingRedemptions(),

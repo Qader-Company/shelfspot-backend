@@ -5,6 +5,7 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Requests;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
+use App\Modules\V1\Tasks\Application\Validation\TaskServiceValidationGenerator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Validator;
@@ -46,11 +47,11 @@ class StoreCompanyTaskRequest extends FormRequest
             'services.*.price' => ['required', 'numeric', 'min:0'],
             'services.*.execution_time_minutes' => ['required', 'integer', 'min:1'],
             'services.*.execution_instructions' => ['nullable', 'string', 'max:5000'],
-            'services.*.request_details' => ['required', 'array'],
-            'services.*.request_details.brand_id' => ['required', 'integer'],
-            'services.*.request_details.sub_brand_id' => ['required', 'integer'],
-            'services.*.request_details.category_id' => ['required', 'integer'],
-            'services.*.request_details.sub_category_id' => ['required', 'integer'],
+            'services.*.request_details' => ['nullable', 'array'],
+            'services.*.request_details.brand_id' => ['prohibited'],
+            'services.*.request_details.sub_brand_id' => ['prohibited'],
+            'services.*.request_details.category_id' => ['prohibited'],
+            'services.*.request_details.sub_category_id' => ['prohibited'],
             'services.*.products' => ['required', 'array', 'min:1'],
             'services.*.products.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'services.*.products.*.product_details' => ['nullable', 'array'],
@@ -93,18 +94,13 @@ class StoreCompanyTaskRequest extends FormRequest
                 $validator->errors()->add("services.$index.execution_time_minutes", __('tasks.validation.minimum_execution_time', ['minutes' => $service->minimum_execution_time]));
             }
 
-            foreach ($service->key->requestForm()['fields'] ?? [] as $field => $definition) {
-                if (($definition['type'] ?? null) !== 'array<file>') {
-                    continue;
-                }
-
-                $files = Arr::wrap($this->file("services.$index.request_files.$field"));
-                $files = array_filter($files);
-
-                if (($definition['required'] ?? false) && count($files) < ($definition['min_items'] ?? 1)) {
-                    $validator->errors()->add("services.$index.request_files.$field", __('tasks.validation.required_file'));
-                }
-            }
+            app(TaskServiceValidationGenerator::class)->validate(
+                $index,
+                $taskService,
+                $service,
+                Arr::get($this->allFiles(), "services.$index.request_files", []),
+                $validator,
+            );
         }
     }
 

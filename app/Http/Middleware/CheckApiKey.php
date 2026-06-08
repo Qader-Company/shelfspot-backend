@@ -23,7 +23,6 @@ class CheckApiKey
     {
         $header = $request->header(self::AUTH_HEADER);
         $apiKey = ApiKey::getByKey($header);
-
         if ($apiKey instanceof ApiKey) {
             $this->logAccessEvent($request, $apiKey);
             return $next($request);

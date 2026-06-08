@@ -10,8 +10,8 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
 
 
     Route::post('{type}/register', [AuthController::class, 'register'])
-        ->where('type', PortalTypeEnum::COMPANY->value .'|'. PortalTypeEnum::WORKER->value)
-            ->middleware('throttle:auth-register');
+        ->where('type', PortalTypeEnum::COMPANY->value .'|'. PortalTypeEnum::WORKER->value);
+//            ->middleware('throttle:auth-register');
 
     Route::post('{type}/login', [AuthController::class, 'login'])
         ->where('type', implode('|', PortalTypeEnum::values()))

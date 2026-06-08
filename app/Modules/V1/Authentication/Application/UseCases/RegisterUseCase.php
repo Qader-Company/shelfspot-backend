@@ -6,6 +6,7 @@ use App\Modules\V1\Authentication\Domain\Services\OtpService;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Companies\Application\UseCases\CreateCompanyUserUseCase;
+use App\Modules\V1\Companies\Application\UseCases\CreateCompanyWithOwnerUseCase;
 use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
 use App\Modules\V1\Users\Domain\Models\User;
@@ -59,18 +60,8 @@ class RegisterUseCase
 
     private function registerCompanyUser(array $attributes): User
     {
-        $company = app(CompanyRepositoryInterface::class)->create([
-            'name' => $attributes['name'],
-            'email' => $attributes['email'],
-            'phone' => $attributes['phone'],
-            'cr_number' => $attributes['cr_number'],
-            'industry' => $attributes['industry'],
-            'type' => PortalTypeEnum::COMPANY
-        ]);
-
-        $companyUser = app(CreateCompanyUserUseCase::class)->execute($company, $attributes, true);
-
-        return $companyUser->user->load('companyUser.company');
+        $company = app(CreateCompanyWithOwnerUseCase::class)->execute($attributes);
+        return $company->users->first()->user;
     }
 
 }

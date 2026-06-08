@@ -5,16 +5,25 @@ namespace App\Modules\V1\Coupons\Domain\Models;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Users\Domain\Models\User;
 use EloquentFilter\Filterable;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[Fillable([
+    'code',
+    'amount',
+    'max_redemptions',
+    'redemptions_count',
+    'expires_at',
+    'is_active',
+    'assigned_company_id',
+    'created_by',
+    'notes',
+])]
 class WalletCoupon extends Model
 {
     use Filterable;
-
-    protected $guarded = [];
-
     protected $casts = [
         'amount' => 'decimal:2',
         'max_redemptions' => 'integer',

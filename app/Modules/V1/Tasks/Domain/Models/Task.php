@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\V1\Tasks;
+namespace App\Modules\V1\Tasks\Domain\Models;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasksold\Domain\ValueObjects\TaskPaymentStatusEnum;
+use App\Modules\V1\Tasksold\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

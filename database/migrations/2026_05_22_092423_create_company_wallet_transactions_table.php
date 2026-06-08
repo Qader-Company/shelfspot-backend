@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('type');
             $table->decimal('amount', 10, 2);
             $table->decimal('balance_after', 10, 2);
+            $table->nullableMorphs('reference');
             $table->foreignId('performed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('description')->nullable();
             $table->timestamps();

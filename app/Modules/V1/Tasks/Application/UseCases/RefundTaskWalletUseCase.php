@@ -5,8 +5,8 @@ namespace App\Modules\V1\Tasks\Application\UseCases;
 use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
 use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
 use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
-use App\Modules\V1\Tasks\Task;
+use App\Modules\V1\Tasks\Domain\Models\Task;
+use App\Modules\V1\Tasksold\Domain\ValueObjects\TaskPaymentStatusEnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

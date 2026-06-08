@@ -197,11 +197,13 @@
 
 ## Service Form Storage Strategy
 
-### Company-side request details
+### Company-side request details and files
 
-سيتم حفظ البيانات المتغيرة لكل Service في `task_services.request_details` كـ JSON، مع الاحتفاظ بالـ Products المختارة في `task_service_products`.
+إنشاء الـ Task سيكون `multipart/form-data` على نفس endpoint، وليس flow منفصل لرفع الملفات. كل Service داخل request تقدر ترفع ملفاتها الخاصة مثل Planogram أو Job Order مع باقي بياناتها.
 
-مثال structure عام للـ `request_details`:
+سيتم حفظ البيانات المتغيرة غير الملفاتية لكل Service في `task_services.request_details` كـ JSON، مع الاحتفاظ بالـ Products المختارة في `task_service_products`. أما الملفات نفسها فسيتم استقبالها من نفس request، ثم تخزينها كـ media records وربطها بالـ Task Service أثناء نفس transaction/flow.
+
+مثال structure للجزء الـ JSON داخل `payload` في multipart request:
 
 ```json
 {
@@ -210,21 +212,18 @@
   "category_id": 3,
   "sub_category_id": 4,
   "description": "Execution instructions from company",
-  "attachments": [
-    {
-      "type": "planogram",
-      "media_id": 100
-    },
-    {
-      "type": "job_order",
-      "media_id": 101
-    }
-  ],
   "freshness_expected": {
     "quantity": 200,
     "expiry_date": "2026-10-20"
   }
 }
+```
+
+وملفات نفس الـ Service تترفع في نفس request تحت keys متفق عليها مثل:
+
+```txt
+services[0][request_files][planogram_files][]=<file>
+services[0][request_files][job_order_files][]=<file>
 ```
 
 ### Product-level details
@@ -248,10 +247,15 @@
 
 ```json
 {
-  "before_picture_media_ids": [201],
-  "after_picture_media_ids": [202],
   "additional_notes": "FIFO applied and price tags updated"
 }
+```
+
+وملفات التنفيذ تترفع في نفس submission request، مثل:
+
+```txt
+before_picture_files[]=<file>
+after_picture_files[]=<file>
 ```
 
 ```json
@@ -291,8 +295,9 @@
 
 - Planogram مطلوب لكل الخدمات حسب التفاصيل المرسلة.
 - Job Order مطلوب/اختياري في Secondary Display Execution حسب اختيار الشركة، لكنه يجب أن يكون مدعومًا كنوع attachment منفصل.
-- الصور التي يرفعها العامل تحفظ كـ media ids داخل `form_data`.
-- لا يتم حفظ raw file paths داخل JSON؛ الأفضل الاعتماد على Media records حتى يسهل التحكم في الملفات لاحقًا.
+- الملفات تترفع داخل نفس request الخاص بإنشاء الـ Task أو Worker submission، وليس endpoint منفصل.
+- بعد استلام request، السيرفر يخزن الملفات كـ Media records ويربطها بالـ Task Service أو submission.
+- لا يتم حفظ raw file paths داخل JSON؛ يتم حفظ بيانات business في JSON، والملفات تُدار من خلال Media records مرتبطة بالكيان المناسب.
 
 ## Phase 0: تثبيت المتطلبات وقرارات المنتج
 
@@ -311,7 +316,7 @@
 2. تحويل Requirements/Form لكل Service إلى validation schema:
    - Company Request Form لكل Service.
    - Worker Submission Form لكل Service.
-   - attachment types مثل `planogram`, `job_order`, `before_picture`, `after_picture`, `visibility_picture`.
+   - file fields مثل `planogram_files`, `job_order_files`, `before_picture_files`, `after_picture_files`, `picture_files`.
    - product-level fields مثل quantity, expiry date, availability.
 3. تحديد حالات الـ Task النهائية:
    - `draft`
@@ -367,6 +372,8 @@
 
 ### Payload مقترح لإنشاء Task
 
+الـ endpoint يستقبل `multipart/form-data`. يمكن إرسال البيانات المتداخلة كـ `payload` JSON، ومعها ملفات كل Service في نفس request. المثال التالي يوضح الـ payload المنطقي، مع ملاحظة أن `<file>` يمثل ملف مرفوع في multipart وليس string داخل JSON.
+
 ```json
 {
   "date": "2026-06-20",
@@ -388,13 +395,10 @@
         "brand_id": 1,
         "sub_brand_id": 2,
         "category_id": 3,
-        "sub_category_id": 4,
-        "attachments": [
-          {
-            "type": "planogram",
-            "media_id": 100
-          }
-        ]
+        "sub_category_id": 4
+      },
+      "request_files": {
+        "planogram_files": ["<file>"]
       },
       "products": [
         {
@@ -438,7 +442,7 @@
    - كل Product تابع للشركة الحالية.
    - كل Service يحتوي على Product واحد على الأقل إذا كان ذلك مطلوبًا حسب نوع الخدمة.
    - `request_details` يطابق Company Request Form الخاص بالـ Service.
-   - attachments المطلوبة موجودة حسب نوع الخدمة، خصوصًا Planogram، و Job Order في Secondary Display عند الحاجة.
+   - الملفات المطلوبة مرفوعة في نفس request حسب نوع الخدمة، خصوصًا Planogram، و Job Order في Secondary Display عند الحاجة.
 3. Pricing Service:
    - يجمع أسعار Services.
    - يتحقق من الحد الأدنى لكل Service.
@@ -621,7 +625,7 @@
    - استخدام `task_service_submissions` لإرسال نتائج كل Service.
    - validation حسب Worker Submission Form الخاصة بكل Service.
    - Home-shelf و Secondary Display يحتاجان before/after pictures.
-   - Instore Visibility يحتاج uploading pictures.
+   - Instore Visibility يحتاج `picture_files`.
    - On-shelf Availability يحتاج availability لكل SKU: available/unavailable.
    - Freshness Report يحتاج quantity و expiry date لكل SKU.
 5. Completion rules:

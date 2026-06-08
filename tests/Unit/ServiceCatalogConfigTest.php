@@ -21,8 +21,9 @@ class ServiceCatalogConfigTest extends TestCase
             $this->assertArrayHasKey('request_form', $catalog);
             $this->assertArrayHasKey('submission_form', $catalog);
             $this->assertTrue($catalog['request_form']['requires_products']);
-            $this->assertArrayHasKey('planogram_media_ids', $catalog['request_form']['fields']);
-            $this->assertTrue($catalog['request_form']['fields']['planogram_media_ids']['required']);
+            $this->assertArrayHasKey('planogram_files', $catalog['request_form']['fields']);
+            $this->assertSame('array<file>', $catalog['request_form']['fields']['planogram_files']['type']);
+            $this->assertTrue($catalog['request_form']['fields']['planogram_files']['required']);
         }
     }
 
@@ -34,12 +35,13 @@ class ServiceCatalogConfigTest extends TestCase
         $visibility = ServiceTypeEnum::INSTORE_VISIBILITY->submissionForm()['fields'];
         $freshness = ServiceTypeEnum::FRESHNESS_REPORT->submissionForm()['fields']['items']['item_fields'];
 
-        $this->assertArrayHasKey('before_picture_media_ids', $primaryDisplay);
-        $this->assertArrayHasKey('after_picture_media_ids', $primaryDisplay);
-        $this->assertArrayHasKey('before_picture_media_ids', $secondaryDisplay);
-        $this->assertArrayHasKey('after_picture_media_ids', $secondaryDisplay);
+        $this->assertArrayHasKey('before_picture_files', $primaryDisplay);
+        $this->assertSame('array<file>', $primaryDisplay['before_picture_files']['type']);
+        $this->assertArrayHasKey('after_picture_files', $primaryDisplay);
+        $this->assertArrayHasKey('before_picture_files', $secondaryDisplay);
+        $this->assertArrayHasKey('after_picture_files', $secondaryDisplay);
         $this->assertSame(['available', 'unavailable'], $availability['availability']['values']);
-        $this->assertArrayHasKey('picture_media_ids', $visibility);
+        $this->assertArrayHasKey('picture_files', $visibility);
         $this->assertArrayHasKey('quantity', $freshness);
         $this->assertArrayHasKey('expiry_date', $freshness);
     }

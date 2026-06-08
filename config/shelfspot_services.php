@@ -13,16 +13,12 @@ return [
             ],
             'request_form' => [
                 'fields' => [
-                    'brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_brands'],
-                    'sub_brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_brands'],
-                    'category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_categories'],
-                    'sub_category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_categories'],
                     'planogram_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'planogram', 'accept' => ['application/pdf', 'image/*']],
                 ],
                 'requires_products' => true,
             ],
             'submission_form' => [
-                'readonly_job_order_fields' => ['location', 'service_type', 'brand', 'sub_brand', 'category', 'sub_category', 'attachments'],
+                'readonly_job_order_fields' => ['location', 'service_type', 'attachments'],
                 'fields' => [
                     'before_picture_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'before_picture', 'accept' => ['image/*']],
                     'after_picture_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'after_picture', 'accept' => ['image/*']],
@@ -40,17 +36,13 @@ return [
             ],
             'request_form' => [
                 'fields' => [
-                    'brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_brands'],
-                    'sub_brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_brands'],
-                    'category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_categories'],
-                    'sub_category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_categories'],
                     'planogram_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'planogram', 'accept' => ['application/pdf', 'image/*']],
                     'job_order_files' => ['type' => 'array<file>', 'required' => false, 'min_items' => 1, 'attachment_type' => 'job_order', 'accept' => ['application/pdf', 'image/*', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']],
                 ],
                 'requires_products' => true,
             ],
             'submission_form' => [
-                'readonly_job_order_fields' => ['location', 'service_type', 'brand', 'sub_brand', 'category', 'sub_category', 'attachments'],
+                'readonly_job_order_fields' => ['location', 'service_type', 'attachments'],
                 'fields' => [
                     'before_picture_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'before_picture', 'accept' => ['image/*']],
                     'after_picture_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'after_picture', 'accept' => ['image/*']],
@@ -68,16 +60,12 @@ return [
             ],
             'request_form' => [
                 'fields' => [
-                    'brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_brands'],
-                    'sub_brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_brands'],
-                    'category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_categories'],
-                    'sub_category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_categories'],
                     'planogram_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'planogram', 'accept' => ['application/pdf', 'image/*']],
                 ],
                 'requires_products' => true,
             ],
             'submission_form' => [
-                'readonly_job_order_fields' => ['location', 'service_type', 'brand', 'sub_brand', 'category', 'sub_category', 'attachments', 'products'],
+                'readonly_job_order_fields' => ['location', 'service_type', 'attachments', 'products'],
                 'fields' => [
                     'items' => [
                         'type' => 'array',
@@ -103,16 +91,12 @@ return [
             ],
             'request_form' => [
                 'fields' => [
-                    'brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_brands'],
-                    'sub_brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_brands'],
-                    'category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_categories'],
-                    'sub_category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_categories'],
                     'planogram_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'planogram', 'accept' => ['application/pdf', 'image/*']],
                 ],
                 'requires_products' => true,
             ],
             'submission_form' => [
-                'readonly_job_order_fields' => ['location', 'service_type', 'brand', 'sub_brand', 'category', 'sub_category', 'attachments'],
+                'readonly_job_order_fields' => ['location', 'service_type', 'attachments'],
                 'fields' => [
                     'picture_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'visibility_picture', 'accept' => ['image/*']],
                     'additional_notes' => ['type' => 'string', 'required' => false, 'max' => 2000],
@@ -129,10 +113,6 @@ return [
             ],
             'request_form' => [
                 'fields' => [
-                    'brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_brands'],
-                    'sub_brand_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_brands'],
-                    'category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_categories'],
-                    'sub_category_id' => ['type' => 'integer', 'required' => true, 'source' => 'company_sub_categories'],
                     'planogram_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'planogram', 'accept' => ['application/pdf', 'image/*']],
                     'expected_quantity' => ['type' => 'integer', 'required' => false, 'min' => 1],
                     'expected_expiry_date' => ['type' => 'date', 'required' => false],
@@ -140,7 +120,7 @@ return [
                 'requires_products' => true,
             ],
             'submission_form' => [
-                'readonly_job_order_fields' => ['location', 'service_type', 'brand', 'sub_brand', 'category', 'sub_category', 'attachments', 'products'],
+                'readonly_job_order_fields' => ['location', 'service_type', 'attachments', 'products'],
                 'fields' => [
                     'items' => [
                         'type' => 'array',

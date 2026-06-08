@@ -5,11 +5,13 @@ namespace App\Modules\V1\Tasks\Application\UseCases;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
+use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -46,21 +48,14 @@ class CreateCompanyTaskUseCase
                 'created_by' => auth()->id(),
             ]);
 
-            foreach ($taskServices as $index => $serviceData) {
-                $taskService = $task->services()->create([
-                    'service_id' => $serviceData['service_id'],
-                    'execution_instructions' => $serviceData['execution_instructions'] ?? null,
-                    'request_details' => $serviceData['request_details'],
-                    'unit_price' => $serviceData['price'],
-                    'status' => TaskServiceStatusEnum::PENDING,
-                    'sort_order' => $index,
-                ]);
+            $taskServiceModels = $this->createTaskServices($task, $taskServices);
+            $this->createTaskServiceProducts($taskServiceModels, $taskServices);
 
-                foreach ($serviceData['products'] as $product) {
-                    $taskService->products()->create([
-                        'product_id' => $product['product_id'],
-                        'product_details' => $product['product_details'] ?? null,
-                    ]);
+            foreach ($taskServices as $index => $serviceData) {
+                $taskService = $taskServiceModels->get((int) $serviceData['service_id']);
+
+                if ($taskService === null) {
+                    continue;
                 }
 
                 $this->attachRequestFiles($taskService, Arr::get($files, "services.$index.request_files", []));
@@ -90,6 +85,59 @@ class CreateCompanyTaskUseCase
             'creator',
             'assignedWorker',
         ];
+    }
+
+    private function createTaskServices(Task $task, array $taskServices): Collection
+    {
+        $now = now();
+
+        TaskService::query()->insert(
+            collect($taskServices)
+                ->map(fn (array $serviceData, int $index) => [
+                    'task_id' => $task->id,
+                    'service_id' => $serviceData['service_id'],
+                    'execution_instructions' => $serviceData['execution_instructions'] ?? null,
+                    'request_details' => isset($serviceData['request_details']) ? json_encode($serviceData['request_details']) : null,
+                    'unit_price' => $serviceData['price'],
+                    'status' => TaskServiceStatusEnum::PENDING->value,
+                    'sort_order' => $index,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
+                ->all()
+        );
+
+        return TaskService::query()
+            ->where('task_id', $task->id)
+            ->whereIn('service_id', collect($taskServices)->pluck('service_id'))
+            ->get()
+            ->keyBy(fn (TaskService $taskService) => (int) $taskService->service_id);
+    }
+
+    private function createTaskServiceProducts(Collection $taskServiceModels, array $taskServices): void
+    {
+        $now = now();
+        $productRows = collect($taskServices)
+            ->flatMap(function (array $serviceData) use ($taskServiceModels, $now) {
+                $taskService = $taskServiceModels->get((int) $serviceData['service_id']);
+
+                if ($taskService === null) {
+                    return [];
+                }
+
+                return collect($serviceData['products'])->map(fn (array $product) => [
+                    'task_service_id' => $taskService->id,
+                    'product_id' => $product['product_id'],
+                    'product_details' => isset($product['product_details']) ? json_encode($product['product_details']) : null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            })
+            ->all();
+
+        if ($productRows !== []) {
+            TaskServiceProduct::query()->insert($productRows);
+        }
     }
 
     private function attachRequestFiles(TaskService $taskService, array $filesByField): void

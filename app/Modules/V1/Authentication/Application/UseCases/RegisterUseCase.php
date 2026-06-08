@@ -6,12 +6,12 @@ use App\Modules\V1\Authentication\Domain\Services\OtpService;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Companies\Application\UseCases\CreateCompanyUserUseCase;
+use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class RegisterUseCase
 {
@@ -28,6 +28,7 @@ class RegisterUseCase
         return DB::transaction(function () use ($attributes, $userType){
             $user = match ($userType){
                 PortalTypeEnum::COMPANY => $this->registerCompanyUser($attributes),
+                PortalTypeEnum::WORKER => $this->registerWorker($attributes),
             };
 
             $this->otpService->generateAndSend(
@@ -50,6 +51,11 @@ class RegisterUseCase
 
     }
 
+
+    private function registerWorker(array $attributes): User
+    {
+        return app(CreateWorkerUseCase::class)->execute($attributes);
+    }
 
     private function registerCompanyUser(array $attributes): User
     {

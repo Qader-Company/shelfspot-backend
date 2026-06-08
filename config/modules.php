@@ -45,6 +45,7 @@ return [
         \App\Modules\V1\Services\Infrastructure\Providers\ServicesModuleServiceProvider::class,
         \App\Modules\V1\Admins\Infrastructure\Providers\AdminsModuleServiceProvider::class,
         \App\Modules\V1\CompaniesWallets\Infrastructure\Providers\CompaniesWalletsModuleServiceProvider::class,
+        \App\Modules\V1\Workers\Infrastructure\Providers\WorkersModuleServiceProvider::class,
         \App\Modules\V1\WorkersWallets\Infrastructure\Providers\WorkersWalletsModuleServiceProvider::class,
         \App\Modules\V1\Coupons\Infrastructure\Providers\CouponsModuleServiceProvider::class,
         \App\Modules\V1\Tasks\Infrastructure\Providers\TasksModuleServiceProvider::class,],

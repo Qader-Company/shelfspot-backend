@@ -2,6 +2,8 @@
 
 namespace App\Modules\V1\Workers\Presentation\Http\Resources;
 
+use App\Modules\V1\Users\Domain\Models\User;
+use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,11 +16,37 @@ class WorkerResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        [$worker, $user] = $this->resolveWorkerAndUser();
+
         return [
-            'name' => $this->name,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'type' => $this->type->value,
+            'id' => $worker?->id,
+            'name' => $user?->name,
+            'email' => $user?->email,
+            'phone' => $worker?->phone,
+            'type' => $user?->type?->value,
+            'is_active' => (bool) $worker?->is_active,
+            'last_location' => [
+                'latitude' => $worker?->last_latitude,
+                'longitude' => $worker?->last_longitude,
+                'updated_at' => $worker?->location_updated_at?->toISOString(),
+            ],
         ];
+    }
+
+    private function resolveWorkerAndUser(): array
+    {
+        if ($this->resource instanceof User) {
+            $this->resource->loadMissing('worker');
+
+            return [$this->resource->worker, $this->resource];
+        }
+
+        if ($this->resource instanceof Worker) {
+            $this->resource->loadMissing('user');
+
+            return [$this->resource, $this->resource->user];
+        }
+
+        return [null, null];
     }
 }

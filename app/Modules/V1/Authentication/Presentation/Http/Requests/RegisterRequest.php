@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Authentication\Presentation\Http\Requests;
 use App\Modules\V1\Companies\Presentation\Http\Requests\RegisterCompanyRequest;
+use App\Modules\V1\Workers\Presentation\Http\Requests\RegisterWorkerRequest;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -22,9 +23,10 @@ class RegisterRequest extends FormRequest
      */
     public function rules(): array
     {
-        $type = request('type');
+        $type = $this->route('type');
         return match ($type) {
             PortalTypeEnum::COMPANY->value => (new RegisterCompanyRequest())->rules(),
+            PortalTypeEnum::WORKER->value => (new RegisterWorkerRequest())->rules(),
         };
     }
 }

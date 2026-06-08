@@ -10,7 +10,7 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
 
 
     Route::post('{type}/register', [AuthController::class, 'register'])
-        ->where('type', PortalTypeEnum::COMPANY->value)
+        ->where('type', PortalTypeEnum::COMPANY->value .'|'. PortalTypeEnum::WORKER->value)
             ->middleware('throttle:auth-register');
 
     Route::post('{type}/login', [AuthController::class, 'login'])
@@ -33,7 +33,7 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
 
     //////////////// verify email \\\\\\\\\\\\\\\\
     Route::patch('{type}/email-verification', [EmailVerificationController::class, 'verifyEmail'])
-        ->where('type', PortalTypeEnum::COMPANY->value)
+        ->where('type', PortalTypeEnum::COMPANY->value .'|'. PortalTypeEnum::WORKER->value)
         ->middleware([
             'auth:sanctum',
             'abilities:'. TokenTypeEnum::VERIFY_TOKEN->value,

@@ -17,19 +17,6 @@ class StoreCompanyTaskRequest extends FormRequest
         return true;
     }
 
-    protected function prepareForValidation(): void
-    {
-        if (! $this->filled('payload')) {
-            return;
-        }
-
-        $payload = json_decode($this->input('payload'), true);
-
-        if (json_last_error() === JSON_ERROR_NONE && is_array($payload)) {
-            $this->merge($payload);
-        }
-    }
-
     public function rules(): array
     {
         return [

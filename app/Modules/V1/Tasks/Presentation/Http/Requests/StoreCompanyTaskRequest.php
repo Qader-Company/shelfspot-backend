@@ -33,7 +33,6 @@ class StoreCompanyTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payload' => ['sometimes', 'json'],
             'date' => ['required', 'date'],
             'execution_time' => ['required', 'date_format:H:i'],
             'location' => ['required', 'array'],
@@ -43,15 +42,10 @@ class StoreCompanyTaskRequest extends FormRequest
             'location.address' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'services' => ['required', 'array', 'min:1'],
-            'services.*.service_id' => ['required', 'integer', 'distinct', 'exists:services,id'],
+            'services.*.service_key' => ['required', 'integer', 'distinct'],
             'services.*.price' => ['required', 'numeric', 'min:0'],
             'services.*.execution_time_minutes' => ['required', 'integer', 'min:1'],
             'services.*.execution_instructions' => ['nullable', 'string', 'max:5000'],
-            'services.*.request_details' => ['nullable', 'array'],
-            'services.*.request_details.brand_id' => ['prohibited'],
-            'services.*.request_details.sub_brand_id' => ['prohibited'],
-            'services.*.request_details.category_id' => ['prohibited'],
-            'services.*.request_details.sub_category_id' => ['prohibited'],
             'services.*.products' => ['required', 'array', 'min:1'],
             'services.*.products.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'services.*.products.*.product_details' => ['nullable', 'array'],
@@ -59,6 +53,7 @@ class StoreCompanyTaskRequest extends FormRequest
             'services.*.request_files.*' => ['nullable', 'array'],
             'services.*.request_files.*.*' => ['file', 'max:10240'],
         ];
+
     }
 
     public function withValidator(Validator $validator): void

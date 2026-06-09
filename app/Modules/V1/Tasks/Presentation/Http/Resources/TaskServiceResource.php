@@ -13,7 +13,6 @@ class TaskServiceResource extends JsonResource
         return [
             'id' => $this->id,
             'execution_instructions' => $this->execution_instructions,
-            'request_details' => $this->request_details,
             'unit_price' => $this->unit_price,
             'status' => $this->status->value,
             'sort_order' => $this->sort_order,

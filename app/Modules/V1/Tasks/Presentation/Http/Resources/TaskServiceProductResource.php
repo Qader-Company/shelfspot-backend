@@ -12,7 +12,6 @@ class TaskServiceProductResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'product_details' => $this->product_details,
             'product' => $this->whenLoaded('product', fn () => new ProductResource($this->product)),
         ];
     }

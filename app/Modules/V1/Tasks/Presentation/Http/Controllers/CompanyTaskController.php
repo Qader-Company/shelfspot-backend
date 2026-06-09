@@ -41,7 +41,7 @@ class CompanyTaskController extends Controller
     {
         $task = $createCompanyTaskUseCase->execute($request->validated(), $request->allFiles());
 
-        return ApiResponse::created(new TaskResource($task));
+        return ApiResponse::message(__('api.created'));
     }
 
     public function show(int $id, CreateCompanyTaskUseCase $createCompanyTaskUseCase)

@@ -81,7 +81,11 @@ class CreateCompanyTaskUseCase
     {
         return [
             'services.service.translations',
-            'services.products.product',
+            'services.products.product.media',
+            'services.products.product.brand.media',
+            'services.products.product.subBrand.media',
+            'services.products.product.category',
+            'services.products.product.subCategory',
             'creator',
             'assignedWorker',
         ];

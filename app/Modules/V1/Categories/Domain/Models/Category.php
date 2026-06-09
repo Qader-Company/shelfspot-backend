@@ -21,6 +21,7 @@ class Category extends Model
 {
     use BelongsToCompany, Filterable, SoftDeletes;
 
+
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);

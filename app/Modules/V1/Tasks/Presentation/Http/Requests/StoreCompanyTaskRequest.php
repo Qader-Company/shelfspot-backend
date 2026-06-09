@@ -75,6 +75,7 @@ class StoreCompanyTaskRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:5000'],
             'services' => ['required', 'array', 'min:1'],
             'services.*.service_key' => ['required', 'string', 'distinct', new Enum(ServiceTypeEnum::class)],
+            'services.*.service_id' => ['required', 'integer', 'distinct'],
             'services.*.price' => ['required', 'numeric', 'min:0'],
             'services.*.execution_time_minutes' => ['required', 'integer', 'min:1'],
             'services.*.execution_instructions' => ['nullable', 'string', 'max:5000'],
@@ -100,35 +101,14 @@ class StoreCompanyTaskRequest extends FormRequest
         });
     }
 
-    public function validated($key = null, $default = null): mixed
-    {
-        $validated = parent::validated($key, $default);
-
-        if ($key !== null) {
-            return $validated;
-        }
-
-        $validated['services'] = collect($validated['services'] ?? [])
-            ->map(function (array $service, int $index) {
-                $service['service_id'] = $this->input("services.$index.service_id");
-
-                return $service;
-            })
-            ->all();
-
-        return $validated;
-    }
-
     private function validateServices(Validator $validator): void
     {
-        $servicesById = Service::query()
-            ->whereIn('id', collect($this->input('services', []))->pluck('service_id')->filter())
+        $servicesByKey = Service::query()
+            ->whereIn('key', collect($this->input('services', []))->pluck('service_key')->filter())
             ->get()
-            ->keyBy('id');
-
+            ->keyBy('key');
         foreach ($this->input('services', []) as $index => $taskService) {
-            $service = $servicesById->get((int) ($taskService['service_id'] ?? 0));
-
+            $service = $servicesByKey->get( ($taskService['service_key'] ?? 0));
             if (! $service || ! $service->is_active) {
                 $validator->errors()->add("services.$index.service_key", __('api.not_found'));
                 continue;

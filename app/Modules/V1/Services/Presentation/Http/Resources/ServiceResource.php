@@ -24,7 +24,6 @@ class ServiceResource extends JsonResource
             'is_active' => (bool) $this->is_active,
             'request_form' => $this->key->requestForm(),
             'submission_form' => $this->key->submissionForm(),
-
             'translations' => $this->when(
                 $this->withTranslations,
                 fn () => $this->translations->mapWithKeys(fn ($t) => [

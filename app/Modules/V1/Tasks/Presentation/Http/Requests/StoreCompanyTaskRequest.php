@@ -5,9 +5,11 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Requests;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
+use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
 use App\Modules\V1\Tasks\Application\Validation\TaskServiceValidationGenerator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Validator;
 
 class StoreCompanyTaskRequest extends FormRequest
@@ -15,6 +17,49 @@ class StoreCompanyTaskRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $services = $this->input('services');
+
+        if (! is_array($services)) {
+            return;
+        }
+
+        $serviceKeys = collect($services)
+            ->filter(fn ($service) => is_array($service))
+            ->pluck('service_key')
+            ->filter(fn ($key) => is_string($key) || is_numeric($key))
+            ->map(fn ($key) => (string) $key)
+            ->unique()
+            ->values();
+
+        $servicesByKey = Service::query()
+            ->whereIn('key', $serviceKeys)
+            ->get()
+            ->keyBy(fn (Service $service) => $service->key->value);
+
+        $this->merge([
+            'services' => collect($services)
+                ->map(function ($service) use ($servicesByKey) {
+                    if (! is_array($service)) {
+                        return $service;
+                    }
+
+                    unset($service['service_id']);
+
+                    $serviceKey = isset($service['service_key']) ? (string) $service['service_key'] : null;
+                    $resolvedService = $serviceKey !== null ? $servicesByKey->get($serviceKey) : null;
+
+                    if ($resolvedService !== null) {
+                        $service['service_id'] = $resolvedService->id;
+                    }
+
+                    return $service;
+                })
+                ->all(),
+        ]);
     }
 
     public function rules(): array
@@ -29,7 +74,7 @@ class StoreCompanyTaskRequest extends FormRequest
             'location.address' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'services' => ['required', 'array', 'min:1'],
-            'services.*.service_key' => ['required', 'integer', 'distinct'],
+            'services.*.service_key' => ['required', 'string', 'distinct', new Enum(ServiceTypeEnum::class)],
             'services.*.price' => ['required', 'numeric', 'min:0'],
             'services.*.execution_time_minutes' => ['required', 'integer', 'min:1'],
             'services.*.execution_instructions' => ['nullable', 'string', 'max:5000'],
@@ -55,16 +100,37 @@ class StoreCompanyTaskRequest extends FormRequest
         });
     }
 
+    public function validated($key = null, $default = null): mixed
+    {
+        $validated = parent::validated($key, $default);
+
+        if ($key !== null) {
+            return $validated;
+        }
+
+        $validated['services'] = collect($validated['services'] ?? [])
+            ->map(function (array $service, int $index) {
+                $service['service_id'] = $this->input("services.$index.service_id");
+
+                return $service;
+            })
+            ->all();
+
+        return $validated;
+    }
+
     private function validateServices(Validator $validator): void
     {
-        $serviceIds = collect($this->input('services', []))->pluck('service_id')->all();
-        $services = Service::query()->whereIn('id', $serviceIds)->get()->keyBy('id');
+        $servicesById = Service::query()
+            ->whereIn('id', collect($this->input('services', []))->pluck('service_id')->filter())
+            ->get()
+            ->keyBy('id');
 
         foreach ($this->input('services', []) as $index => $taskService) {
-            $service = $services->get((int) $taskService['service_id']);
+            $service = $servicesById->get((int) ($taskService['service_id'] ?? 0));
 
             if (! $service || ! $service->is_active) {
-                $validator->errors()->add("services.$index.service_id", __('api.not_found'));
+                $validator->errors()->add("services.$index.service_key", __('api.not_found'));
                 continue;
             }
 

@@ -14,8 +14,8 @@ readonly class TaskServiceValidationData
     ) {
     }
 
-    public function requestDetails(): array
+    public function products(): array
     {
-        return $this->taskService['request_details'] ?? [];
+        return $this->taskService['products'] ?? [];
     }
 }

@@ -4,7 +4,7 @@ namespace App\Modules\V1\Tasks\Application\Validation\Strategies;
 
 class FreshnessReportValidationStrategy extends AbstractTaskServiceValidationStrategy
 {
-    protected function requestDetailsRules(): array
+    protected function productDetailsRules(): array
     {
         return [
             'expected_quantity' => ['nullable', 'integer', 'min:1'],

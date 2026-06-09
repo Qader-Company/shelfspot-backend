@@ -12,53 +12,76 @@ abstract class AbstractTaskServiceValidationStrategy implements TaskServiceValid
 {
     public function validate(TaskServiceValidationData $data, Validator $validator): void
     {
-        $this->validateRequestDetails($data, $validator);
+        $this->validateMisplacedProductDetails($data, $validator);
+        $this->validateProductDetails($data, $validator);
         $this->validateRequiredFiles($data, $validator);
     }
 
-    protected function requestDetailsRules(): array
+    protected function productDetailsRules(): array
     {
         return [];
     }
 
-    protected function allowedRequestDetailsFields(): array
+    protected function allowedProductDetailsFields(): array
     {
-        return array_keys($this->requestDetailsRules());
+        return array_keys($this->productDetailsRules());
     }
 
-    protected function fileFields(): array
+    protected function fileFields(TaskServiceValidationData $data): array
     {
-        return [
-            'planogram_files' => ['required' => true, 'min_items' => 1],
-        ];
+        return collect($data->service->key->requestForm()['fields'] ?? [])
+            ->filter(fn (array $definition) => str_contains((string) ($definition['type'] ?? ''), 'file'))
+            ->map(fn (array $definition) => [
+                'required' => (bool) ($definition['required'] ?? false),
+                'min_items' => (int) ($definition['min_items'] ?? 1),
+            ])
+            ->all();
     }
 
-    private function validateRequestDetails(TaskServiceValidationData $data, Validator $validator): void
+    private function validateMisplacedProductDetails(TaskServiceValidationData $data, Validator $validator): void
     {
-        $rules = $this->requestDetailsRules();
-        $requestDetails = $data->requestDetails();
-        $unexpectedFields = array_diff(array_keys($requestDetails), $this->allowedRequestDetailsFields());
-
-        foreach ($unexpectedFields as $field) {
-            $validator->errors()->add("services.{$data->index}.request_details.$field", __('validation.prohibited', ['attribute' => $field]));
+        foreach (array_keys($this->productDetailsRules()) as $field) {
+            if (array_key_exists($field, $data->taskService['request_details'] ?? [])) {
+                $validator->errors()->add(
+                    "services.{$data->index}.request_details.$field",
+                    __('validation.prohibited', ['attribute' => $field]),
+                );
+            }
         }
+    }
 
-        if ($rules === []) {
-            return;
-        }
+    private function validateProductDetails(TaskServiceValidationData $data, Validator $validator): void
+    {
+        $rules = $this->productDetailsRules();
 
-        $detailsValidator = ValidatorFactory::make($requestDetails, $rules);
+        foreach ($data->products() as $productIndex => $product) {
+            $productDetails = $product['product_details'] ?? [];
+            $unexpectedFields = array_diff(array_keys($productDetails), $this->allowedProductDetailsFields());
 
-        foreach ($detailsValidator->errors()->messages() as $field => $messages) {
-            foreach ($messages as $message) {
-                $validator->errors()->add("services.{$data->index}.request_details.$field", $message);
+            foreach ($unexpectedFields as $field) {
+                $validator->errors()->add(
+                    "services.{$data->index}.products.$productIndex.product_details.$field",
+                    __('validation.prohibited', ['attribute' => $field]),
+                );
+            }
+
+            if ($rules === []) {
+                continue;
+            }
+
+            $detailsValidator = ValidatorFactory::make($productDetails, $rules);
+
+            foreach ($detailsValidator->errors()->messages() as $field => $messages) {
+                foreach ($messages as $message) {
+                    $validator->errors()->add("services.{$data->index}.products.$productIndex.product_details.$field", $message);
+                }
             }
         }
     }
 
     private function validateRequiredFiles(TaskServiceValidationData $data, Validator $validator): void
     {
-        foreach ($this->fileFields() as $field => $definition) {
+        foreach ($this->fileFields($data) as $field => $definition) {
             if (! ($definition['required'] ?? false)) {
                 continue;
             }

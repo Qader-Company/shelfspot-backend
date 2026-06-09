@@ -114,10 +114,14 @@ return [
             'request_form' => [
                 'fields' => [
                     'planogram_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'planogram', 'accept' => ['application/pdf', 'image/*']],
+                ],
+                'requires_products' => true,
+            ],
+            'product_details_form' => [
+                'fields' => [
                     'expected_quantity' => ['type' => 'integer', 'required' => false, 'min' => 1],
                     'expected_expiry_date' => ['type' => 'date', 'required' => false],
                 ],
-                'requires_products' => true,
             ],
             'submission_form' => [
                 'readonly_job_order_fields' => ['location', 'service_type', 'attachments', 'products'],

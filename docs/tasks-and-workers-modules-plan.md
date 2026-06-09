@@ -387,7 +387,7 @@ after_picture_files[]=<file>
   "notes": "ملاحظات عامة على التاسك",
   "services": [
     {
-      "service_id": 1,
+      "service_key": "primary_display",
       "price": 150.00,
       "execution_time_minutes": 90,
       "execution_instructions": "تعليمات تنفيذ الخدمة",

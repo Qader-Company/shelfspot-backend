@@ -30,4 +30,9 @@ enum ServiceTypeEnum: string
         return $this->catalog()['submission_form'] ?? [];
     }
 
+    public function productDetailsForm(): array
+    {
+        return $this->catalog()['product_details_form'] ?? [];
+    }
+
 }

@@ -4,6 +4,7 @@ namespace App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories;
 
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -55,12 +56,13 @@ class EloquentTaskRepository implements TaskRepositoryInterface
 
         return Task::query()
             ->with(['company'])
-            ->where('status', TaskStatusEnum::ACTIVE->value)
+            ->where('status', TaskStatusEnum::PENDING->value)
+            ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
+            ->whereDate('date', $filters['execution_date'] ?? now()->toDateString())
             ->whereNull('assigned_worker_id')
+            ->whereNull('company_deleted_at')
             ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
             ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
-            ->when($filters['date_from'] ?? null, fn (Builder $query, string $dateFrom) => $query->whereDate('date', '>=', $dateFrom))
-            ->when($filters['date_to'] ?? null, fn (Builder $query, string $dateTo) => $query->whereDate('date', '<=', $dateTo))
             ->select('tasks.*')
             ->selectRaw($distanceSql.' AS distance_km', [$latitude, $longitude, $latitude])
             ->having('distance_km', '<=', $radiusKilometers)
@@ -81,6 +83,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return Task::query()
             ->when($filters['company_id'] ?? null, fn (Builder $query, int $companyId) => $query->where('company_id', $companyId))
+            ->whereNull('company_deleted_at')
             ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
             ->when($filters['payment_status'] ?? null, fn (Builder $query, string $paymentStatus) => $query->where('payment_status', $paymentStatus))
             ->when($filters['date_from'] ?? null, fn (Builder $query, string $dateFrom) => $query->whereDate('date', '>=', $dateFrom))

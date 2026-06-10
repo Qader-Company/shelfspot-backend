@@ -9,6 +9,10 @@ class TaskResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $userType = $request->user()?->type;
+        $userTypeValue = $userType instanceof \BackedEnum ? $userType->value : $userType;
+        $isWorker = $userTypeValue === 'worker';
+
         return [
             'id' => $this->id,
             'company_id' => $this->company_id,
@@ -30,10 +34,12 @@ class TaskResource extends JsonResource
             'expires_at' => $this->expires_at?->toDateTimeString(),
             'charged_at' => $this->charged_at?->toDateTimeString(),
             'accepted_at' => $this->accepted_at?->toDateTimeString(),
+            'start_deadline_at' => $this->when($isWorker, $this->start_deadline_at?->toDateTimeString()),
             'started_at' => $this->started_at?->toDateTimeString(),
             'completed_at' => $this->completed_at?->toDateTimeString(),
             'declined_at' => $this->declined_at?->toDateTimeString(),
             'decline_reason' => $this->decline_reason,
+            'assigned_worker_id' => $this->when($isWorker, $this->assigned_worker_id),
             'distance_km' => $this->when(isset($this->distance_km), fn () => round((float) $this->distance_km, 3)),
             'services' => TaskServiceResource::collection($this->whenLoaded('services')),
             'created_at' => $this->created_at?->toDateTimeString(),

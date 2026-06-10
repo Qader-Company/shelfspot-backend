@@ -4,6 +4,8 @@ namespace App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories;
 
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +47,34 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     public function delete(Task $task): void
     {
         $task->delete();
+    }
+
+    public function availableNearWorker(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): LengthAwarePaginator
+    {
+        $distanceSql = $this->haversineSql();
+
+        return Task::query()
+            ->with(['company'])
+            ->where('status', TaskStatusEnum::ACTIVE->value)
+            ->whereNull('assigned_worker_id')
+            ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
+            ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
+            ->when($filters['date_from'] ?? null, fn (Builder $query, string $dateFrom) => $query->whereDate('date', '>=', $dateFrom))
+            ->when($filters['date_to'] ?? null, fn (Builder $query, string $dateTo) => $query->whereDate('date', '<=', $dateTo))
+            ->select('tasks.*')
+            ->selectRaw($distanceSql.' AS distance_km', [$latitude, $longitude, $latitude])
+            ->having('distance_km', '<=', $radiusKilometers)
+            ->orderBy('distance_km')
+            ->orderBy('date')
+            ->paginate(request('per_page', 15));
+    }
+
+    private function haversineSql(): string
+    {
+        return sprintf(
+            '(%F * acos(least(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))))',
+            GeoDistanceCalculator::EARTH_RADIUS_KM
+        );
     }
 
     private function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder

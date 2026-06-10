@@ -1,0 +1,92 @@
+<?php
+
+namespace App\Modules\V1\Workers\Presentation\Http\Controllers;
+
+use App\Facades\ApiResponse;
+use App\Http\Controllers\Controller;
+use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
+use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
+use App\Modules\V1\Workers\Domain\Models\Worker;
+use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
+use App\Modules\V1\Workers\Presentation\Http\Requests\RegisterWorkerRequest;
+use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerRequest;
+use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+
+class AdminWorkerController extends Controller
+{
+    public function __construct(
+        private readonly WorkerRepositoryInterface $workerRepository,
+        private readonly UserRepositoryInterface $userRepository,
+    ) {
+    }
+
+    public function index(Request $request)
+    {
+        $workers = $this->workerRepository->getAll(
+            relations: ['user'],
+            filters: array_filter([
+                'is_active' => $request->query('is_active'),
+                'phone' => $request->query('phone'),
+                'search' => $request->query('search'),
+            ], fn ($value) => $value !== null && $value !== '')
+        );
+
+        return ApiResponse::success(WorkerResource::collection($workers)->response()->getData(true));
+    }
+
+    public function store(RegisterWorkerRequest $request, CreateWorkerUseCase $createWorkerUseCase)
+    {
+        $user = $createWorkerUseCase->execute($request->validated());
+
+        return ApiResponse::created(new WorkerResource($user));
+    }
+
+    public function show(int $worker)
+    {
+        return ApiResponse::success(new WorkerResource($this->getWorker($worker, ['user'])));
+    }
+
+    public function update(UpdateWorkerRequest $request, int $worker)
+    {
+        $worker = $this->getWorker($worker, ['user']);
+        $data = $request->validated();
+
+        DB::transaction(function () use ($worker, $data) {
+            $userAttributes = Arr::only($data, ['name', 'email', 'password']);
+            $workerAttributes = Arr::only($data, ['phone', 'is_active']);
+
+            if ($userAttributes !== []) {
+                $this->userRepository->update($worker->user, $userAttributes);
+            }
+
+            if ($workerAttributes !== []) {
+                $this->workerRepository->update($worker, $workerAttributes);
+            }
+        });
+
+        return ApiResponse::updated(new WorkerResource($worker->refresh()->load('user')));
+    }
+
+    public function destroy(int $worker)
+    {
+        $worker = $this->getWorker($worker, ['user']);
+        $this->userRepository->delete($worker->user);
+
+        return ApiResponse::deleted();
+    }
+
+    private function getWorker(int $id, array $relations = []): Worker
+    {
+        $worker = $this->workerRepository->getById($id, $relations);
+
+        if (! $worker) {
+            throw new ModelNotFoundException(__('api.not_found'));
+        }
+
+        return $worker;
+    }
+}

@@ -30,6 +30,9 @@ class CreateWorkerUseCase
                 'user_id' => $user->id,
                 'phone' => $attributes['phone'],
                 'is_active' => true,
+                'last_latitude' => $attributes['latitude'] ?? null,
+                'last_longitude' => $attributes['longitude'] ?? null,
+                'location_updated_at' => isset($attributes['latitude'], $attributes['longitude']) ? now() : null,
             ]);
 
             return $user->load('worker');

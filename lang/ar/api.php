@@ -18,6 +18,7 @@ return [
     'bulk_deleted_successfully' => 'تم حذف :count طلب بنجاح',
     'ids_required' => 'يجب إدخال معرف طلب واحد على الأقل',
     'join' => '',
+    'location_required' => 'يجب تحديث موقعك قبل البحث عن المهام القريبة.',
 
     'chat_tokens' => [
         'insufficient' => 'رصيد كريدتس الشات غير كافٍ. برجاء شحن رصيدك للمتابعة.',

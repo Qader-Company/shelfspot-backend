@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Modules\V1\Workers\Presentation\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class NearbyTaskRequest extends FormRequest
+{
+    public const DEFAULT_RADIUS_KM = 5;
+    public const MAX_RADIUS_KM = 100;
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'radius_km' => ['sometimes', 'numeric', 'min:0.1', 'max:'.self::MAX_RADIUS_KM],
+            'date_from' => ['sometimes', 'date'],
+            'date_to' => ['sometimes', 'date', 'after_or_equal:date_from'],
+        ];
+    }
+
+    public function radiusKilometers(): float
+    {
+        return (float) $this->validated('radius_km', self::DEFAULT_RADIUS_KM);
+    }
+}

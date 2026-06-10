@@ -27,7 +27,6 @@ class TaskResource extends JsonResource
             'status' => $this->status->value,
             'payment_status' => $this->payment_status->value,
             'created_by' => $this->whenLoaded('creator', $this->creator->name),
-            'assigned_worker_id' => $this->whenLoaded('assignedWorker', $this->assignedWorker?->name),
             'expires_at' => $this->expires_at?->toDateTimeString(),
             'charged_at' => $this->charged_at?->toDateTimeString(),
             'accepted_at' => $this->accepted_at?->toDateTimeString(),

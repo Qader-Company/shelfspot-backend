@@ -89,7 +89,6 @@ class CreateCompanyTaskUseCase
             'services.products.product.category',
             'services.products.product.subCategory',
             'creator',
-            'assignedWorker',
         ];
     }
 

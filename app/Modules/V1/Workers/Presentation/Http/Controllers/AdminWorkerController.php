@@ -4,6 +4,7 @@ namespace App\Modules\V1\Workers\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
 use App\Modules\V1\Workers\Domain\Models\Worker;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 
 class AdminWorkerController extends Controller
 {
+    use Filterable;
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
         private readonly UserRepositoryInterface $userRepository,
@@ -28,11 +30,10 @@ class AdminWorkerController extends Controller
     {
         $workers = $this->workerRepository->getAll(
             relations: ['user'],
-            filters: array_filter([
-                'is_active' => $request->query('is_active'),
-                'phone' => $request->query('phone'),
-                'search' => $request->query('search'),
-            ], fn ($value) => $value !== null && $value !== '')
+            filters: $this->acceptedFilters($request, [
+                'is_active',
+                'search',
+            ])
         );
 
         return ApiResponse::success(WorkerResource::collection($workers)->response()->getData(true));

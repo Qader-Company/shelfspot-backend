@@ -20,7 +20,8 @@ return [
         ],
 
         'worker' => [
-            ['prefix' => 'worker', 'file' => 'account.php', 'middlewares' => ['auth:sanctum']],
+            ['prefix' => 'worker/account', 'file' => 'account.php', 'middlewares' => ['auth:sanctum']],
+            ['prefix' => 'worker/tasks', 'file' => 'tasks.php', 'middlewares' => ['auth:sanctum']],
         ],
 
         'company' => [

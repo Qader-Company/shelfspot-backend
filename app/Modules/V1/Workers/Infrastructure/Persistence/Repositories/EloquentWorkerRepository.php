@@ -54,17 +54,7 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
     private function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder
     {
         return Worker::query()
-            ->when(array_key_exists('is_active', $filters), fn (Builder $query) => $query->where('is_active', (bool) $filters['is_active']))
-            ->when($filters['phone'] ?? null, fn (Builder $query, string $phone) => $query->where('phone', $phone))
-            ->when($filters['search'] ?? null, function (Builder $query, string $search) {
-                $query->where(function (Builder $query) use ($search) {
-                    $query->where('phone', 'like', '%'.$search.'%')
-                        ->orWhereHas('user', function (Builder $query) use ($search) {
-                            $query->where('name', 'like', '%'.$search.'%')
-                                ->orWhere('email', 'like', '%'.$search.'%');
-                        });
-                });
-            })
+            ->when($filters, fn (Builder $query) => $query->filter($filters))
             ->when($relations, fn (Builder $query) => $query->with($relations))
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
     }

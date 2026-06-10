@@ -4,6 +4,7 @@ namespace App\Modules\V1\Workers\Domain\Models;
 
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Users\Domain\Models\User;
+use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Worker extends Model
 {
+    use Filterable;
     protected $casts = [
         'is_active' => 'boolean',
         'wallet_balance' => 'decimal:2',

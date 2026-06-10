@@ -4,6 +4,8 @@ namespace App\Modules\V1\Workers\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
 use App\Modules\V1\Workers\Domain\Models\Worker;
@@ -13,11 +15,14 @@ use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class AdminWorkerController extends Controller
 {
+    use ManagesTrash;
+
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
         private readonly UserRepositoryInterface $userRepository,
@@ -74,9 +79,19 @@ class AdminWorkerController extends Controller
     public function destroy(int $worker)
     {
         $worker = $this->getWorker($worker, ['user']);
-        $this->userRepository->delete($worker->user);
+        $this->workerRepository->delete($worker);
 
         return ApiResponse::deleted();
+    }
+
+    protected function trashRepository(): TrashableRepositoryInterface
+    {
+        return $this->workerRepository;
+    }
+
+    protected function trashResourceCollection(LengthAwarePaginator $items): mixed
+    {
+        return WorkerResource::collection($items)->response()->getData(true);
     }
 
     private function getWorker(int $id, array $relations = []): Worker

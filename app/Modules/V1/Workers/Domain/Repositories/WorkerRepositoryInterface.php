@@ -2,10 +2,11 @@
 
 namespace App\Modules\V1\Workers\Domain\Repositories;
 
+use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-interface WorkerRepositoryInterface
+interface WorkerRepositoryInterface extends TrashableRepositoryInterface
 {
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator;
 

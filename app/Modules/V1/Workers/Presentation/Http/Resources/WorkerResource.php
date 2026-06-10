@@ -23,6 +23,7 @@ class WorkerResource extends JsonResource
             'name' => $user?->name,
             'email' => $user?->email,
             'phone' => $worker?->phone,
+            'deleted_at' => $worker?->deleted_at?->toISOString(),
             'type' => $user?->type?->value,
             'is_active' => (bool) $worker?->is_active,
             'last_location' => [

@@ -57,7 +57,7 @@ class WorkerAccountController extends Controller
 
     public function deleteAccount(Request $request)
     {
-        $this->userRepository->delete($request->user());
+        $this->workerRepository->delete($this->worker($request));
 
         return ApiResponse::deleted();
     }

@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Workers\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,6 +11,13 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentWorkerRepository implements WorkerRepositoryInterface
 {
+    use HandlesTrash;
+
+    protected function trashableModel(): string
+    {
+        return Worker::class;
+    }
+
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)

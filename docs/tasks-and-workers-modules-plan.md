@@ -812,7 +812,7 @@ after_picture_files[]=<file>
 
 - Create/list/show company Tasks.
 - Pricing + validation.
-- Wallet charge + active status.
+- Wallet charge/hold + pending status.
 
 ### Milestone 3: Worker Foundation
 

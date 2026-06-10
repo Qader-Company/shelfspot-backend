@@ -92,7 +92,7 @@ class WorkerAccountController extends Controller
             longitude: $longitude,
             radiusKilometers: $radius,
             boundingBox: $this->geoDistanceCalculator->boundingBox($latitude, $longitude, $radius),
-            filters: Arr::only($request->validated(), ['date_from', 'date_to'])
+            filters: Arr::only($request->validated(), ['execution_date'])
         );
 
         return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));

@@ -6,6 +6,7 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Tasks\Application\UseCases\CreateCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
@@ -49,6 +50,13 @@ class CompanyTaskController extends Controller
         $task = $this->getCompanyTask($id, $createCompanyTaskUseCase->relations());
 
         return ApiResponse::success(new TaskResource($task));
+    }
+
+    public function destroy(int $id, DeleteCompanyTaskUseCase $deleteCompanyTaskUseCase)
+    {
+        $deleteCompanyTaskUseCase->execute($this->getCompanyTask($id), auth()->user());
+
+        return ApiResponse::deleted();
     }
 
     private function getCompanyTask(int $id, array $relations = []): Task

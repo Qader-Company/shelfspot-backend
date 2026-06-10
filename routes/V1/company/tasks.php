@@ -10,4 +10,5 @@ Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEn
         Route::get('/', 'index');
         Route::post('/', 'store');
         Route::get('/{id}', 'show');
+        Route::delete('/{id}', 'destroy');
     });

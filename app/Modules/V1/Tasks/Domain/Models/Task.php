@@ -30,15 +30,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'assigned_worker_id',
     'expires_at',
     'accepted_at',
+    'start_deadline_at',
     'started_at',
     'completed_at',
     'declined_at',
     'decline_reason',
+    'worker_cancelled_at',
+    'worker_cancel_reason',
+    'company_deleted_at',
     'payment_status',
     'charged_at',
 ])]
 class Task extends Model
 {
+
     protected $casts = [
         'date' => 'date',
         'execution_time' => 'datetime:H:i:s',
@@ -46,9 +51,12 @@ class Task extends Model
         'total_price' => 'decimal:2',
         'expires_at' => 'datetime',
         'accepted_at' => 'datetime',
+        'start_deadline_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'declined_at' => 'datetime',
+        'worker_cancelled_at' => 'datetime',
+        'company_deleted_at' => 'datetime',
         'charged_at' => 'datetime',
         'status' => TaskStatusEnum::class,
         'payment_status' => TaskPaymentStatusEnum::class,
@@ -77,5 +85,10 @@ class Task extends Model
     public function services(): HasMany
     {
         return $this->hasMany(TaskService::class);
+    }
+
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(TaskStatusHistory::class);
     }
 }

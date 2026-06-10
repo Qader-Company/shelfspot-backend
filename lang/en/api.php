@@ -19,6 +19,7 @@ return [
     'join' => 'joined successfully',
     'available' => 'available',
     'notavailable' => 'not available',
+    'location_required' => 'Please update your location before searching nearby tasks.',
 
     'chat_tokens' => [
         'insufficient' => 'You do not have enough chat credits. Please recharge your balance to continue.',

@@ -30,7 +30,7 @@ class EloquentUserRepository implements UserRepositoryInterface
 
     public function delete(User $user): void
     {
-        // TODO: Implement delete() method.
+        $user->delete();
     }
 
     public function findWhere(array $attributes)

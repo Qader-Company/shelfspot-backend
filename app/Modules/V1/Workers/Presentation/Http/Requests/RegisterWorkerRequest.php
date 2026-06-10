@@ -32,6 +32,8 @@ class RegisterWorkerRequest extends FormRequest
                 'required',
                 'confirmed',
             ],
+            'latitude' => ['sometimes', 'numeric', 'between:-90,90', 'required_with:longitude'],
+            'longitude' => ['sometimes', 'numeric', 'between:-180,180', 'required_with:latitude'],
         ];
     }
 }

@@ -35,6 +35,7 @@ class TaskResource extends JsonResource
             'completed_at' => $this->completed_at?->toDateTimeString(),
             'declined_at' => $this->declined_at?->toDateTimeString(),
             'decline_reason' => $this->decline_reason,
+            'distance_km' => $this->when(isset($this->distance_km), fn () => round((float) $this->distance_km, 3)),
             'services' => TaskServiceResource::collection($this->whenLoaded('services')),
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),

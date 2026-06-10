@@ -48,10 +48,65 @@
 5. **Worker Discovery منفصل عن Assignment**
    - ظهور Tasks قريبة للـ Worker لا يعني أنها assigned له.
    - الـ Assignment يحدث فقط عند accept/claim حسب flow يتم تثبيته لاحقًا.
+   - الـ Task تظهر للعمال فقط في تاريخ التنفيذ المحدد لها، وليس بمجرد إنشائها.
 
 6. **التوسع الجغرافي تدريجي**
    - الـ Worker يبدأ بنطاق قريب افتراضي.
    - يمكنه زيادة radius للحصول على Tasks أبعد.
+
+7. **فصل الحالة التشغيلية عن حالة الشركة**
+   - الشركة ترى lifecycle مبسطًا: `pending` -> `in_progress` -> `completed` أو `failed`.
+   - النظام داخليًا يحتاج حالات أكثر مثل `accepted`, `worker_cancelled`, `company_deleted` لإدارة التشغيل بدون كشف تفاصيل غير لازمة للشركة.
+
+8. **الحذف نوعان**
+   - حذف الشركة هو soft/company delete يخفي الـ Task من واجهة الشركة فقط ويترك السجلات لأغراض audit والتشغيل.
+   - hard delete الحقيقي أو الأرشفة النهائية من صلاحيات Shelf Spot Admin فقط.
+
+## Lifecycle Decisions من السيناريو الحالي
+
+### Company-facing status model
+
+الحالة التي تظهر للشركة يجب أن تكون بسيطة ومركزة على وضع الطلب نفسه، بدون كشف تفاصيل تشغيل العامل:
+
+- `pending`: تم إنشاء الـ Task وتم حجز/خصم قيمتها من Wallet الشركة مؤقتًا، وتنتظر يوم التنفيذ أو قبول Worker.
+- `in_progress`: تم قبول الـ Task أو يوجد تشغيل داخلي عليها، بما في ذلك حالات انتظار reassign بعد إلغاء Worker.
+- `completed`: تم تسليم كل Services بنجاح.
+- `failed`: لم يعمل عليها أي Worker في الوقت المطلوب، أو انتهت صلاحيتها/نافذة البدء حسب قواعد النظام.
+
+### Internal operational status model
+
+داخليًا نحتاج حالات أكثر لإدارة Worker/Admin flows:
+
+- `pending`: جاهزة للظهور للعمال في تاريخ التنفيذ المحدد.
+- `accepted`: Worker قبل المهمة ويجب أن يصل لموقع المتجر خلال 15 دقيقة.
+- `in_progress`: Worker بدأ التنفيذ من موقع صحيح داخل geofence المتجر.
+- `completed`: كل services/submissions المطلوبة مكتملة.
+- `failed`: انتهى وقت القبول/البدء أو لم يعمل عليها أحد.
+- `worker_cancelled`: Worker كنسل وكتب السبب، وتحتاج Admin reassignment أو قرار تشغيلي.
+- `company_deleted`: مخفية من واجهة الشركة فقط.
+- `admin_deleted`: حذف/أرشفة نهائية من Shelf Spot Admin فقط حسب السياسة.
+
+### Worker execution rules
+
+- الـ Task تظهر في available list للعمال القريبين فقط في يوم `date` المحدد للـ Task، وبشرط أن تكون paid/charged أو held، غير معيّنة، وداخل radius العامل.
+- بعد `accept` يجب أن يحصل العامل على بيانات الموقع الكاملة ويعمل `start` خلال 15 دقيقة.
+- `start` يتطلب إرسال موقع العامل والتحقق أنه داخل موقع الـ Task أو قريب منه حسب geofence/tolerance يتم تثبيته في config.
+- بعد `start` يدخل العامل على كل Service داخل الـ Task ويرسل submission form والملفات المطلوبة حسب نوع الخدمة.
+- الـ Task لا تتحول إلى `completed` إلا بعد اكتمال كل الـ Services المطلوبة.
+
+### Worker cancellation and admin reassignment
+
+- Worker يمكنه إلغاء الـ Task بعد القبول مع كتابة السبب.
+- السبب يظهر للـ Admin فقط، ولا يظهر للشركة.
+- من ناحية الشركة تظل الـ Task `in_progress` أثناء انتظار إعادة التعيين.
+- Admin يستطيع reassign لعامل آخر active ومتاح ولا يملك Task حالتها `in_progress`.
+
+### Company actions by status
+
+- `pending`: يمكن للشركة edit أو delete من واجهتها.
+- `in_progress`: يمكن للشركة delete من واجهتها فقط، ولا يوقف ذلك التشغيل الداخلي إلا إذا قرر Admin سياسة مختلفة.
+- `completed`: يمكن للشركة delete من واجهتها فقط.
+- `failed`: يمكن للشركة delete مع refund، أو edit/reschedule. عند edit/reschedule يجب إعادة حساب السعر ومقارنة السعر القديم بالجديد؛ لو الجديد أعلى يتم خصم الفرق، ولو أقل يتم رد الفرق، ثم تعود الـ Task إلى `pending` بتاريخها الجديد.
 
 ## Service Catalog & Requirements Matrix
 
@@ -318,28 +373,24 @@ after_picture_files[]=<file>
    - Worker Submission Form لكل Service.
    - file fields مثل `planogram_files`, `job_order_files`, `before_picture_files`, `after_picture_files`, `picture_files`.
    - product-level fields مثل quantity, expiry date, availability.
-3. تحديد حالات الـ Task النهائية:
-   - `draft`
-   - `active`
-   - `accepted`
-   - `in_progress`
-   - `completed`
-   - `cancelled`
-   - `expired`
-   - `declined`
+3. تحديد حالات الـ Task النهائية مع فصل حالتين:
+   - Company-facing: `pending`, `in_progress`, `completed`, `failed`.
+   - Internal operational: `pending`, `accepted`, `in_progress`, `completed`, `failed`, `worker_cancelled`, `company_deleted`, `admin_deleted`.
 4. تحديد حالات الدفع:
    - `pending`
    - `charged`
    - `refunded`
    - `failed`
 5. تحديد قواعد انتهاء صلاحية الـ Task:
-   - هل لها `expires_at` تلقائي؟
-   - ماذا يحدث لو لم يقبلها Worker؟
+   - الـ Task تظهر للعمال في يوم `date` المحدد فقط.
+   - إذا لم يقبلها Worker أو لم يبدأها ضمن النافذة الزمنية تتحول إلى `failed`.
+   - بعد accept توجد نافذة 15 دقيقة للوصول والـ start من موقع صحيح.
 6. تحديد قواعد الإلغاء والاسترجاع:
-   - إلغاء قبل قبول Worker.
-   - إلغاء بعد قبول Worker.
-   - إلغاء بعد بدء التنفيذ.
-7. تحديد radius الافتراضي للـ Workers، والحد الأقصى المسموح.
+   - إلغاء/حذف الشركة قبل قبول Worker.
+   - حذف الشركة أثناء `in_progress` أو بعد `completed` هو إخفاء فقط من واجهة الشركة.
+   - Worker cancel مع reason داخلي وإتاحة Admin reassignment.
+   - failed task يمكن reschedule/edit مع حساب فرق السعر في wallet.
+7. تحديد radius الافتراضي للـ Workers، والحد الأقصى المسموح، و geofence tolerance للـ start.
 
 ### Acceptance Criteria
 
@@ -452,8 +503,9 @@ after_picture_files[]=<file>
    - إنشاء Wallet transaction من نوع task payment/debit.
    - تحديث `payment_status` إلى `charged`.
 5. تفعيل الـ Task:
-   - بعد نجاح الخصم يتم تحويل status إلى `active`.
-   - ضبط `expires_at` حسب قاعدة المنتج المتفق عليها.
+   - بعد نجاح الخصم/الحجز يتم تحويل company-facing status إلى `pending` و internal status إلى `pending`.
+   - لا تظهر للعمال إلا في تاريخ التنفيذ المحدد، حتى لو كانت جاهزة ماليًا قبل ذلك.
+   - ضبط `expires_at`/execution window حسب قاعدة المنتج المتفق عليها.
 6. Error Handling:
    - إذا فشل أي جزء داخل transaction، لا يتم إنشاء Task ناقص ولا خصم مبلغ.
 
@@ -462,7 +514,7 @@ after_picture_files[]=<file>
 - الشركة تستطيع إنشاء Task يحتوي على عدة Services وعدة Products لكل Service.
 - لا يمكن إنشاء Task بسعر Service أقل من الحد الأدنى.
 - لا يمكن استخدام Product لا يخص الشركة الحالية.
-- لا يصبح الـ Task `active` إلا بعد نجاح خصم/حجز المبلغ من Wallet الشركة.
+- لا يصبح الـ Task `pending` وقابلًا للظهور في يوم التنفيذ إلا بعد نجاح خصم/حجز المبلغ من Wallet الشركة.
 - يتم إرجاع تفاصيل السعر النهائي للـ Task في response.
 
 ## Phase 3: Company Task Management
@@ -485,20 +537,30 @@ after_picture_files[]=<file>
    - Worker assigned إن وجد.
    - Payment status.
    - Status history.
-3. Cancellation Flow:
-   - إتاحة إلغاء Task حسب القواعد.
-   - استدعاء refund use case إذا كان الإلغاء يستحق استرجاع.
-4. Status History:
+3. Company actions by status:
+   - `pending`: edit/delete من واجهة الشركة.
+   - `in_progress`: delete من واجهة الشركة فقط.
+   - `completed`: delete من واجهة الشركة فقط.
+   - `failed`: delete مع refund أو edit/reschedule مع حساب فرق السعر.
+4. Failed reschedule flow:
+   - إعادة حساب السعر بعد التعديل.
+   - مقارنة السعر الجديد بالقديم.
+   - خصم الفرق إذا السعر زاد أو رد الفرق إذا السعر قل.
+   - بعد نجاح الحركة المالية ترجع الـ Task إلى `pending` بتاريخها الجديد.
+5. Delete semantics:
+   - company delete يضبط `company_deleted_at` أو visibility flag ولا يحذف السجلات فعليًا.
+   - Shelf Spot Admin فقط يملك hard delete/archival النهائي.
+6. Status History:
    - تسجيل أي انتقال status في `task_status_histories`.
-5. حماية transitions:
-   - لا يمكن إلغاء Task مكتمل.
-   - لا يمكن تعديل Task بعد قبوله إلا حسب قواعد متفق عليها.
+7. حماية transitions:
+   - لا يمكن تعديل Task أثناء `in_progress` أو بعد `completed` من الشركة.
+   - لا تُعرض أسباب worker cancellation للشركة.
 
 ### Acceptance Criteria
 
 - الشركة ترى Tasks الخاصة بها فقط.
 - الشركة ترى تفاصيل كل Service/Product داخل Task.
-- إلغاء الـ Task يطبق قواعد refund بشكل صحيح.
+- إجراءات edit/delete/reschedule تطبق قواعد refund/price difference بشكل صحيح.
 - كل تغيير status يتم تسجيله.
 
 ## Phase 4: Worker Authentication & Admin Creation
@@ -562,21 +624,22 @@ after_picture_files[]=<file>
 - النظام يحفظ آخر موقع وتاريخ تحديثه.
 - لا تظهر Tasks للعامل إذا لم يكن لديه موقع حديث حسب threshold يتم تحديده.
 
-## Phase 6: Nearby Active Tasks Discovery
+## Phase 6: Dated Nearby Pending Tasks Discovery
 
 ### الهدف
 
-إظهار الـ Tasks القريبة من العامل بناءً على موقعه الحالي مع إمكانية توسيع radius.
+إظهار الـ Tasks القريبة من العامل في يوم التنفيذ المحدد بناءً على موقعه الحالي مع إمكانية توسيع radius.
 
 ### المطلوب
 
 1. Endpoint:
    - `GET /v1/worker/tasks/nearby?radius_km=5`
 2. Query rules:
-   - Tasks status = `active`.
-   - payment_status = `charged`.
+   - Company-facing status = `pending` و internal status = `pending`.
+   - `date` يساوي يوم التنفيذ الحالي/المطلوب حسب timezone المتفق عليه.
+   - payment_status = `charged` أو `held` حسب التسمية النهائية.
    - ليس لها assigned_worker_id.
-   - لم تنته صلاحيتها.
+   - لم تنته صلاحيتها أو نافذة ظهورها.
    - داخل radius المطلوب من آخر موقع للعامل.
 3. Sorting:
    - الأقرب أولًا.
@@ -599,8 +662,8 @@ after_picture_files[]=<file>
 
 ### Acceptance Criteria
 
-- Worker يرى فقط Tasks القريبة والمتاحة.
-- Worker لا يرى Tasks assigned لعامل آخر.
+- Worker يرى فقط Tasks القريبة والمتاحة في يوم تنفيذها.
+- Worker لا يرى Tasks assigned لعامل آخر أو Tasks خارج تاريخ التنفيذ.
 - زيادة radius تعيد نتائج أكثر حسب الموقع.
 - النتائج مرتبة حسب المسافة.
 
@@ -618,9 +681,10 @@ after_picture_files[]=<file>
    - lock على task row أثناء القبول.
    - لا يمكن لعاملين قبول نفس الـ Task.
 3. Status transitions:
-   - active -> accepted.
-   - accepted -> in_progress.
-   - in_progress -> completed.
+   - `pending` -> `accepted` عند قبول Worker، مع ضبط `accepted_at` و `start_deadline_at = accepted_at + 15 minutes` وجعل حالة الشركة `in_progress`.
+   - `accepted` -> `in_progress` عند start من موقع صحيح داخل geofence.
+   - `in_progress` -> `completed` بعد اكتمال كل services.
+   - `pending`/`accepted` -> `failed` عند انتهاء الوقت بدون قبول/بدء حسب scheduler.
 4. Worker service submissions:
    - استخدام `task_service_submissions` لإرسال نتائج كل Service.
    - validation حسب Worker Submission Form الخاصة بكل Service.
@@ -630,15 +694,20 @@ after_picture_files[]=<file>
    - Freshness Report يحتاج quantity و expiry date لكل SKU.
 5. Completion rules:
    - لا يكتمل Task إلا بعد اكتمال كل required service submissions.
-6. Worker rejection/decline:
-   - إذا العامل رفض بعد acceptance، يتم تحديد هل يعود Task إلى active أم يصبح declined/cancelled حسب قرار المنتج.
+6. Worker cancellation:
+   - Worker يستطيع cancel بعد acceptance مع reason mandatory.
+   - تتحول الحالة الداخلية إلى `worker_cancelled` وتظل حالة الشركة `in_progress`.
+   - Admin يستطيع reassign لعامل active ومتاح ولا يملك tasks `in_progress`.
+7. Start validation:
+   - start ممنوع بعد 15 دقيقة إلا بتدخل Admin/سياسة محددة.
+   - start ممنوع إذا موقع العامل خارج geofence/tolerance الخاص بموقع الـ Task.
 
 ### Acceptance Criteria
 
-- لا يمكن لأكثر من Worker قبول نفس Task.
-- Task ينتقل بين الحالات بشكل مضبوط.
+- لا يمكن لأكثر من Worker قبول نفس Task، ولا يمكن قبول Task خارج يوم تنفيذها.
+- Task ينتقل بين الحالات بشكل مضبوط مع حفظ company-facing status منفصل عن internal status.
 - Worker يستطيع إرسال بيانات التنفيذ لكل Service.
-- لا يتم إكمال Task بدون submissions المطلوبة.
+- لا يتم إكمال Task بدون submissions المطلوبة، ولا يتم start بدون geofence صحيح.
 
 ## Phase 8: Wallet Settlement & Worker Earnings
 
@@ -678,8 +747,12 @@ after_picture_files[]=<file>
    - status.
    - date range.
    - city/location إن وجد.
-3. Manual assignment أو reassignment إذا مطلوب.
-4. إدارة Workers:
+3. Manual assignment أو reassignment:
+   - reassign بعد worker cancellation.
+   - اختيار Worker active ومتاح ولا يملك Task `in_progress`.
+   - حفظ سبب/actor التعيين في audit/status history.
+4. Admin hard delete/archival للـ Tasks عند الحاجة، منفصل عن company soft delete.
+5. إدارة Workers:
    - list/show/update.
    - activate/deactivate.
    - رؤية آخر موقع للعامل.
@@ -687,8 +760,8 @@ after_picture_files[]=<file>
 
 ### Acceptance Criteria
 
-- Admin يستطيع متابعة Tasks وWorkers.
-- Admin يستطيع تعطيل Worker ومنعه من قبول Tasks.
+- Admin يستطيع متابعة Tasks وWorkers وتفاصيل worker cancellation/reassignment.
+- Admin يستطيع تعطيل Worker ومنعه من قبول Tasks أو استبعاده من reassignment.
 - Admin يستطيع رؤية حالة كل Task ومراحلها.
 
 ## Phase 10: Testing Plan
@@ -711,11 +784,17 @@ after_picture_files[]=<file>
 - Company cannot reduce service price/time below minimum.
 - Task creation rollback on wallet charge failure.
 - Worker updates location.
-- Worker lists nearby active Tasks.
+- Worker lists nearby pending Tasks only on their execution date.
 - Worker expands radius and gets additional Tasks.
 - Worker accepts Task with concurrency protection.
+- Worker cannot accept Task outside execution date.
+- Worker cannot start after 15 minutes without allowed override.
+- Worker cannot start outside geofence.
+- Worker cancels with reason and Admin reassigns to available Worker only.
 - Worker completes submissions.
-- Company cancellation triggers refund when eligible.
+- Failed task reschedule calculates wallet price difference correctly.
+- Company soft delete hides Task without hard deleting records.
+- Admin hard delete/archival is restricted to Shelf Spot Admin.
 
 ### Integration Tests
 
@@ -743,21 +822,21 @@ after_picture_files[]=<file>
 
 ### Milestone 4: Nearby Discovery
 
-- Nearby Tasks endpoint.
+- Dated nearby Tasks endpoint.
 - Radius expansion.
 - Distance sorting.
 
 ### Milestone 5: Acceptance & Execution
 
-- Worker accepts Task.
-- Status transitions.
+- Worker accepts Task on execution date.
+- 15-minute start window, geofence start validation, and status transitions.
 - Service submissions.
 
 ### Milestone 6: Settlement & Operations
 
 - Worker earnings.
 - Refund rules.
-- Admin monitoring.
+- Admin monitoring, reassignment, and hard-delete/archival controls.
 
 ## Open Questions قبل كتابة الكود
 
@@ -765,14 +844,15 @@ after_picture_files[]=<file>
 2. هل Job Order في Secondary Display mandatory أم optional مع Planogram؟
 3. هل Freshness Report request من الشركة يحتاج quantity/expiry date كحقول mandatory أم optional، بما أن العامل هو الذي سيرفع القيم الفعلية؟
 4. هل السعر الذي تدفعه الشركة يذهب كله للعامل أم يوجد platform fee؟
-5. هل يمكن للشركة تعديل Task بعد أن يصبح active؟
-6. ما مدة صلاحية الـ Task قبل أن تصبح expired؟
-7. هل Worker يستطيع قبول أكثر من Task في نفس الوقت؟
-8. هل يتم إظهار العنوان التفصيلي للعامل قبل القبول أم بعد القبول فقط؟
+5. ما قيمة geofence tolerance المسموحة للـ start حول موقع المتجر؟
+6. هل يسمح Admin بتمديد نافذة الـ 15 دقيقة أو إعادة فتح accepted task قبل تحويلها failed؟
+7. هل Worker يستطيع قبول أكثر من Task في نفس الوقت؟ السيناريو الحالي يمنع reassign لعامل لديه `in_progress`، لكن هل يمنع accept أيضًا؟
+8. هل يتم إظهار العنوان التفصيلي للعامل قبل القبول أم بعد القبول فقط؟ السيناريو الحالي يميل لإظهاره بعد accept.
 9. هل يجب وجود approval من الشركة بعد إكمال العامل للـ Task؟
 10. ما هو default radius والـ max radius للبحث عن Tasks؟
 11. هل يوجد cancellation fees بعد قبول العامل؟
 12. هل الصور والملفات ستستخدم Media Library الحالية، وهل نحتاج image count/size limits لكل Service؟
+13. ما السياسة النهائية للـ hard delete: حذف فعلي أم archival مع إخفاء كامل؟
 
 ## أول Sprint مقترح
 
@@ -783,7 +863,8 @@ after_picture_files[]=<file>
 3. تنفيذ Company Task create/list/show.
 4. تنفيذ pricing validation.
 5. تنفيذ wallet charge عند إنشاء الـ Task.
-6. جعل الـ Task يصبح active بعد نجاح الخصم.
-7. إضافة tests تغطي happy path وأهم failure cases.
+6. جعل الـ Task يصبح `pending` بعد نجاح الخصم/الحجز، ولا يظهر للعمال إلا في يوم التنفيذ.
+7. إضافة foundation لحالة الشركة مقابل الحالة الداخلية وسجل history.
+8. إضافة tests تغطي happy path وأهم failure cases.
 
 هذا يعطي foundation قوية قبل الدخول في Worker discovery والـ nearby search.

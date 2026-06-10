@@ -65,8 +65,8 @@ class StoreCompanyTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date' => ['required', 'date'],
-            'execution_time' => ['required', 'date_format:H:i'],
+            'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:tomorrow'],
+            'execution_time' => ['prohibited'],
             'location' => ['required', 'array'],
             'location.latitude' => ['required', 'numeric', 'between:-90,90'],
             'location.longitude' => ['required', 'numeric', 'between:-180,180'],

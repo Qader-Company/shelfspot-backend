@@ -18,6 +18,8 @@ use InvalidArgumentException;
 
 class CreateCompanyTaskUseCase
 {
+    private const FIXED_EXECUTION_TIME = '00:00:00';
+
     public function __construct(
         private readonly TenantContextInterface $tenantContext,
         private readonly ChargeTaskWalletUseCase $chargeTaskWalletUseCase,
@@ -34,7 +36,7 @@ class CreateCompanyTaskUseCase
             $task = Task::create([
                 'company_id' => $this->tenantContext->getCompanyId(),
                 'date' => $data['date'],
-                'execution_time' => $data['execution_time'],
+                'execution_time' => self::FIXED_EXECUTION_TIME,
                 'estimated_duration_minutes' => $estimatedDuration,
                 'latitude' => $data['location']['latitude'],
                 'longitude' => $data['location']['longitude'],

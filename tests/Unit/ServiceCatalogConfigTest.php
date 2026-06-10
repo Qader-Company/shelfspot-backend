@@ -2,7 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
+use App\Modules\V1\Services\Presentation\Http\Resources\ServiceResource;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class ServiceCatalogConfigTest extends TestCase
@@ -44,6 +47,26 @@ class ServiceCatalogConfigTest extends TestCase
         $this->assertArrayHasKey('picture_files', $visibility);
         $this->assertArrayHasKey('quantity', $freshness);
         $this->assertArrayHasKey('expiry_date', $freshness);
+    }
+
+    public function test_service_resource_returns_request_and_submit_forms(): void
+    {
+        $service = new Service([
+            'key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
+            'minimum_price' => 50,
+            'minimum_execution_time' => 30,
+            'is_active' => true,
+        ]);
+        $service->id = 1;
+
+        $payload = (new ServiceResource($service))->toArray(Request::create('/'));
+
+        $this->assertArrayHasKey('request_form', $payload);
+        $this->assertArrayHasKey('submit_form', $payload);
+        $this->assertArrayHasKey('submission_form', $payload);
+        $this->assertSame(ServiceTypeEnum::PRIMARY_DISPLAY->requestForm(), $payload['request_form']);
+        $this->assertSame(ServiceTypeEnum::PRIMARY_DISPLAY->submitForm(), $payload['submit_form']);
+        $this->assertSame($payload['submit_form'], $payload['submission_form']);
     }
 
     public function test_service_type_labels_are_translated_for_english_and_arabic(): void

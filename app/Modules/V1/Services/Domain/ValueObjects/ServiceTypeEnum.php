@@ -25,6 +25,11 @@ enum ServiceTypeEnum: string
         return $this->catalog()['request_form'] ?? [];
     }
 
+    public function submitForm(): array
+    {
+        return $this->submissionForm();
+    }
+
     public function submissionForm(): array
     {
         return $this->catalog()['submission_form'] ?? [];

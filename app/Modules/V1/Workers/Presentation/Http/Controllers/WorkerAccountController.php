@@ -95,7 +95,14 @@ class WorkerAccountController extends Controller
             filters: Arr::only($request->validated(), ['execution_date'])
         );
 
-        return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));
+        return ApiResponse::success(
+            [
+                'radius_km' => $radius ?? NearbyTaskRequest::DEFAULT_RADIUS_KM,
+                'tasks' => TaskResource::collection($tasks)
+                    ->response()
+                    ->getData(true)
+            ]
+        );
     }
 
     private function worker(Request $request): Worker

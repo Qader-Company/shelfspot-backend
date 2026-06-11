@@ -58,16 +58,12 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->with(['company'])
             ->where('status', TaskStatusEnum::PENDING->value)
             ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
-            ->whereDate('date', $filters['execution_date'] ?? now()->toDateString())
+            ->when(isset($filters['execution_date']), fn (Builder $query) => $query->whereDate('date', $filters['execution_date']))
             ->whereNull('assigned_worker_id')
             ->whereNull('company_deleted_at')
             ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
             ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
             ->select('tasks.*')
-            ->selectRaw($distanceSql.' AS distance_km', [$latitude, $longitude, $latitude])
-            ->having('distance_km', '<=', $radiusKilometers)
-            ->orderBy('distance_km')
-            ->orderBy('date')
             ->paginate(request('per_page', 15));
     }
 

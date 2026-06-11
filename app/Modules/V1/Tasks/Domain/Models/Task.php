@@ -7,6 +7,7 @@ use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Workers\Domain\Models\Worker;
+use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,6 +44,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Task extends Model
 {
+//    use Filterable;
 
     protected $casts = [
         'date' => 'date',

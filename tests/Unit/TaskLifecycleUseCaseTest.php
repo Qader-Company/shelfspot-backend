@@ -4,6 +4,14 @@ namespace Tests\Unit;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
+use App\Modules\V1\Products\Domain\Models\Product;
+use App\Modules\V1\Services\Domain\Models\Service;
+use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
+use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
+use App\Modules\V1\Tasks\Domain\Models\TaskService;
+use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
+use App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories\EloquentTaskRepository;
 use App\Modules\V1\Tasks\Application\UseCases\AcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
@@ -100,7 +108,6 @@ class TaskLifecycleUseCaseTest extends TestCase
         app(StartTaskUseCase::class)->execute($acceptedTask, $worker, 31.2001, 29.9187);
     }
 
-
     public function test_company_delete_hides_task_without_changing_operational_status(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
@@ -117,6 +124,85 @@ class TaskLifecycleUseCaseTest extends TestCase
             'to_status' => TaskStatusEnum::COMPANY_DELETED->value,
             'changed_by' => $worker->user_id,
         ]);
+    }
+
+    public function test_repository_returns_tasks_assigned_to_worker_only(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker([
+            'status' => TaskStatusEnum::ACCEPTED,
+        ]);
+        $task->forceFill(['assigned_worker_id' => $worker->id])->save();
+
+        [$otherTask, $otherWorker] = $this->pendingTaskAndWorker([
+            'status' => TaskStatusEnum::ACCEPTED,
+        ]);
+        $otherTask->forceFill(['assigned_worker_id' => $otherWorker->id])->save();
+
+        $tasks = app(EloquentTaskRepository::class)->assignedToWorker($worker->id);
+
+        $this->assertSame([$task->id], $tasks->pluck('id')->all());
+    }
+
+    public function test_worker_submits_task_service_after_task_started(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $startedTask = app(StartTaskUseCase::class)->execute(
+            app(AcceptTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            30.0444,
+            31.2357
+        );
+        [$taskService, $product] = $this->taskServiceWithProduct($startedTask);
+
+        $submission = app(SubmitTaskServiceUseCase::class)->execute(
+            task: $startedTask,
+            taskService: $taskService,
+            worker: $worker,
+            formData: [
+                'items' => [[
+                    'product_id' => $product->id,
+                    'sku' => $product->sku,
+                    'availability' => 'available',
+                ]],
+                'additional_notes' => 'Shelf was fully stocked.',
+            ]
+        );
+
+        $this->assertSame($worker->id, $submission->worker_id);
+        $this->assertSame('completed', $submission->status);
+        $this->assertTrue($submission->completed_at->equalTo(now()));
+        $this->assertSame(TaskServiceStatusEnum::COMPLETED, $taskService->refresh()->status);
+        $this->assertDatabaseHas('task_service_submissions', [
+            'id' => $submission->id,
+            'task_service_id' => $taskService->id,
+            'worker_id' => $worker->id,
+            'status' => 'completed',
+        ]);
+    }
+
+    public function test_worker_cannot_submit_task_service_before_task_started(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+        [$taskService, $product] = $this->taskServiceWithProduct($acceptedTask);
+
+        $this->expectException(ValidationException::class);
+
+        app(SubmitTaskServiceUseCase::class)->execute(
+            task: $acceptedTask,
+            taskService: $taskService,
+            worker: $worker,
+            formData: [
+                'items' => [[
+                    'product_id' => $product->id,
+                    'sku' => $product->sku,
+                    'availability' => 'available',
+                ]],
+            ]
+        );
     }
 
     private function pendingTaskAndWorker(array $taskOverrides = []): array
@@ -153,4 +239,41 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         return [$task, $worker];
     }
+
+    private function taskServiceWithProduct(Task $task): array
+    {
+        $service = Service::query()->create([
+            'key' => ServiceTypeEnum::ON_SHELF_AVAILABILITY,
+            'minimum_price' => 25,
+            'minimum_execution_time' => 15,
+            'is_active' => true,
+        ]);
+
+        $product = Product::query()->create([
+            'company_id' => $task->company_id,
+            'name' => 'Product '.fake()->unique()->word(),
+            'description' => 'Test product',
+            'sku' => fake()->unique()->bothify('SKU-####'),
+            'is_active' => true,
+        ]);
+
+        $taskService = TaskService::query()->create([
+            'task_id' => $task->id,
+            'service_id' => $service->id,
+            'execution_instructions' => 'Check shelf availability.',
+            'request_details' => [],
+            'unit_price' => 25,
+            'status' => TaskServiceStatusEnum::PENDING,
+            'sort_order' => 1,
+        ]);
+
+        TaskServiceProduct::query()->create([
+            'task_service_id' => $taskService->id,
+            'product_id' => $product->id,
+            'product_details' => [],
+        ]);
+
+        return [$taskService, $product];
+    }
+
 }

@@ -2,23 +2,20 @@
 
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
-use App\Modules\V1\Services\Presentation\Http\Resources\ServiceResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TaskServiceResource extends JsonResource
+class TaskServiceSubmissionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
-            'execution_instructions' => $this->execution_instructions,
-            'unit_price' => $this->unit_price,
-            'status' => $this->status->value,
-            'sort_order' => $this->sort_order,
-            'service' => $this->whenLoaded('service', fn () => new ServiceResource($this->service)),
-            'products' => TaskServiceProductResource::collection($this->whenLoaded('products')),
-            'submission' => $this->whenLoaded('submission', fn () => new TaskServiceSubmissionResource($this->submission)),
+            'task_service_id' => $this->task_service_id,
+            'worker_id' => $this->worker_id,
+            'form_data' => $this->form_data,
+            'status' => $this->status,
+            'completed_at' => $this->completed_at?->toDateTimeString(),
             'attachments' => $this->getMedia()->map(fn ($media) => [
                 'id' => $media->id,
                 'field' => $media->getCustomProperty('field'),
@@ -29,6 +26,8 @@ class TaskServiceResource extends JsonResource
                 'size' => $media->size,
                 'url' => $media->getUrl(),
             ]),
+            'created_at' => $this->created_at?->toDateTimeString(),
+            'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -43,5 +44,10 @@ class TaskService extends Model implements HasMedia
     public function products(): HasMany
     {
         return $this->hasMany(TaskServiceProduct::class);
+    }
+
+    public function submission(): HasOne
+    {
+        return $this->hasOne(TaskServiceSubmission::class);
     }
 }

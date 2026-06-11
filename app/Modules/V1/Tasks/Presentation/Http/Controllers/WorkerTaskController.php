@@ -6,10 +6,15 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\V1\Tasks\Application\UseCases\AcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
+use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StartTaskRequest;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\SubmitTaskServiceRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskServiceSubmissionResource;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -21,11 +26,29 @@ class WorkerTaskController extends Controller
     {
     }
 
+    public function mine(Request $request)
+    {
+        $tasks = $this->taskRepository->assignedToWorker(
+            workerId: $this->worker($request)->id,
+            filters: array_merge($request->only(['status', 'date_from', 'date_to']), [
+                'statuses' => [
+                    TaskStatusEnum::ACCEPTED->value,
+                    TaskStatusEnum::IN_PROGRESS->value,
+                    TaskStatusEnum::WORKER_CANCELLED->value,
+                    TaskStatusEnum::COMPLETED->value,
+                ],
+            ]),
+            relations: ['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker']
+        );
+
+        return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));
+    }
+
     public function accept(int $id, Request $request, AcceptTaskUseCase $acceptTaskUseCase)
     {
         $task = $acceptTaskUseCase->execute($this->task($id), $this->worker($request));
 
-        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'assignedWorker'])));
+        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
     }
 
     public function start(int $id, StartTaskRequest $request, StartTaskUseCase $startTaskUseCase)
@@ -37,7 +60,20 @@ class WorkerTaskController extends Controller
             longitude: (float) $request->validated('longitude')
         );
 
-        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'assignedWorker'])));
+        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+    }
+
+    public function submitService(int $id, int $serviceId, SubmitTaskServiceRequest $request, SubmitTaskServiceUseCase $submitTaskServiceUseCase)
+    {
+        $submission = $submitTaskServiceUseCase->execute(
+            task: $this->task($id),
+            taskService: $this->taskService($serviceId),
+            worker: $this->worker($request),
+            formData: $request->formData(),
+            filesByField: $request->submissionFiles()
+        );
+
+        return ApiResponse::updated(new TaskServiceSubmissionResource($submission));
     }
 
     private function task(int $id): Task
@@ -49,6 +85,17 @@ class WorkerTaskController extends Controller
         }
 
         return $task;
+    }
+
+    private function taskService(int $id): TaskService
+    {
+        $taskService = TaskService::query()->with(['service.translations', 'products'])->find($id);
+
+        if (! $taskService) {
+            throw new ModelNotFoundException(__('api.not_found'));
+        }
+
+        return $taskService;
     }
 
     private function worker(Request $request): Worker

@@ -18,4 +18,6 @@ interface TaskRepositoryInterface
     public function delete(Task $task): void;
 
     public function availableNearWorker(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): LengthAwarePaginator;
+
+    public function assignedToWorker(int $workerId, array $filters = [], array $relations = []): LengthAwarePaginator;
 }

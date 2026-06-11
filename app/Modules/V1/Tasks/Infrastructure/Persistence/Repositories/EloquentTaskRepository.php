@@ -71,6 +71,20 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->paginate(request('per_page', 15));
     }
 
+    public function assignedToWorker(int $workerId, array $filters = [], array $relations = []): LengthAwarePaginator
+    {
+        return Task::query()
+            ->where('assigned_worker_id', $workerId)
+            ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when(($filters['status'] ?? null) === null && ($filters['statuses'] ?? []) !== [], fn (Builder $query) => $query->whereIn('status', $filters['statuses']))
+            ->when($filters['date_from'] ?? null, fn (Builder $query, string $dateFrom) => $query->whereDate('date', '>=', $dateFrom))
+            ->when($filters['date_to'] ?? null, fn (Builder $query, string $dateTo) => $query->whereDate('date', '<=', $dateTo))
+            ->when($relations, fn (Builder $query) => $query->with($relations))
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->paginate(request('per_page', 15));
+    }
+
     private function haversineSql(): string
     {
         return sprintf(
@@ -85,6 +99,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->when($filters['company_id'] ?? null, fn (Builder $query, int $companyId) => $query->where('company_id', $companyId))
             ->whereNull('company_deleted_at')
             ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when(($filters['status'] ?? null) === null && ($filters['statuses'] ?? []) !== [], fn (Builder $query) => $query->whereIn('status', $filters['statuses']))
             ->when($filters['payment_status'] ?? null, fn (Builder $query, string $paymentStatus) => $query->where('payment_status', $paymentStatus))
             ->when($filters['date_from'] ?? null, fn (Builder $query, string $dateFrom) => $query->whereDate('date', '>=', $dateFrom))
             ->when($filters['date_to'] ?? null, fn (Builder $query, string $dateTo) => $query->whereDate('date', '<=', $dateTo))

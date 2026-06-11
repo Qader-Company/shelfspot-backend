@@ -13,7 +13,9 @@ Route::middleware('abilities:'.PortalTypeEnum::WORKER->value.','.TokenTypeEnum::
         });
 
         Route::controller(WorkerTaskController::class)->group(function () {
+            Route::get('/my', 'mine');
             Route::post('/{id}/accept', 'accept');
             Route::post('/{id}/start', 'start');
+            Route::post('/{id}/services/{serviceId}/submission', 'submitService');
         });
     });

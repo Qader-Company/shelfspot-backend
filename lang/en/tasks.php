@@ -15,5 +15,8 @@ return [
         'minimum_execution_time' => 'The service execution time must be at least :minutes minutes.',
         'required_file' => 'This service requires the requested file upload.',
         'product_not_in_company' => 'The selected product does not belong to the current company.',
+        'service_not_in_task' => 'This service does not belong to the selected task.',
+        'submit_in_progress_only' => 'Task services can only be submitted after the task starts.',
+        'submitted_product_not_in_task_service' => 'The submitted product is not part of this task service.',
     ],
 ];

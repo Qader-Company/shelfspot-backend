@@ -15,5 +15,8 @@ return [
         'minimum_execution_time' => 'يجب ألا يقل وقت تنفيذ الخدمة عن :minutes دقيقة.',
         'required_file' => 'هذه الخدمة تتطلب رفع الملف المطلوب.',
         'product_not_in_company' => 'المنتج المحدد لا يتبع الشركة الحالية.',
+        'service_not_in_task' => 'هذه الخدمة لا تتبع المهمة المحددة.',
+        'submit_in_progress_only' => 'لا يمكن تسليم خدمات المهمة إلا بعد بدء المهمة.',
+        'submitted_product_not_in_task_service' => 'المنتج المرسل ليس ضمن خدمة هذه المهمة.',
     ],
 ];

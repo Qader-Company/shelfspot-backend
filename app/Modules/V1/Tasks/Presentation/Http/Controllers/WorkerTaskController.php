@@ -4,6 +4,7 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Tasks\Application\UseCases\AcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
@@ -22,22 +23,17 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class WorkerTaskController extends Controller
 {
+    use Filterable;
     public function __construct(private readonly TaskRepositoryInterface $taskRepository)
     {
     }
 
     public function mine(Request $request)
     {
+        $filters = $this->acceptedFilters($request, ['status', 'date_from', 'date_to']);
         $tasks = $this->taskRepository->assignedToWorker(
             workerId: $this->worker($request)->id,
-            filters: array_merge($request->only(['status', 'date_from', 'date_to']), [
-                'statuses' => [
-                    TaskStatusEnum::ACCEPTED->value,
-                    TaskStatusEnum::IN_PROGRESS->value,
-                    TaskStatusEnum::WORKER_CANCELLED->value,
-                    TaskStatusEnum::COMPLETED->value,
-                ],
-            ]),
+            filters: $filters,
             relations: ['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker']
         );
 

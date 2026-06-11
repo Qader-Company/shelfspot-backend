@@ -2,7 +2,7 @@
 
 namespace App\Modules\V1\Tasks\Domain\Models;
 
-use App\Modules\V1\Companies\Domain\Models\Company;
+use App\Modules\Shared\Support\Traits\BelongsToCompany;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
@@ -44,7 +44,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Task extends Model
 {
-//    use Filterable;
+    use Filterable, BelongsToCompany;
 
     protected $casts = [
         'date' => 'date',
@@ -63,11 +63,6 @@ class Task extends Model
         'status' => TaskStatusEnum::class,
         'payment_status' => TaskPaymentStatusEnum::class,
     ];
-
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(Company::class);
-    }
 
     public function creator(): BelongsTo
     {

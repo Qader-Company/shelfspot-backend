@@ -31,7 +31,6 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return DB::transaction(function () use ($attributes) {
             $task = Task::create($attributes);
-
             return $task;
         });
     }
@@ -40,7 +39,6 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return DB::transaction(function () use ($task, $attributes) {
             $task->update($attributes);
-
             return $task;
         });
     }
@@ -52,15 +50,11 @@ class EloquentTaskRepository implements TaskRepositoryInterface
 
     public function availableNearWorker(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): LengthAwarePaginator
     {
-        $distanceSql = $this->haversineSql();
-
-        return Task::query()
-            ->with(['company'])
+        return $this->query(['company'], [], $filters)
             ->where('status', TaskStatusEnum::PENDING->value)
             ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
             ->when(isset($filters['execution_date']), fn (Builder $query) => $query->whereDate('date', $filters['execution_date']))
             ->whereNull('assigned_worker_id')
-            ->whereNull('company_deleted_at')
             ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
             ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
             ->select('tasks.*')
@@ -69,13 +63,9 @@ class EloquentTaskRepository implements TaskRepositoryInterface
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = []): LengthAwarePaginator
     {
-        return Task::query()
+        return
+            $this->query($relations, [], $filters)
             ->where('assigned_worker_id', $workerId)
-            ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
-            ->when(($filters['status'] ?? null) === null && ($filters['statuses'] ?? []) !== [], fn (Builder $query) => $query->whereIn('status', $filters['statuses']))
-            ->when($filters['date_from'] ?? null, fn (Builder $query, string $dateFrom) => $query->whereDate('date', '>=', $dateFrom))
-            ->when($filters['date_to'] ?? null, fn (Builder $query, string $dateTo) => $query->whereDate('date', '<=', $dateTo))
-            ->when($relations, fn (Builder $query) => $query->with($relations))
             ->orderByDesc('date')
             ->orderByDesc('id')
             ->paginate(request('per_page', 15));
@@ -92,13 +82,8 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     private function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder
     {
         return Task::query()
-            ->when($filters['company_id'] ?? null, fn (Builder $query, int $companyId) => $query->where('company_id', $companyId))
             ->whereNull('company_deleted_at')
-            ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
-            ->when(($filters['status'] ?? null) === null && ($filters['statuses'] ?? []) !== [], fn (Builder $query) => $query->whereIn('status', $filters['statuses']))
-            ->when($filters['payment_status'] ?? null, fn (Builder $query, string $paymentStatus) => $query->where('payment_status', $paymentStatus))
-            ->when($filters['date_from'] ?? null, fn (Builder $query, string $dateFrom) => $query->whereDate('date', '>=', $dateFrom))
-            ->when($filters['date_to'] ?? null, fn (Builder $query, string $dateTo) => $query->whereDate('date', '<=', $dateTo))
+            ->when($filters, fn (Builder $query) => $query->filter($filters))
             ->when($relations, fn (Builder $query) => $query->with($relations))
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
     }

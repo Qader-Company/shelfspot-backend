@@ -5,6 +5,7 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Controllers;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
+use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Tasks\Application\UseCases\CreateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 
 class CompanyTaskController extends Controller
 {
+    use Filterable;
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TenantContextInterface $tenantContext,
@@ -24,15 +26,11 @@ class CompanyTaskController extends Controller
 
     public function index(Request $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
-        $tasks = $this->taskRepository->getAll(
+        $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
+        $tasks = $this->taskRepository
+        ->getAll(
             relations: $createCompanyTaskUseCase->relations(),
-            filters: array_filter([
-                'company_id' => $this->tenantContext->getCompanyId(),
-                'status' => $request->query('status'),
-                'payment_status' => $request->query('payment_status'),
-                'date_from' => $request->query('date_from'),
-                'date_to' => $request->query('date_to'),
-            ], fn ($value) => $value !== null && $value !== '')
+            filters: $filters
         );
 
         return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));

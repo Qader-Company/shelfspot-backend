@@ -7,6 +7,7 @@ use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
+use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
@@ -25,6 +26,7 @@ class CreateCompanyTaskUseCase
         private readonly TenantContextInterface $tenantContext,
         private readonly ChargeTaskWalletUseCase $chargeTaskWalletUseCase,
         private readonly TaskStatusHistoryRecorder $statusHistoryRecorder,
+        private readonly TaskRepositoryInterface $taskRepository,
     ) {
     }
 
@@ -35,7 +37,7 @@ class CreateCompanyTaskUseCase
             $subtotal = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
             $estimatedDuration = collect($taskServices)->sum(fn (array $service) => (int) $service['execution_time_minutes']);
 
-            $task = Task::create([
+            $task = $this->taskRepository->create([
                 'company_id' => $this->tenantContext->getCompanyId(),
                 'date' => $data['date'],
                 'execution_time' => self::FIXED_EXECUTION_TIME,
@@ -85,21 +87,8 @@ class CreateCompanyTaskUseCase
                 meta: ['payment_status' => $task->payment_status?->value]
             );
 
-            return $task->load($this->relations());
+            return $task->load($this->taskRepository->relations());
         });
-    }
-
-    public function relations(): array
-    {
-        return [
-            'services.service.translations',
-            'services.products.product.media',
-            'services.products.product.brand.media',
-            'services.products.product.subBrand.media',
-            'services.products.product.category',
-            'services.products.product.subCategory',
-            'creator',
-        ];
     }
 
     private function createTaskServices(Task $task, array $taskServices): Collection

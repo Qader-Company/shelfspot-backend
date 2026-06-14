@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\V1\Tasks\Application\Validation;
+namespace App\Modules\V1\Tasks\Application\DTOs;
 
 use App\Modules\V1\Services\Domain\Models\Service;
 

@@ -2,7 +2,7 @@
 
 namespace App\Modules\V1\Tasks\Application\Validation\Strategies;
 
-use App\Modules\V1\Tasks\Application\Validation\TaskServiceValidationData;
+use App\Modules\V1\Tasks\Application\DTOs\TaskServiceValidationData;
 
 class SecondaryDisplayExecutionValidationStrategy extends AbstractTaskServiceValidationStrategy
 {

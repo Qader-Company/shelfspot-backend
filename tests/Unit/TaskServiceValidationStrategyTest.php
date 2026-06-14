@@ -4,9 +4,9 @@ namespace Tests\Unit;
 
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
+use App\Modules\V1\Tasks\Application\DTOs\TaskServiceValidationData;
 use App\Modules\V1\Tasks\Application\Validation\Strategies\FreshnessReportValidationStrategy;
 use App\Modules\V1\Tasks\Application\Validation\Strategies\SecondaryDisplayExecutionValidationStrategy;
-use App\Modules\V1\Tasks\Application\Validation\TaskServiceValidationData;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;

@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Domain\Repositories;
 
 use App\Modules\V1\Tasks\Domain\Models\Task;
+use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 interface TaskRepositoryInterface
@@ -17,7 +18,7 @@ interface TaskRepositoryInterface
 
     public function delete(Task $task): void;
 
-    public function availableNearWorker(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): LengthAwarePaginator;
+    public function TasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator;
 
-    public function assignedToWorker(int $workerId, array $filters = [], array $relations = []): LengthAwarePaginator;
+    public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator;
 }

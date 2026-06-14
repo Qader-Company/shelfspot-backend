@@ -7,6 +7,7 @@ use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
+use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -29,18 +30,14 @@ class EloquentTaskRepository implements TaskRepositoryInterface
 
     public function create(array $attributes): Task
     {
-        return DB::transaction(function () use ($attributes) {
-            $task = Task::create($attributes);
-            return $task;
-        });
+        $task = Task::create($attributes);
+        return $task;
     }
 
     public function update(Task $task, array $attributes): Task
     {
-        return DB::transaction(function () use ($task, $attributes) {
-            $task->update($attributes);
-            return $task;
-        });
+        $task->update($attributes);
+        return $task->refresh();
     }
 
     public function delete(Task $task): void
@@ -48,32 +45,36 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         $task->delete();
     }
 
-    public function availableNearWorker(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): LengthAwarePaginator
+    public function TasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator
     {
         $distanceSql = $this->haversineSql();
 
-        return $this->query(['company'], [], $filters)
-            ->where('status', TaskStatusEnum::PENDING->value)
-            ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
-            ->when(isset($filters['execution_date']), fn (Builder $query) => $query->whereDate('date', $filters['execution_date']))
-            ->whereNull('assigned_worker_id')
-            ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
-            ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
-            ->select('tasks.*')
-            ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
-            ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
-            ->orderBy('distance_km')
-            ->paginate(request('per_page', 15));
+        return $this->query(
+            relations: ['company', 'services'],
+            filters: $filters
+        )->where('status', TaskStatusEnum::PENDING->value)
+        ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
+        ->whereNull('assigned_worker_id')
+        ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
+        ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
+        ->select('tasks.*')
+        ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
+        ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
+        ->orderBy('distance_km')
+        ->cursorPaginate();
     }
 
-    public function assignedToWorker(int $workerId, array $filters = [], array $relations = []): LengthAwarePaginator
+    public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator
     {
-        return
-            $this->query($relations, [], $filters)
-            ->where('assigned_worker_id', $workerId)
-            ->orderByDesc('date')
-            ->orderByDesc('id')
-            ->paginate(request('per_page', 15));
+        $query = $this->query($relations, [], $filters)
+        ->where('assigned_worker_id', $workerId)
+        ->orderByDesc('date')
+        ->orderByDesc('id');
+
+        return match ($paginationType) {
+            'cursor' => $query->cursorPaginate(),
+            'paginate' => $query->paginate()
+        };
     }
 
     private function haversineSql(): string
@@ -84,12 +85,25 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         );
     }
 
-    private function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder
+    public function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder
     {
         return Task::query()
             ->whereNull('company_deleted_at')
             ->when($filters, fn (Builder $query) => $query->filter($filters))
             ->when($relations, fn (Builder $query) => $query->with($relations))
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
+    }
+
+    public function relations(): array
+    {
+        return [
+            'services.service.translations',
+            'services.products.product.media',
+            'services.products.product.brand.media',
+            'services.products.product.subBrand.media',
+            'services.products.product.category',
+            'services.products.product.subCategory',
+            'creator',
+        ];
     }
 }

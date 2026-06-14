@@ -8,11 +8,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('abilities:'.PortalTypeEnum::WORKER->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
     ->group(function () {
-        Route::controller(WorkerAccountController::class)->group(function () {
-            Route::get('/nearby', 'nearbyTasks');
-        });
-
         Route::controller(WorkerTaskController::class)->group(function () {
+            Route::get('/nearby', 'nearbyTasks');
             Route::get('/my', 'mine');
             Route::post('/{id}/accept', 'accept');
             Route::post('/{id}/start', 'start');

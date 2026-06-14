@@ -2,13 +2,12 @@
 
 namespace App\Modules\V1\Tasks\Application\Validation\Strategies;
 
-use App\Modules\V1\Tasks\Application\Validation\TaskServiceValidationData;
-use App\Modules\V1\Tasks\Application\Validation\TaskServiceValidationStrategyInterface;
+use App\Modules\V1\Tasks\Application\DTOs\TaskServiceValidationData;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator as ValidatorFactory;
 use Illuminate\Validation\Validator;
 
-abstract class AbstractTaskServiceValidationStrategy implements TaskServiceValidationStrategyInterface
+abstract class AbstractTaskServiceValidationStrategy
 {
     public function validate(TaskServiceValidationData $data, Validator $validator): void
     {

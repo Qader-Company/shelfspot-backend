@@ -29,7 +29,7 @@ class CompanyTaskController extends Controller
         $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
         $tasks = $this->taskRepository
         ->getAll(
-            relations: $createCompanyTaskUseCase->relations(),
+            relations: $this->taskRepository->relations(),
             filters: $filters
         );
 
@@ -38,21 +38,29 @@ class CompanyTaskController extends Controller
 
     public function store(StoreCompanyTaskRequest $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
-        $task = $createCompanyTaskUseCase->execute($request->validated(), $request->allFiles());
+        $createCompanyTaskUseCase->execute(
+            $request->validated(),
+            $request->allFiles()
+        );
 
         return ApiResponse::message(__('api.created'));
     }
 
-    public function show(int $id, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
+    public function show(int $id)
     {
-        $task = $this->getCompanyTask($id, $createCompanyTaskUseCase->relations());
-
+        $task = $this->getCompanyTask(
+            $id,
+            $this->taskRepository->relations()
+        );
         return ApiResponse::success(new TaskResource($task));
     }
 
     public function destroy(int $id, DeleteCompanyTaskUseCase $deleteCompanyTaskUseCase)
     {
-        $deleteCompanyTaskUseCase->execute($this->getCompanyTask($id), auth()->user());
+        $deleteCompanyTaskUseCase->execute(
+            $this->getCompanyTask($id),
+            auth()->user()
+        );
 
         return ApiResponse::deleted();
     }

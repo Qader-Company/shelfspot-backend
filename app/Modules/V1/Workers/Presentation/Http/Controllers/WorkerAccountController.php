@@ -4,13 +4,9 @@ namespace App\Modules\V1\Workers\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
-use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
-use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
-use App\Modules\V1\Workers\Presentation\Http\Requests\NearbyTaskRequest;
 use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerLocationRequest;
 use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
@@ -24,8 +20,6 @@ class WorkerAccountController extends Controller
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
         private readonly UserRepositoryInterface $userRepository,
-        private readonly TaskRepositoryInterface $taskRepository,
-        private readonly GeoDistanceCalculator $geoDistanceCalculator,
     ) {
     }
 
@@ -73,36 +67,6 @@ class WorkerAccountController extends Controller
         ]);
 
         return ApiResponse::updated(new WorkerResource($worker->refresh()->load('user')));
-    }
-
-    public function nearbyTasks(NearbyTaskRequest $request)
-    {
-        $worker = $this->worker($request);
-
-        if ($worker->last_latitude === null || $worker->last_longitude === null) {
-            throw new AccessDeniedHttpException(__('api.location_required'));
-        }
-
-        $latitude = (float) $worker->last_latitude;
-        $longitude = (float) $worker->last_longitude;
-        $radius = $request->radiusKilometers();
-
-        $tasks = $this->taskRepository->availableNearWorker(
-            latitude: $latitude,
-            longitude: $longitude,
-            radiusKilometers: $radius,
-            boundingBox: $this->geoDistanceCalculator->boundingBox($latitude, $longitude, $radius),
-            filters: Arr::only($request->validated(), ['execution_date'])
-        );
-
-        return ApiResponse::success(
-            [
-                'radius_km' => $radius ?? NearbyTaskRequest::DEFAULT_RADIUS_KM,
-                'tasks' => TaskResource::collection($tasks)
-                    ->response()
-                    ->getData(true)
-            ]
-        );
     }
 
     private function worker(Request $request): Worker

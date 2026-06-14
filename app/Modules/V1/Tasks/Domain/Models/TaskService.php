@@ -16,7 +16,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
     'task_id',
     'service_id',
     'execution_instructions',
-    'request_details',
+    'form_data',
     'unit_price',
     'status',
     'sort_order',
@@ -26,7 +26,7 @@ class TaskService extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $casts = [
-        'request_details' => 'array',
+        'form_data' => 'array',
         'unit_price' => 'decimal:2',
         'status' => TaskServiceStatusEnum::class,
     ];

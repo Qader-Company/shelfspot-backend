@@ -13,15 +13,17 @@ use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\NearbyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StartTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\SubmitTaskServiceRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\WorkerCancelTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskServiceSubmissionResource;
+use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class WorkerTaskController extends Controller
@@ -31,23 +33,61 @@ class WorkerTaskController extends Controller
     {
     }
 
-    public function mine(Request $request)
+    public function nearbyTasks(NearbyTaskRequest $request, GeoDistanceCalculator $geoDistanceCalculator,)
     {
-        $filters = $this->acceptedFilters($request, ['status', 'date_from', 'date_to']);
-        $tasks = $this->taskRepository->assignedToWorker(
-            workerId: $this->worker($request)->id,
-            filters: $filters,
-            relations: ['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker']
+        $worker = $this->worker($request);
+        $latitude = $worker->last_latitude;
+        $longitude = $worker->last_longitude;
+
+        if ($latitude === null || $longitude === null) {
+            throw new AccessDeniedHttpException(__('api.location_required'));
+        }
+
+        $radius = $request->radiusKilometers();
+
+        $tasks = $this->taskRepository->TasksByCoordinates(
+            latitude: $latitude,
+            longitude: $longitude,
+            radiusKilometers: $radius,
+            boundingBox: $geoDistanceCalculator->boundingBox($latitude, $longitude, $radius),
+            filters: Arr::only($request->validated(), ['execution_date'])
         );
 
-        return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));
+        return ApiResponse::success(
+            [
+                'radius_km' => $radius ?? NearbyTaskRequest::DEFAULT_RADIUS_KM,
+                'tasks' => TaskResource::collection($tasks)
+                    ->response()
+                    ->getData(true)
+            ]
+        );
+    }
+
+    public function mine(Request $request)
+    {
+        $tasks = $this->taskRepository->assignedToWorker(
+            workerId: $this->worker($request)->id,
+            filters: $this->acceptedFilters($request, ['status', 'date_from', 'date_to']),
+            relations: ['services.service.translations', 'assignedWorker']
+        );
+
+        return ApiResponse::success(
+            TaskResource::collection($tasks)
+                ->response()
+                ->getData(true)
+        );
     }
 
     public function accept(int $id, Request $request, AcceptTaskUseCase $acceptTaskUseCase)
     {
-        $task = $acceptTaskUseCase->execute($this->task($id), $this->worker($request));
+        $task = $acceptTaskUseCase->execute(
+            $this->task($id),
+            $this->worker($request)
+        );
 
-        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+        return ApiResponse::updated(
+            new TaskResource($task)
+        );
     }
 
     public function start(int $id, StartTaskRequest $request, StartTaskUseCase $startTaskUseCase)
@@ -93,9 +133,9 @@ class WorkerTaskController extends Controller
         return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
     }
 
-    private function task(int $id): Task
+    private function task(int $id, array $relations = []): Task
     {
-        $task = $this->taskRepository->getById($id, ['services.service.translations', 'assignedWorker']);
+        $task = $this->taskRepository->getById($id, $relations);
 
         if (! $task) {
             throw new ModelNotFoundException(__('api.not_found'));

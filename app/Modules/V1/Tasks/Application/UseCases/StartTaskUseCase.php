@@ -2,8 +2,10 @@
 
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
+use App\Events\TaskStatusUpdated;
 use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Domain\Models\Task;
+use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use App\Modules\V1\Workers\Domain\Models\Worker;
@@ -17,6 +19,7 @@ class StartTaskUseCase
     public function __construct(
         private readonly GeoDistanceCalculator $geoDistanceCalculator,
         private readonly TaskStatusHistoryRecorder $statusHistoryRecorder,
+        private readonly TaskRepositoryInterface $taskRepository,
     ) {
     }
 
@@ -24,20 +27,12 @@ class StartTaskUseCase
     {
         return DB::transaction(function () use ($task, $worker, $latitude, $longitude) {
             /** @var Task $lockedTask */
-            $lockedTask = Task::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
-            $fromStatus = $lockedTask->status;
+            $lockedTask = $this->taskRepository->query()
+                ->whereKey($task->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            if ($lockedTask->status !== TaskStatusEnum::ACCEPTED) {
-                throw ValidationException::withMessages(['task' => __('tasks.validation.start_accepted_only')]);
-            }
-
-            if ((int) $lockedTask->assigned_worker_id !== (int) $worker->id) {
-                throw ValidationException::withMessages(['task' => __('tasks.validation.worker_not_assigned')]);
-            }
-
-            if ($lockedTask->start_deadline_at !== null && now()->greaterThan($lockedTask->start_deadline_at)) {
-                throw ValidationException::withMessages(['task' => __('tasks.validation.start_deadline_expired')]);
-            }
+            $this->ensureTaskIsAvailableToBeStarted($lockedTask, $worker->id);
 
             $distance = $this->geoDistanceCalculator->haversineKilometers(
                 fromLatitude: $latitude,
@@ -50,17 +45,18 @@ class StartTaskUseCase
                 throw ValidationException::withMessages(['task' => __('tasks.validation.start_outside_geofence')]);
             }
 
+            $fromStatus = $lockedTask->status;
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::IN_PROGRESS,
                 'started_at' => now(),
             ])->save();
 
-            $this->statusHistoryRecorder->record(
-                task: $lockedTask,
-                fromStatus: $fromStatus,
-                toStatus: TaskStatusEnum::IN_PROGRESS,
-                actor: $worker->user,
-                meta: [
+            TaskStatusUpdated::dispatch(
+                $lockedTask,
+                $fromStatus,
+                TaskStatusEnum::IN_PROGRESS,
+                $worker,
+                [
                     'worker_id' => $worker->id,
                     'latitude' => $latitude,
                     'longitude' => $longitude,
@@ -71,5 +67,20 @@ class StartTaskUseCase
 
             return $lockedTask->refresh();
         });
+    }
+
+    private function ensureTaskIsAvailableToBeStarted(Task $lockedTask, $workerId): void
+    {
+        if ($lockedTask->status !== TaskStatusEnum::ACCEPTED) {
+            throw ValidationException::withMessages(['task' => __('tasks.validation.start_accepted_only')]);
+        }
+
+        if ((int) $lockedTask->assigned_worker_id !== (int) $workerId) {
+            throw ValidationException::withMessages(['task' => __('tasks.validation.worker_not_assigned')]);
+        }
+
+        if ($lockedTask->start_deadline_at !== null && now()->greaterThan($lockedTask->start_deadline_at)) {
+            throw ValidationException::withMessages(['task' => __('tasks.validation.start_deadline_expired')]);
+        }
     }
 }

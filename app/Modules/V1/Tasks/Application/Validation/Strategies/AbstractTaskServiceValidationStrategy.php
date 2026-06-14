@@ -3,8 +3,9 @@
 namespace App\Modules\V1\Tasks\Application\Validation\Strategies;
 
 use App\Modules\V1\Tasks\Application\DTOs\TaskServiceValidationData;
-use Illuminate\Support\Arr;
+use App\Modules\V1\Tasks\Application\Validation\DynamicFormValidator;
 use Illuminate\Support\Facades\Validator as ValidatorFactory;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 
 abstract class AbstractTaskServiceValidationStrategy
@@ -80,15 +81,17 @@ abstract class AbstractTaskServiceValidationStrategy
 
     private function validateRequiredFiles(TaskServiceValidationData $data, Validator $validator): void
     {
-        foreach ($this->fileFields($data) as $field => $definition) {
-            if (! ($definition['required'] ?? false)) {
-                continue;
-            }
-
-            $files = array_filter(Arr::wrap(Arr::get($data->filesByField, $field)));
-
-            if (count($files) < ($definition['min_items'] ?? 1)) {
-                $validator->errors()->add("services.{$data->index}.request_files.$field", __('tasks.validation.required_file'));
+        try {
+            app(DynamicFormValidator::class)->validateFiles(
+                $this->fileFields($data),
+                $data->filesByField,
+                "services.{$data->index}.request_files",
+            );
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $field => $messages) {
+                foreach ($messages as $message) {
+                    $validator->errors()->add($field, $message);
+                }
             }
         }
     }

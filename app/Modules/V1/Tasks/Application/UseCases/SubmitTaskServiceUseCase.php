@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
+use App\Modules\V1\Tasks\Application\Validation\DynamicFormValidator;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceSubmission;
@@ -12,11 +13,14 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class SubmitTaskServiceUseCase
 {
+    public function __construct(private readonly DynamicFormValidator $dynamicFormValidator)
+    {
+    }
+
     public function execute(Task $task, TaskService $taskService, Worker $worker, array $formData, array $filesByField = []): TaskServiceSubmission
     {
         return DB::transaction(function () use ($task, $taskService, $worker, $formData, $filesByField) {
@@ -73,73 +77,16 @@ class SubmitTaskServiceUseCase
     {
         $service = $taskService->service;
         $fields = $service?->key?->submissionForm()['fields'] ?? [];
-        $rules = [];
 
-        foreach ($fields as $field => $definition) {
-            $type = (string) ($definition['type'] ?? 'string');
+        $this->dynamicFormValidator->validateFiles($fields, $filesByField, 'submission_files');
 
-            if (str_contains($type, 'file')) {
-                $this->validateFileField($field, $definition, $filesByField);
-                continue;
-            }
-
-            $rules[$field] = $this->rulesForField($definition);
-
-            if ($type === 'array' && isset($definition['item_fields'])) {
-                foreach ($definition['item_fields'] as $itemField => $itemDefinition) {
-                    $rules["$field.*.$itemField"] = $this->rulesForField($itemDefinition);
-                }
-            }
-        }
-
-        $validator = Validator::make($formData, $rules);
+        $validator = Validator::make($formData, $this->dynamicFormValidator->rulesForFields($fields));
 
         $validator->after(function ($validator) use ($taskService, $formData, $fields) {
             $this->validateSubmittedProductsBelongToTaskService($validator, $taskService, $formData, $fields);
         });
 
         $validator->validate();
-    }
-
-    private function rulesForField(array $definition): array
-    {
-        $rules = [($definition['required'] ?? false) ? 'required' : 'nullable'];
-        $type = (string) ($definition['type'] ?? 'string');
-
-        match ($type) {
-            'array' => $rules[] = 'array',
-            'integer' => $rules[] = 'integer',
-            'numeric' => $rules[] = 'numeric',
-            'boolean' => $rules[] = 'boolean',
-            default => $rules[] = 'string',
-        };
-
-        if ($type === 'enum' && isset($definition['values'])) {
-            $rules = [($definition['required'] ?? false) ? 'required' : 'nullable', Rule::in($definition['values'])];
-        }
-
-        if (isset($definition['max']) && in_array($type, ['string', 'array'], true)) {
-            $rules[] = 'max:'.$definition['max'];
-        }
-
-        if (isset($definition['min_items']) && $type === 'array') {
-            $rules[] = 'min:'.$definition['min_items'];
-        }
-
-        return $rules;
-    }
-
-    private function validateFileField(string $field, array $definition, array $filesByField): void
-    {
-        if (! ($definition['required'] ?? false)) {
-            return;
-        }
-
-        $files = array_filter(Arr::wrap($filesByField[$field] ?? null));
-
-        if (count($files) < (int) ($definition['min_items'] ?? 1)) {
-            throw ValidationException::withMessages(["submission_files.$field" => __('tasks.validation.required_file')]);
-        }
     }
 
     private function validateSubmittedProductsBelongToTaskService($validator, TaskService $taskService, array $formData, array $fields): void

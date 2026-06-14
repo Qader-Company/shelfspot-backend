@@ -6,14 +6,17 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Tasks\Application\UseCases\AcceptTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StartTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\SubmitTaskServiceRequest;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\WorkerCancelTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskServiceSubmissionResource;
 use App\Modules\V1\Workers\Domain\Models\Worker;
@@ -70,6 +73,24 @@ class WorkerTaskController extends Controller
         );
 
         return ApiResponse::updated(new TaskServiceSubmissionResource($submission));
+    }
+
+    public function complete(int $id, Request $request, CompleteTaskUseCase $completeTaskUseCase)
+    {
+        $task = $completeTaskUseCase->execute($this->task($id), $this->worker($request));
+
+        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+    }
+
+    public function cancel(int $id, WorkerCancelTaskRequest $request, WorkerCancelTaskUseCase $workerCancelTaskUseCase)
+    {
+        $task = $workerCancelTaskUseCase->execute(
+            task: $this->task($id),
+            worker: $this->worker($request),
+            reason: $request->validated('reason')
+        );
+
+        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
     }
 
     private function task(int $id): Task

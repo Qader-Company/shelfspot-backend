@@ -12,6 +12,7 @@ class TaskResource extends JsonResource
         $userType = $request->user()?->type;
         $userTypeValue = $userType instanceof \BackedEnum ? $userType->value : $userType;
         $isWorker = $userTypeValue === 'worker';
+        $isCompany = $userTypeValue === 'company';
 
         return [
             'id' => $this->id,
@@ -28,7 +29,7 @@ class TaskResource extends JsonResource
             'subtotal' => $this->subtotal,
             'total_price' => $this->total_price,
             'notes' => $this->notes,
-            'status' => $this->status->value,
+            'status' => $isCompany ? $this->companyFacingStatus() : $this->status->value,
             'payment_status' => $this->payment_status->value,
             'created_by' => $this->whenLoaded('creator', $this->creator->name),
             'expires_at' => $this->expires_at?->toDateTimeString(),
@@ -45,5 +46,15 @@ class TaskResource extends JsonResource
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
+    }
+
+    private function companyFacingStatus(): string
+    {
+        return match ($this->status->value) {
+            'accepted', 'worker_cancelled' => 'in_progress',
+            'company_deleted' => 'pending',
+            'admin_deleted' => 'failed',
+            default => $this->status->value,
+        };
     }
 }

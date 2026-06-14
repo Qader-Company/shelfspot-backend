@@ -13,8 +13,12 @@ use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories\EloquentTaskRepository;
 use App\Modules\V1\Tasks\Application\UseCases\AcceptTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\AdminReassignTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
@@ -180,6 +184,133 @@ class TaskLifecycleUseCaseTest extends TestCase
             'worker_id' => $worker->id,
             'status' => 'completed',
         ]);
+    }
+
+
+    public function test_worker_completes_task_after_all_services_are_completed(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $startedTask = app(StartTaskUseCase::class)->execute(
+            app(AcceptTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            30.0444,
+            31.2357
+        );
+        [$taskService] = $this->taskServiceWithProduct($startedTask);
+        $taskService->forceFill(['status' => TaskServiceStatusEnum::COMPLETED])->save();
+
+        $completedTask = app(CompleteTaskUseCase::class)->execute($startedTask, $worker);
+
+        $this->assertSame(TaskStatusEnum::COMPLETED, $completedTask->status);
+        $this->assertTrue($completedTask->completed_at->equalTo(now()));
+        $this->assertDatabaseHas('task_status_histories', [
+            'task_id' => $task->id,
+            'from_status' => TaskStatusEnum::IN_PROGRESS->value,
+            'to_status' => TaskStatusEnum::COMPLETED->value,
+            'changed_by' => $worker->user_id,
+        ]);
+    }
+
+    public function test_worker_cannot_complete_task_before_services_are_completed(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $startedTask = app(StartTaskUseCase::class)->execute(
+            app(AcceptTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            30.0444,
+            31.2357
+        );
+        $this->taskServiceWithProduct($startedTask);
+
+        $this->expectException(ValidationException::class);
+
+        app(CompleteTaskUseCase::class)->execute($startedTask, $worker);
+    }
+
+    public function test_worker_cancel_records_internal_reason_and_history(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+
+        $cancelledTask = app(WorkerCancelTaskUseCase::class)->execute($acceptedTask, $worker, 'Vehicle issue');
+
+        $this->assertSame(TaskStatusEnum::WORKER_CANCELLED, $cancelledTask->status);
+        $this->assertSame('Vehicle issue', $cancelledTask->worker_cancel_reason);
+        $this->assertTrue($cancelledTask->worker_cancelled_at->equalTo(now()));
+        $this->assertDatabaseHas('task_status_histories', [
+            'task_id' => $task->id,
+            'from_status' => TaskStatusEnum::ACCEPTED->value,
+            'to_status' => TaskStatusEnum::WORKER_CANCELLED->value,
+            'changed_by' => $worker->user_id,
+        ]);
+    }
+
+    public function test_admin_reassigns_cancelled_task_to_available_worker(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $cancelledTask = app(WorkerCancelTaskUseCase::class)->execute(
+            app(AcceptTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            'Emergency'
+        );
+        $newWorker = Worker::query()->create([
+            'user_id' => User::factory()->create(['type' => PortalTypeEnum::WORKER])->id,
+            'phone' => fake()->unique()->numerify('012########'),
+            'is_active' => true,
+        ]);
+        $admin = User::factory()->create(['type' => PortalTypeEnum::ADMIN]);
+
+        $reassignedTask = app(AdminReassignTaskUseCase::class)->execute($cancelledTask, $newWorker, $admin);
+
+        $this->assertSame(TaskStatusEnum::ACCEPTED, $reassignedTask->status);
+        $this->assertSame($newWorker->id, $reassignedTask->assigned_worker_id);
+        $this->assertNull($reassignedTask->worker_cancel_reason);
+        $this->assertDatabaseHas('task_status_histories', [
+            'task_id' => $task->id,
+            'from_status' => TaskStatusEnum::WORKER_CANCELLED->value,
+            'to_status' => TaskStatusEnum::ACCEPTED->value,
+            'changed_by' => $admin->id,
+        ]);
+    }
+
+    public function test_admin_cannot_reassign_to_worker_with_in_progress_task(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $cancelledTask = app(WorkerCancelTaskUseCase::class)->execute(
+            app(AcceptTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            'Emergency'
+        );
+        [$busyTask, $busyWorker] = $this->pendingTaskAndWorker(['status' => TaskStatusEnum::IN_PROGRESS]);
+        $busyTask->forceFill(['assigned_worker_id' => $busyWorker->id])->save();
+
+        $this->expectException(ValidationException::class);
+
+        app(AdminReassignTaskUseCase::class)->execute($cancelledTask, $busyWorker, null);
+    }
+
+    public function test_expired_pending_and_accepted_tasks_are_failed(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$pendingTask] = $this->pendingTaskAndWorker(['date' => '2026-06-09']);
+        [$acceptedTask, $worker] = $this->pendingTaskAndWorker(['date' => '2026-06-10']);
+        $acceptedTask->forceFill([
+            'status' => TaskStatusEnum::ACCEPTED,
+            'assigned_worker_id' => $worker->id,
+            'accepted_at' => now()->subMinutes(20),
+            'start_deadline_at' => now()->subMinutes(5),
+        ])->save();
+
+        $failed = app(FailExpiredTaskUseCase::class)->execute();
+
+        $this->assertSame(2, $failed);
+        $this->assertSame(TaskStatusEnum::FAILED, $pendingTask->refresh()->status);
+        $this->assertSame(TaskStatusEnum::FAILED, $acceptedTask->refresh()->status);
     }
 
     public function test_worker_cannot_submit_task_service_before_task_started(): void

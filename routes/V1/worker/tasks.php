@@ -17,5 +17,7 @@ Route::middleware('abilities:'.PortalTypeEnum::WORKER->value.','.TokenTypeEnum::
             Route::post('/{id}/accept', 'accept');
             Route::post('/{id}/start', 'start');
             Route::post('/{id}/services/{serviceId}/submission', 'submitService');
+            Route::post('/{id}/complete', 'complete');
+            Route::post('/{id}/cancel', 'cancel');
         });
     });

@@ -18,5 +18,12 @@ return [
         'service_not_in_task' => 'هذه الخدمة لا تتبع المهمة المحددة.',
         'submit_in_progress_only' => 'لا يمكن تسليم خدمات المهمة إلا بعد بدء المهمة.',
         'submitted_product_not_in_task_service' => 'المنتج المرسل ليس ضمن خدمة هذه المهمة.',
+        'complete_in_progress_only' => 'لا يمكن إكمال المهمة إلا بعد أن تكون قيد التنفيذ.',
+        'complete_requires_services' => 'يجب أن تحتوي المهمة على خدمات قبل إكمالها.',
+        'complete_requires_completed_services' => 'يجب إكمال كل خدمات المهمة قبل إكمال المهمة.',
+        'cancel_active_only' => 'لا يمكن للعامل إلغاء المهمة إلا بعد قبولها أو أثناء تنفيذها.',
+        'reassign_cancelled_only' => 'لا يمكن إعادة تعيين المهمة إلا إذا كانت ملغاة من العامل أو مقبولة.',
+        'reassign_active_worker_only' => 'لا يمكن إعادة تعيين المهمة إلا لعامل نشط.',
+        'reassign_worker_busy' => 'هذا العامل لديه مهمة قيد التنفيذ بالفعل.',
     ],
 ];

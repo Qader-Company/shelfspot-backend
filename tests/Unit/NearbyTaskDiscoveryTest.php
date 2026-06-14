@@ -51,6 +51,7 @@ class NearbyTaskDiscoveryTest extends TestCase
         $this->task($company, ['payment_status' => TaskPaymentStatusEnum::PENDING]);
         $this->task($company, ['assigned_worker_id' => $assignedWorker->id]);
         $this->task($company, ['company_deleted_at' => now()]);
+        $this->task($company, ['latitude' => 30.084, 'longitude' => 31.275]);
 
         $latitude = 30.0444;
         $longitude = 31.2357;

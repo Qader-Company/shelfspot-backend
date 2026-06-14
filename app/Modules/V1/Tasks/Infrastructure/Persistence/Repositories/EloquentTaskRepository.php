@@ -50,6 +50,8 @@ class EloquentTaskRepository implements TaskRepositoryInterface
 
     public function availableNearWorker(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): LengthAwarePaginator
     {
+        $distanceSql = $this->haversineSql();
+
         return $this->query(['company'], [], $filters)
             ->where('status', TaskStatusEnum::PENDING->value)
             ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
@@ -58,6 +60,9 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
             ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
             ->select('tasks.*')
+            ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
+            ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
+            ->orderBy('distance_km')
             ->paginate(request('per_page', 15));
     }
 

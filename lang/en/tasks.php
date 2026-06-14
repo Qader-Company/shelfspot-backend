@@ -18,5 +18,12 @@ return [
         'service_not_in_task' => 'This service does not belong to the selected task.',
         'submit_in_progress_only' => 'Task services can only be submitted after the task starts.',
         'submitted_product_not_in_task_service' => 'The submitted product is not part of this task service.',
+        'complete_in_progress_only' => 'Tasks can only be completed after they are in progress.',
+        'complete_requires_services' => 'A task must have services before it can be completed.',
+        'complete_requires_completed_services' => 'All task services must be completed before completing the task.',
+        'cancel_active_only' => 'Only accepted or in-progress tasks can be cancelled by the assigned worker.',
+        'reassign_cancelled_only' => 'Only worker-cancelled or accepted tasks can be reassigned.',
+        'reassign_active_worker_only' => 'Tasks can only be reassigned to an active worker.',
+        'reassign_worker_busy' => 'This worker already has an in-progress task.',
     ],
 ];

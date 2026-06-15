@@ -2,7 +2,8 @@
 
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
-use App\Modules\V1\Companies\Presentation\Http\Resources\CompanyResource;
+
+use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,7 +18,13 @@ class TaskResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'company_id' => new CompanyResource($this->whenLoaded('company')),
+            'company_id' => $this->company_id,
+            'company' => $this->whenLoaded('company', fn () => [
+                'id' => $this->company?->id,
+                'name' => $this->company?->name,
+                'email' => $this->company?->email,
+                'phone' => $this->company?->phone,
+            ]),
             'date' => $this->date?->toDateString(),
             'execution_time' => $this->execution_time?->format('H:i:s'),
             'estimated_duration_minutes' => $this->estimated_duration_minutes,
@@ -41,7 +48,8 @@ class TaskResource extends JsonResource
             'completed_at' => $this->completed_at?->toDateTimeString(),
             'declined_at' => $this->declined_at?->toDateTimeString(),
             'decline_reason' => $this->decline_reason,
-            'assigned_worker_id' => $this->when($isWorker, $this->assigned_worker_id),
+            'assigned_worker_id' => $this->when($isWorker || $this->relationLoaded('assignedWorker'), $this->assigned_worker_id),
+            'assigned_worker' => new WorkerResource($this->whenLoaded('assignedWorker')),
             'distance_km' => $this->when(isset($this->distance_km), fn () => round((float) $this->distance_km, 3)),
             'services' => TaskServiceResource::collection($this->whenLoaded('services')),
             'created_at' => $this->created_at?->toDateTimeString(),

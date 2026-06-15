@@ -24,6 +24,21 @@ class TaskFilter extends ModelFilter
         return $this->where('payment_status', $payment_status);
     }
 
+    public function companyId($companyId)
+    {
+        return $this->where('company_id', $companyId);
+    }
+
+    public function assignedWorkerId($workerId)
+    {
+        return $this->where('assigned_worker_id', $workerId);
+    }
+
+    public function createdBy($userId)
+    {
+        return $this->where('created_by', $userId);
+    }
+
     public function dateFrom($date_from)
     {
         return $this->whereDate('date', '>=', $date_from);

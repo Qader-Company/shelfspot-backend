@@ -79,6 +79,40 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     }
 
 
+    public function assignedToWorkerForAdmin(int $workerId, array $filters = [], array $relations = []): Collection
+    {
+        $queryFilters = collect($filters)->except('not_in_progress')->all();
+
+        return $this->query($relations, [], $queryFilters)
+            ->where('assigned_worker_id', $workerId)
+            ->when(
+                (bool) ($filters['not_in_progress'] ?? false),
+                fn (Builder $query) => $query->where('status', '!=', TaskStatusEnum::IN_PROGRESS->value)
+            )
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    public function countAssignedToWorkerByStatus(int $workerId, TaskStatusEnum $status): int
+    {
+        return $this->query()
+            ->where('assigned_worker_id', $workerId)
+            ->where('status', $status->value)
+            ->count();
+    }
+
+    public function inProgressAssignedToWorker(int $workerId, array $relations = []): ?Task
+    {
+        return $this->query($relations)
+            ->where('assigned_worker_id', $workerId)
+            ->where('status', TaskStatusEnum::IN_PROGRESS->value)
+            ->latest('started_at')
+            ->latest('id')
+            ->first();
+    }
+
+
     public function latestForCompany(int $companyId, int $limit = 15, array $relations = []): Collection
     {
         return $this->query($relations)

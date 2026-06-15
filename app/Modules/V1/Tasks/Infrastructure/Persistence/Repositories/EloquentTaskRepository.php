@@ -131,6 +131,8 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             'services.products.product.category',
             'services.products.product.subCategory',
             'creator',
+            'company',
+            'assignedWorker.user',
         ];
     }
 }

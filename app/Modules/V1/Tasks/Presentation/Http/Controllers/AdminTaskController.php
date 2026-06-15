@@ -9,8 +9,11 @@ use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminReassignTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminTaskIndexRequest;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\AvailableTaskWorkersRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
+use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
+use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AdminTaskController extends Controller
@@ -41,6 +44,24 @@ class AdminTaskController extends Controller
         return ApiResponse::success(new TaskResource(
             $this->task($id, $this->taskRepository->relations())
         ));
+    }
+
+    public function availableWorkers(int $id, AvailableTaskWorkersRequest $request, GeoDistanceCalculator $geoDistanceCalculator)
+    {
+        $task = $this->task($id);
+
+        $radius = $request->radiusKilometers();
+        $workers = $this->workerRepository->availableNearTask(
+            latitude: (float) $task->latitude,
+            longitude: (float) $task->longitude,
+            radiusKilometers: $radius,
+            boundingBox: $geoDistanceCalculator->boundingBox((float) $task->latitude, (float) $task->longitude, $radius)
+        );
+
+        return ApiResponse::success([
+            'radius_km' => $radius,
+            'workers' => WorkerResource::collection($workers)->response()->getData(true),
+        ]);
     }
 
     public function reassign(int $id, AdminReassignTaskRequest $request, AdminReassignTaskUseCase $adminReassignTaskUseCase)

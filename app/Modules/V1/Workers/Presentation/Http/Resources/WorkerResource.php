@@ -27,6 +27,7 @@ class WorkerResource extends JsonResource
             'deleted_at' => $worker?->deleted_at?->toISOString(),
             'type' => $user?->type?->value,
             'is_active' => (bool) $worker?->is_active,
+            'distance_km' => $this->when(isset($worker->distance_km), fn () => round((float) $worker->distance_km, 3)),
             'last_location' => [
                 'latitude' => $worker?->last_latitude,
                 'longitude' => $worker?->last_longitude,

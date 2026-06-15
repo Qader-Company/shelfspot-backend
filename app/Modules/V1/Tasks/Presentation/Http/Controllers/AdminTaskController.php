@@ -22,7 +22,6 @@ class AdminTaskController extends Controller
     {
     }
 
-
     public function index(AdminTaskIndexRequest $request)
     {
         $tasks = $this->taskRepository->getAll(
@@ -30,7 +29,11 @@ class AdminTaskController extends Controller
             filters: $request->filters()
         );
 
-        return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));
+        return ApiResponse::success(
+            TaskResource::collection($tasks)
+                ->response()
+                ->getData(true)
+        );
     }
 
     public function show(int $id)

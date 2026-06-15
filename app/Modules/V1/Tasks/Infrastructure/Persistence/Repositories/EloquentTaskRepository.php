@@ -7,6 +7,7 @@ use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -75,6 +76,32 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             'cursor' => $query->cursorPaginate(),
             'paginate' => $query->paginate()
         };
+    }
+
+
+    public function latestForCompany(int $companyId, int $limit = 15, array $relations = []): Collection
+    {
+        return $this->query($relations)
+            ->where('company_id', $companyId)
+            ->latest()
+            ->limit($limit)
+            ->get();
+    }
+
+    public function countForCompany(int $companyId, ?TaskStatusEnum $status = null): int
+    {
+        return $this->query()
+            ->where('company_id', $companyId)
+            ->when($status, fn (Builder $query) => $query->where('status', $status->value))
+            ->count();
+    }
+
+    public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null): float
+    {
+        return (float) $this->query()
+            ->where('company_id', $companyId)
+            ->when($paymentStatus, fn (Builder $query) => $query->where('payment_status', $paymentStatus->value))
+            ->sum('total_price');
     }
 
     private function haversineSql(): string

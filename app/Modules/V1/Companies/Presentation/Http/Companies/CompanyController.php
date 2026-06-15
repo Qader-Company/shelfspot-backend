@@ -8,6 +8,7 @@ use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Companies\Application\UseCases\CreateCompanyWithOwnerUseCase;
+use App\Modules\V1\Companies\Application\UseCases\GetCompanyDetailsUseCase;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
 use App\Modules\V1\Companies\Presentation\Http\Requests\RegisterCompanyRequest;
 use App\Modules\V1\Companies\Presentation\Http\Requests\UpdateCompanyRequest;
@@ -34,9 +35,12 @@ class CompanyController extends Controller
                 ->getData(true)
         );
     }
-    public function show(string $id)
+    public function show(string $id, GetCompanyDetailsUseCase $getCompanyDetailsUseCase)
     {
-        $company = $this->getCompany($id, ['users']);
+        $company = $getCompanyDetailsUseCase->execute(
+            $this->getCompany($id, ['users'])
+        );
+
         return ApiResponse::success(new CompanyResource($company));
     }
     public function create(RegisterCompanyRequest $request, CreateCompanyWithOwnerUseCase $createCompanyWithOwnerUseCase)
@@ -75,5 +79,6 @@ class CompanyController extends Controller
             throw new ModelNotFoundException(__('api.not_found'));
         return $company;
     }
+
 
 }

@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Workers\Presentation\Http\Resources;
 
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Http\Request;
@@ -31,6 +32,12 @@ class WorkerResource extends JsonResource
                 'longitude' => $worker?->last_longitude,
                 'updated_at' => $worker?->location_updated_at?->toISOString(),
             ],
+            'task_counts' => $this->when(isset($worker->admin_task_counts), $worker->admin_task_counts),
+            'in_progress_task_completion_percentage' => $this->when(
+                isset($worker->admin_task_counts),
+                $worker->in_progress_task_completion_percentage ?? null
+            ),
+            'assigned_tasks' => TaskResource::collection($this->whenLoaded('assignedTasks')),
         ];
     }
 

@@ -25,6 +25,12 @@ interface TaskRepositoryInterface
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator;
 
+    public function assignedToWorkerForAdmin(int $workerId, array $filters = [], array $relations = []): Collection;
+
+    public function countAssignedToWorkerByStatus(int $workerId, TaskStatusEnum $status): int;
+
+    public function inProgressAssignedToWorker(int $workerId, array $relations = []): ?Task;
+
     public function latestForCompany(int $companyId, int $limit = 15, array $relations = []): Collection;
 
     public function countForCompany(int $companyId, ?TaskStatusEnum $status = null): int;

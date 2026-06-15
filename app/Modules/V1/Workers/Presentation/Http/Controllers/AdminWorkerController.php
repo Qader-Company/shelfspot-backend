@@ -4,13 +4,15 @@ namespace App\Modules\V1\Workers\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
+use App\Modules\V1\Workers\Application\UseCases\ShowAdminWorkerUseCase;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
+use App\Modules\V1\Workers\Presentation\Http\Requests\AdminShowWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Requests\RegisterWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
@@ -51,9 +53,11 @@ class AdminWorkerController extends Controller
         return ApiResponse::created(new WorkerResource($user));
     }
 
-    public function show(int $worker)
+    public function show(AdminShowWorkerRequest $request, int $worker, ShowAdminWorkerUseCase $showAdminWorkerUseCase)
     {
-        return ApiResponse::success(new WorkerResource($this->getWorker($worker, ['user'])));
+        return ApiResponse::success(new WorkerResource(
+            $showAdminWorkerUseCase->execute($worker, $request->taskFilters())
+        ));
     }
 
     public function update(UpdateWorkerRequest $request, int $worker)

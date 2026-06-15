@@ -116,9 +116,12 @@ class WorkerTaskController extends Controller
 
     public function complete(int $id, Request $request, CompleteTaskUseCase $completeTaskUseCase)
     {
-        $task = $completeTaskUseCase->execute($this->task($id), $this->worker($request));
+        $task = $completeTaskUseCase->execute(
+            $this->task($id),
+            $this->worker($request)
+        );
 
-        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+        return ApiResponse::message(__('api.updated'));
     }
 
     public function cancel(int $id, WorkerCancelTaskRequest $request, WorkerCancelTaskUseCase $workerCancelTaskUseCase)
@@ -129,7 +132,7 @@ class WorkerTaskController extends Controller
             reason: $request->validated('reason')
         );
 
-        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+        return ApiResponse::message(__('api.updated'));
     }
 
     private function task(int $id, array $relations = []): Task

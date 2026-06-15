@@ -14,4 +14,5 @@ interface ProductRepositoryInterface extends TrashableRepositoryInterface
     public function create(array $attributes, UploadedFile $image = null): Product;
     public function update(Product $product, array $attributes, UploadedFile $image = null): Product;
     public function delete(Product $product): void;
+    public function countForCompany(int $companyId): int;
 }

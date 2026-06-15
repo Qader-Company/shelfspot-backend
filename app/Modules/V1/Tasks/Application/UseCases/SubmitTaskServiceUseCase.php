@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
+use App\Modules\V1\Tasks\Application\Validation\DynamicFormValidator;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceSubmission;
@@ -15,6 +16,10 @@ use Illuminate\Validation\ValidationException;
 
 class SubmitTaskServiceUseCase
 {
+    public function __construct(private readonly DynamicFormValidator $dynamicFormValidator)
+    {
+    }
+
     public function execute(Task $task, TaskService $taskService, Worker $worker, array $formData, array $filesByField = []): TaskServiceSubmission
     {
         return DB::transaction(function () use ($task, $taskService, $worker, $formData, $filesByField) {

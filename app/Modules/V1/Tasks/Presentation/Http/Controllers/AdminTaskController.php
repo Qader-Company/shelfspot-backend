@@ -10,17 +10,21 @@ use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminReassignTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Workers\Domain\Models\Worker;
+use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AdminTaskController extends Controller
 {
-    public function __construct(private readonly TaskRepositoryInterface $taskRepository)
+    public function __construct(
+        private readonly TaskRepositoryInterface $taskRepository,
+        private readonly WorkerRepositoryInterface $workerRepository
+    )
     {
     }
 
     public function reassign(int $id, AdminReassignTaskRequest $request, AdminReassignTaskUseCase $adminReassignTaskUseCase)
     {
-        $worker = Worker::query()->findOrFail($request->validated('worker_id'));
+        $worker = $this->workerRepository->getById($request->validated('worker_id'));
 
         $task = $adminReassignTaskUseCase->execute(
             task: $this->task($id),

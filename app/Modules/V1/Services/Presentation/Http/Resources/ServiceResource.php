@@ -23,7 +23,6 @@ class ServiceResource extends JsonResource
             'minimum_execution_time' => $this->minimum_execution_time,
             'is_active' => (bool) $this->is_active,
             'request_form' => $this->key->requestForm(),
-            'submit_form' => $this->key->submitForm(),
             'submission_form' => $this->key->submissionForm(),
             'translations' => $this->when(
                 $this->withTranslations,

@@ -17,14 +17,14 @@ class CompanyResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'deleted_at' => $this->deleted_at?->toISOString(),
+            'deleted_at' => $this->when($this->deleted_at, $this->deleted_at?->toISOString()),
             'name' => $this->name ,
             'slug' => $this->slug ,
             'email' => $this->email ,
             'phone' => $this->phone ,
             'cr_number' => $this->cr_number ,
             'industry' => $this->industry->label() ,
-            'is_active' => $this->is_active,
+            'is_active' => (bool) $this->is_active,
             'users' => CompanyUserResource::collection($this->whenLoaded('companyUsers')),
         ];
     }

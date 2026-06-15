@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
+use App\Modules\V1\Companies\Presentation\Http\Resources\CompanyResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,7 +17,7 @@ class TaskResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'company_id' => $this->company_id,
+            'company_id' => new CompanyResource($this->whenLoaded('company')),
             'date' => $this->date?->toDateString(),
             'execution_time' => $this->execution_time?->format('H:i:s'),
             'estimated_duration_minutes' => $this->estimated_duration_minutes,

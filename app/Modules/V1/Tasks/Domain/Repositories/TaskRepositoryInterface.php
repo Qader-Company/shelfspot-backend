@@ -31,5 +31,4 @@ interface TaskRepositoryInterface
 
     public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null): float;
 
-    public function relations(): array;
 }

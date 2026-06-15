@@ -12,7 +12,6 @@ use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class SubmitTaskServiceUseCase
@@ -35,7 +34,6 @@ class SubmitTaskServiceUseCase
                 ->firstOrFail();
 
             $this->ensureWorkerCanSubmit($lockedTask, $lockedTaskService, $worker);
-            $this->validateSubmission($lockedTaskService, $formData, $filesByField);
 
             /** @var TaskServiceSubmission $submission */
             $submission = TaskServiceSubmission::query()->updateOrCreate(
@@ -70,44 +68,6 @@ class SubmitTaskServiceUseCase
 
         if ((int) $task->assigned_worker_id !== (int) $worker->id) {
             throw ValidationException::withMessages(['task' => __('tasks.validation.worker_not_assigned')]);
-        }
-    }
-
-    private function validateSubmission(TaskService $taskService, array $formData, array $filesByField): void
-    {
-        $service = $taskService->service;
-        $fields = $service?->key?->submissionForm()['fields'] ?? [];
-
-        $this->dynamicFormValidator->validateFiles($fields, $filesByField, 'submission_files');
-
-        $validator = Validator::make($formData, $this->dynamicFormValidator->rulesForFields($fields));
-
-        $validator->after(function ($validator) use ($taskService, $formData, $fields) {
-            $this->validateSubmittedProductsBelongToTaskService($validator, $taskService, $formData, $fields);
-        });
-
-        $validator->validate();
-    }
-
-    private function validateSubmittedProductsBelongToTaskService($validator, TaskService $taskService, array $formData, array $fields): void
-    {
-        $allowedProductIds = $taskService->products
-            ->pluck('product_id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-
-        foreach ($fields as $field => $definition) {
-            if (($definition['type'] ?? null) !== 'array' || ! isset($definition['item_fields']['product_id'])) {
-                continue;
-            }
-
-            foreach ($formData[$field] ?? [] as $index => $item) {
-                $productId = isset($item['product_id']) ? (int) $item['product_id'] : null;
-
-                if ($productId !== null && ! in_array($productId, $allowedProductIds, true)) {
-                    $validator->errors()->add("$field.$index.product_id", __('tasks.validation.submitted_product_not_in_task_service'));
-                }
-            }
         }
     }
 

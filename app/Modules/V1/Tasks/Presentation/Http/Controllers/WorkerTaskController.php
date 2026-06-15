@@ -11,7 +11,6 @@ use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
-use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\NearbyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StartTaskRequest;
@@ -105,9 +104,9 @@ class WorkerTaskController extends Controller
     public function submitService(int $id, int $serviceId, SubmitTaskServiceRequest $request, SubmitTaskServiceUseCase $submitTaskServiceUseCase)
     {
         $submission = $submitTaskServiceUseCase->execute(
-            task: $this->task($id),
-            taskService: $this->taskService($serviceId),
-            worker: $this->worker($request),
+            task: $request->taskModel(),
+            taskService: $request->taskServiceModel(),
+            worker: $request->workerModel(),
             formData: $request->formData(),
             filesByField: $request->submissionFiles()
         );
@@ -142,17 +141,6 @@ class WorkerTaskController extends Controller
         }
 
         return $task;
-    }
-
-    private function taskService(int $id): TaskService
-    {
-        $taskService = TaskService::query()->with(['service.translations', 'products'])->find($id);
-
-        if (! $taskService) {
-            throw new ModelNotFoundException(__('api.not_found'));
-        }
-
-        return $taskService;
     }
 
     private function worker(Request $request): Worker

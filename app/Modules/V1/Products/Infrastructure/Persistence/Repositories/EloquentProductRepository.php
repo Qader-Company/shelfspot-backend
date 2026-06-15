@@ -55,6 +55,14 @@ class EloquentProductRepository implements ProductRepositoryInterface
         $product->delete();
     }
 
+
+    public function countForCompany(int $companyId): int
+    {
+        return $this->query([], [])
+            ->where('company_id', $companyId)
+            ->count();
+    }
+
     private function query(array $relations, array $relationsCount, array $filters = [])
     {
         return Product::query()

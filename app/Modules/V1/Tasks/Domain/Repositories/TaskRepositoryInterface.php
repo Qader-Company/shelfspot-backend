@@ -3,6 +3,9 @@
 namespace App\Modules\V1\Tasks\Domain\Repositories;
 
 use App\Modules\V1\Tasks\Domain\Models\Task;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -21,4 +24,12 @@ interface TaskRepositoryInterface
     public function TasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator;
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator;
+
+    public function latestForCompany(int $companyId, int $limit = 15, array $relations = []): Collection;
+
+    public function countForCompany(int $companyId, ?TaskStatusEnum $status = null): int;
+
+    public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null): float;
+
+    public function relations(): array;
 }

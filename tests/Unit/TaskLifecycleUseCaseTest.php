@@ -24,7 +24,9 @@ use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
+use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use App\Modules\V1\Workers\Domain\Models\Worker;
+use App\Modules\V1\Workers\Infrastructure\Persistence\Repositories\EloquentWorkerRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -186,7 +188,6 @@ class TaskLifecycleUseCaseTest extends TestCase
         ]);
     }
 
-
     public function test_worker_completes_task_after_all_services_are_completed(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
@@ -334,6 +335,65 @@ class TaskLifecycleUseCaseTest extends TestCase
                 ]],
             ]
         );
+    }
+
+    public function test_available_near_task_workers_are_active_not_busy_and_sorted_by_distance(): void
+    {
+        [$task, $nearestWorker] = $this->pendingTaskAndWorker();
+        $nearestWorker->forceFill([
+            'last_latitude' => 30.0450,
+            'last_longitude' => 31.2360,
+        ])->save();
+
+        $fartherWorker = Worker::query()->create([
+            'user_id' => User::factory()->create(['type' => PortalTypeEnum::WORKER])->id,
+            'phone' => fake()->unique()->numerify('012########'),
+            'is_active' => true,
+            'last_latitude' => 30.0600,
+            'last_longitude' => 31.2500,
+        ]);
+
+        $busyWorker = Worker::query()->create([
+            'user_id' => User::factory()->create(['type' => PortalTypeEnum::WORKER])->id,
+            'phone' => fake()->unique()->numerify('012########'),
+            'is_active' => true,
+            'last_latitude' => 30.0450,
+            'last_longitude' => 31.2360,
+        ]);
+        Task::query()->create($task->only([
+            'company_id',
+            'date',
+            'execution_time',
+            'estimated_duration_minutes',
+            'latitude',
+            'longitude',
+            'subtotal',
+            'total_price',
+            'payment_status',
+            'charged_at',
+        ]) + [
+            'status' => TaskStatusEnum::IN_PROGRESS,
+            'assigned_worker_id' => $busyWorker->id,
+        ]);
+
+        Worker::query()->create([
+            'user_id' => User::factory()->create(['type' => PortalTypeEnum::WORKER])->id,
+            'phone' => fake()->unique()->numerify('012########'),
+            'is_active' => false,
+            'last_latitude' => 30.0450,
+            'last_longitude' => 31.2360,
+        ]);
+
+        $radius = 5.0;
+        $workers = app(EloquentWorkerRepository::class)->availableNearTask(
+            latitude: (float) $task->latitude,
+            longitude: (float) $task->longitude,
+            radiusKilometers: $radius,
+            boundingBox: app(GeoDistanceCalculator::class)->boundingBox((float) $task->latitude, (float) $task->longitude, $radius)
+        );
+
+        $this->assertSame([$nearestWorker->id, $fartherWorker->id], $workers->pluck('id')->all());
+        $this->assertLessThan($workers[1]->distance_km, $workers[0]->distance_km);
     }
 
     private function pendingTaskAndWorker(array $taskOverrides = []): array

@@ -9,6 +9,7 @@ Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::A
     ->controller(AdminTaskController::class)
     ->group(function () {
         Route::get('/', 'index');
-        Route::get('/{id}', 'show');
+        Route::get('/{id}/available-workers', 'availableWorkers');
         Route::post('/{id}/reassign', 'reassign');
+        Route::get('/{id}', 'show');
     });

@@ -1,35 +1,32 @@
 <?php
 
+use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
-use App\Modules\Shared\Presentation\Http\Requests\BulkActionRequest;
-use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\V1\Products\Presentation\Http\Controller\ProductController;
-use App\Modules\V1\Products\Presentation\Http\Requests\ProductFilterOptionsRequest;
-use App\Modules\V1\Products\Presentation\Http\Requests\StoreProductRequest;
-use App\Modules\V1\Products\Presentation\Http\Requests\UpdateProductRequest;
-use App\Modules\V1\Products\Application\Services\ProductFilterOptionsService;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
     ->controller(ProductController::class)
     ->group(function () {
-        Route::get('/filter-options', 'filterOptions');
+        $catalogPolicy = 'permission:'.AdminPermissionEnum::MANAGE_COMPANY_CATALOG->value;
 
-        Route::get('/excel/template', 'excelTemplate');
-        Route::get('/excel/export', 'excelExport');
-        Route::post('/excel/import', 'excelImport');
+        Route::get('/filter-options', 'filterOptions')->middleware($catalogPolicy);
 
-        Route::get('/', 'index');
-        Route::post('/', 'store');
-        Route::get('/{id}', 'show');
-        Route::match(['put', 'patch'], '/{id}', 'update');
-        Route::delete('/{id}', 'destroy');
+        Route::get('/excel/template', 'excelTemplate')->middleware($catalogPolicy);
+        Route::get('/excel/export', 'excelExport')->middleware($catalogPolicy);
+        Route::post('/excel/import', 'excelImport')->middleware($catalogPolicy);
 
-        Route::get('/trash', 'trash');
-        Route::post('/bulk-delete', 'bulkDelete');
-        Route::post('/trash/bulk-restore', 'bulkRestore');
-        Route::delete('/trash/bulk-force-delete', 'bulkForceDelete');
-        Route::post('/trash/{id}/restore', 'restore');
-        Route::delete('/trash/{id}', 'forceDelete');
+        Route::get('/', 'index')->middleware($catalogPolicy);
+        Route::post('/', 'store')->middleware($catalogPolicy);
+        Route::get('/{id}', 'show')->middleware($catalogPolicy);
+        Route::match(['put', 'patch'], '/{id}', 'update')->middleware($catalogPolicy);
+        Route::delete('/{id}', 'destroy')->middleware($catalogPolicy);
+
+        Route::get('/trash', 'trash')->middleware($catalogPolicy);
+        Route::post('/bulk-delete', 'bulkDelete')->middleware($catalogPolicy);
+        Route::post('/trash/bulk-restore', 'bulkRestore')->middleware($catalogPolicy);
+        Route::delete('/trash/bulk-force-delete', 'bulkForceDelete')->middleware($catalogPolicy);
+        Route::post('/trash/{id}/restore', 'restore')->middleware($catalogPolicy);
+        Route::delete('/trash/{id}', 'forceDelete')->middleware($catalogPolicy);
     });

@@ -1,22 +1,23 @@
 <?php
 
+use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Companies\Presentation\Http\Companies\CompanyController;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 
 Route::middleware('abilities:'. PortalTypeEnum::ADMIN->value .','. TokenTypeEnum::ACCESS_TOKEN->value)
     ->controller(CompanyController::class)->group(function (){
-        Route::get('/', 'index');
-        Route::post('/', 'create');
-        Route::post('/bulk-delete', 'bulkDelete');
+        Route::get('/', 'index')->middleware('permission:'.AdminPermissionEnum::VIEW_COMPANY->value);
+        Route::post('/', 'create')->middleware('permission:'.AdminPermissionEnum::CREATE_COMPANY->value);
+        Route::post('/bulk-delete', 'bulkDelete')->middleware('permission:'.AdminPermissionEnum::DELETE_COMPANY->value);
         Route::prefix('trash')->group(function (){
-            Route::get('', 'trash');
-            Route::post('/bulk-restore', 'bulkRestore');
-            Route::delete('/bulk-force-delete', 'bulkForceDelete');
-            Route::post('/{id}/restore', 'restore');
-            Route::delete('/{id}', 'forceDelete');
+            Route::get('', 'trash')->middleware('permission:'.AdminPermissionEnum::VIEW_COMPANY->value);
+            Route::post('/bulk-restore', 'bulkRestore')->middleware('permission:'.AdminPermissionEnum::EDIT_COMPANY->value);
+            Route::delete('/bulk-force-delete', 'bulkForceDelete')->middleware('permission:'.AdminPermissionEnum::DELETE_COMPANY->value);
+            Route::post('/{id}/restore', 'restore')->middleware('permission:'.AdminPermissionEnum::EDIT_COMPANY->value);
+            Route::delete('/{id}', 'forceDelete')->middleware('permission:'.AdminPermissionEnum::DELETE_COMPANY->value);
         });
-        Route::get('/{company}', 'show');
-        Route::match(['put', 'patch'], '/{company}', 'update');
-        Route::delete('/{company}', 'destroy');
+        Route::get('/{company}', 'show')->middleware('permission:'.AdminPermissionEnum::VIEW_COMPANY->value);
+        Route::match(['put', 'patch'], '/{company}', 'update')->middleware('permission:'.AdminPermissionEnum::EDIT_COMPANY->value);
+        Route::delete('/{company}', 'destroy')->middleware('permission:'.AdminPermissionEnum::DELETE_COMPANY->value);
     });

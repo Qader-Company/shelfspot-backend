@@ -3,11 +3,9 @@
 use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Controllers\AdminTaskController;
-use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
-    ->controller(AdminTaskController::class)
+Route::controller(AdminTaskController::class)
     ->group(function () {
         Route::get('/', 'index')->middleware('permission:'.AdminPermissionEnum::VIEW_TASK->value);
         Route::get('/{id}/available-workers', 'availableWorkers')->middleware('permission:'.AdminPermissionEnum::REASSIGN_TASK->value);

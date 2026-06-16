@@ -6,8 +6,7 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Workers\Presentation\Http\Controllers\AdminWorkerController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
-    ->controller(AdminWorkerController::class)
+Route::controller(AdminWorkerController::class)
     ->group(function () {
         Route::get('/', 'index')->middleware('permission:'.AdminPermissionEnum::VIEW_WORKER->value);
         Route::post('/', 'store')->middleware('permission:'.AdminPermissionEnum::CREATE_WORKER->value);

@@ -21,7 +21,7 @@ interface TaskRepositoryInterface
 
     public function delete(Task $task): void;
 
-    public function TasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator;
+    public function tasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator;
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator;
 
@@ -36,5 +36,11 @@ interface TaskRepositoryInterface
     public function countForCompany(int $companyId, ?TaskStatusEnum $status = null): int;
 
     public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null): float;
+
+    public function listRelations(): array;
+
+    public function detailRelations(): array;
+
+    public function relations(): array;
 
 }

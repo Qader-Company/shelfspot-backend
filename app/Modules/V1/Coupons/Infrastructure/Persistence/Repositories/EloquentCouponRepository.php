@@ -14,7 +14,7 @@ class EloquentCouponRepository implements CouponRepositoryInterface
     {
         return $this->query($relations, $relationsCount, $filters)
             ->latest()
-            ->paginate(request('per_page', 15));
+            ->paginate();
     }
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?WalletCoupon

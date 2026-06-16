@@ -6,8 +6,7 @@ use App\Modules\V1\Categories\Presentation\Http\Controller\CategoryController;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('abilities:'.PortalTypeEnum::ADMIN->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
-    ->controller(CategoryController::class)
+Route::controller(CategoryController::class)
     ->group(function () {
         $catalogPolicy = 'permission:'.AdminPermissionEnum::MANAGE_COMPANY_CATALOG->value;
 

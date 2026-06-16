@@ -16,7 +16,7 @@ class ChargeTaskWalletUseCase
     {
     }
 
-    public function execute(Task $task): CompanyWalletTransaction
+    public function execute(Task $task, ?int $performedBy = null): CompanyWalletTransaction
     {
         if ($task->company_id === null) {
             throw ValidationException::withMessages([
@@ -30,12 +30,12 @@ class ChargeTaskWalletUseCase
             ]);
         }
 
-        return DB::transaction(function () use ($task) {
+        return DB::transaction(function () use ($task, $performedBy) {
             $transaction = $this->walletRepository->createTransaction([
                 'company_id' => $task->company_id,
                 'amount' => $task->total_price,
                 'description' => __('company.wallet.tasks.payment_description', ['task' => $task->id]),
-                'performed_by' => auth()->id(),
+                'performed_by' => $performedBy,
                 'reference_type' => $task->getMorphClass(),
                 'reference_id' => $task->id,
             ], CompanyWalletTransactionTypeEnum::TASK_PAYMENT);

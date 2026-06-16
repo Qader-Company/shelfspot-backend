@@ -29,7 +29,7 @@ class CompanyTaskController extends Controller
         $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
         $tasks = $this->taskRepository
         ->getAll(
-            relations: $this->taskRepository->relations(),
+            relations: $this->taskRepository->listRelations(),
             filters: $filters
         );
 
@@ -40,6 +40,7 @@ class CompanyTaskController extends Controller
     {
         $createCompanyTaskUseCase->execute(
             $request->validated(),
+            $request->user(),
             $request->allFiles()
         );
 
@@ -50,16 +51,16 @@ class CompanyTaskController extends Controller
     {
         $task = $this->getCompanyTask(
             $id,
-            $this->taskRepository->relations()
+            $this->taskRepository->detailRelations()
         );
         return ApiResponse::success(new TaskResource($task));
     }
 
-    public function destroy(int $id, DeleteCompanyTaskUseCase $deleteCompanyTaskUseCase)
+    public function destroy(int $id, Request $request, DeleteCompanyTaskUseCase $deleteCompanyTaskUseCase)
     {
         $deleteCompanyTaskUseCase->execute(
             $this->getCompanyTask($id),
-            auth()->user()
+            $request->user()
         );
 
         return ApiResponse::deleted();

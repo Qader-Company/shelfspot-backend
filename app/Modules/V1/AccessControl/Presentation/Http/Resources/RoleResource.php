@@ -13,7 +13,7 @@ class RoleResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'portal' => $this->portal,
-            'company_id' => $this->company_id,
+            'company_id' => $this->when($this->company_id, $this->company_id),
             'permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
         ];
     }

@@ -15,7 +15,7 @@ class PermissionResource extends JsonResource
             'name' => $this->name,
             'label' => PermissionCatalog::label($this->portal, $this->name),
             'portal' => $this->portal,
-            'company_id' => $this->company_id,
+            'company_id' => $this->when($this->company_id, $this->company_id),
         ];
     }
 }

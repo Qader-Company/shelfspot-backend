@@ -11,7 +11,7 @@ class SubBrandResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'deleted_at' => $this->deleted_at?->toISOString(),
+            'deleted_at' => $this->when($this->deleted_at, $this->deleted_at?->toISOString()),
             'name' => $this->name,
             'logo' => $this->getMedia('logo')->first()?->getUrl(),
             'active' => (bool) $this->is_active,

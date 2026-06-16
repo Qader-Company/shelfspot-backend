@@ -35,12 +35,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
             'locale' => SetLocale::class,
-            'permission' => CheckScopedPermission::class,
             'role' => CheckScopedRole::class,
             'tenant' => SetTenantFromHeader::class,
             'tenant.route-company' => SetTenantFromRouteCompany::class,
             'tenant.user' => EnsureTenantUser::class,
             'api.key' => CheckApiKey::class,
+            'permission' => CheckScopedPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -60,10 +60,10 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::unauthorized('auth.unauthorized');
         });
 
-        $exceptions->render(function (AccessDeniedHttpException|AuthorizationException $e, $request) {
-            $message = $e->getMessage() ?: 'api.forbidden';
-            return ApiResponse::forbidden($message);
-        });
+//        $exceptions->render(function (AccessDeniedHttpException|AuthorizationException $e, $request) {
+//            $message = $e->getMessage() ?: 'api.forbidden';
+//            return ApiResponse::forbidden($message);
+//        });
 
         $exceptions->render(function (NotFoundHttpException|ModelNotFoundException $e, $request) {
             return ApiResponse::notFound($e->getMessage());
@@ -83,8 +83,8 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::tooManyRequests($retryAfter);
         });
 
-        $exceptions->render(function (HttpException $e, $request) {
-            return ApiResponse::message($e->getMessage(), $e->getStatusCode());
-        });
+//        $exceptions->render(function (HttpException $e, $request) {
+//            return ApiResponse::message($e->getMessage(), $e->getStatusCode());
+//        });
 
     })->create();

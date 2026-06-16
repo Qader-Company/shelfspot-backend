@@ -1,10 +1,10 @@
 <?php
 
     $adminAuthMiddlewares = ['auth:sanctum', 'abilities:admin,access'];
-    $adminManageCompaniesMiddlewares = $adminAuthMiddlewares + ['tenant.route-company'];
+    $adminManageCompaniesMiddlewares = array_merge($adminAuthMiddlewares, ['tenant.route-company']);
 
     $companyAuthMiddlewares = ['auth:sanctum', 'abilities:company,access'];
-    $companyMiddlewares = $companyAuthMiddlewares + ['tenant', 'tenant.user'];
+    $companyMiddlewares = array_merge($companyAuthMiddlewares, ['tenant', 'tenant.user']);
 
     $workerAuthMiddlewares = ['auth:sanctum', 'abilities:worker,access'];
 

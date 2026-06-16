@@ -30,7 +30,6 @@ class CheckScopedPermission
             : null;
 
         $permissionNames = $this->parsePipeSeparatedValues($permissions);
-
         $hasPermissionThroughRole = $user->roles()
             ->where('portal', $portal)
             ->where('company_id', $companyId)

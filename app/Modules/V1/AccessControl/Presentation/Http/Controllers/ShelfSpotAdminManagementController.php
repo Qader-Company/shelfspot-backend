@@ -25,24 +25,54 @@ class ShelfSpotAdminManagementController extends AccessControlController
         parent::__construct($accessControlRepository);
     }
 
-    public function permissions(): JsonResponse { return $this->listPermissions(self::PORTAL); }
-    public function roles(): JsonResponse { return $this->listRoles(self::PORTAL); }
-    public function storeRole(StoreRoleRequest $request): JsonResponse { return $this->createRole($request, self::PORTAL); }
-    public function updateRole(UpdateRoleRequest $request, int $roleId): JsonResponse { return $this->modifyRole($request, self::PORTAL, $roleId); }
-    public function destroyRole(int $roleId): JsonResponse { return $this->deleteRole(self::PORTAL, $roleId); }
-
-    public function admins(): JsonResponse
+    public function permissions()
     {
-        return ApiResponse::success(ManagedAdminResource::collection($this->managedAdminRepository->shelfSpotAdmins()));
+        return $this->listPermissions(self::PORTAL);
+    }
+    public function roles()
+    {
+        return $this->listRoles(self::PORTAL);
+    }
+    public function storeRole(StoreRoleRequest $request)
+    {
+        return $this->createRole($request, self::PORTAL);
     }
 
-    public function storeAdmin(StoreShelfSpotAdminRequest $request): JsonResponse
+    public function updateRole(UpdateRoleRequest $request, int $roleId)
     {
-        return ApiResponse::created(new ManagedAdminResource($this->managedAdminRepository->createShelfSpotAdmin($request->validated())));
+        return $this->modifyRole($request, self::PORTAL, $roleId);
     }
 
-    public function updateAdmin(UpdateShelfSpotAdminRequest $request, User $user): JsonResponse
+    public function destroyRole(int $roleId)
     {
-        return ApiResponse::updated(new ManagedAdminResource($this->managedAdminRepository->updateShelfSpotAdmin($user, $request->validated())));
+        return $this->deleteRole(self::PORTAL, $roleId);
+    }
+
+
+    public function admins()
+    {
+        return ApiResponse::success(
+            ManagedAdminResource::collection(
+                $this->managedAdminRepository->shelfSpotAdmins()
+            )
+        );
+    }
+
+    public function storeAdmin(StoreShelfSpotAdminRequest $request)
+    {
+        return ApiResponse::created(
+            new ManagedAdminResource(
+                $this->managedAdminRepository->createShelfSpotAdmin($request->validated())
+            )
+        );
+    }
+
+    public function updateAdmin(UpdateShelfSpotAdminRequest $request, User $user)
+    {
+        return ApiResponse::updated(
+            new ManagedAdminResource(
+                $this->managedAdminRepository->updateShelfSpotAdmin($user, $request->validated())
+            )
+        );
     }
 }

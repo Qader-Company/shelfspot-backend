@@ -14,6 +14,9 @@ use Illuminate\Validation\Validator;
 
 class StoreCompanyTaskRequest extends FormRequest
 {
+    private const ALLOWED_UPLOAD_MIMES = 'jpg,jpeg,png,webp,pdf';
+    private const MAX_UPLOAD_KB = 10240;
+
     public function authorize(): bool
     {
         return true;
@@ -84,7 +87,7 @@ class StoreCompanyTaskRequest extends FormRequest
             'services.*.products.*.product_details' => ['nullable', 'array'],
             'services.*.request_files' => ['nullable', 'array'],
             'services.*.request_files.*' => ['nullable', 'array'],
-            'services.*.request_files.*.*' => ['file', 'max:10240'],
+            'services.*.request_files.*.*' => ['file', 'mimes:'.self::ALLOWED_UPLOAD_MIMES, 'max:'.self::MAX_UPLOAD_KB],
         ];
 
     }

@@ -11,6 +11,7 @@ use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Users\Domain\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -30,9 +31,9 @@ class CreateCompanyTaskUseCase
     ) {
     }
 
-    public function execute(array $data, array $files = []): Task
+    public function execute(array $data, User $actor, array $files = []): Task
     {
-        return DB::transaction(function () use ($data, $files) {
+        return DB::transaction(function () use ($data, $actor, $files) {
             $taskServices = $data['services'];
             $subtotal = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
             $estimatedDuration = collect($taskServices)->sum(fn (array $service) => (int) $service['execution_time_minutes']);
@@ -51,7 +52,7 @@ class CreateCompanyTaskUseCase
                 'notes' => $data['notes'] ?? null,
                 'status' => TaskStatusEnum::DRAFT,
                 'payment_status' => TaskPaymentStatusEnum::PENDING,
-                'created_by' => auth()->id(),
+                'created_by' => $actor->id,
             ]);
 
             $taskServiceModels = $this->createTaskServices($task, $taskServices);
@@ -68,7 +69,7 @@ class CreateCompanyTaskUseCase
             }
 
             try {
-                $this->chargeTaskWalletUseCase->execute($task);
+                $this->chargeTaskWalletUseCase->execute($task, $actor->id);
             } catch (InvalidArgumentException $exception) {
                 $task->forceFill(['payment_status' => TaskPaymentStatusEnum::FAILED])->save();
 
@@ -83,7 +84,7 @@ class CreateCompanyTaskUseCase
                 task: $task,
                 fromStatus: TaskStatusEnum::DRAFT,
                 toStatus: TaskStatusEnum::PENDING,
-                actor: auth()->user(),
+                actor: $actor,
                 meta: ['payment_status' => $task->payment_status?->value]
             );
 

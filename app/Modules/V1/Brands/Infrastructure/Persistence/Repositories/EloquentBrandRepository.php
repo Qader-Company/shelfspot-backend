@@ -28,7 +28,7 @@ class EloquentBrandRepository implements BrandRepositoryInterface
             $relations,
             $relationsCount,
             $filters,
-        )->paginate(request('per_page', 15));
+        )->paginate();
     }
 
     public function getByCompanyId(
@@ -44,7 +44,7 @@ class EloquentBrandRepository implements BrandRepositoryInterface
             $filters,
             true
         )->where('company_id', $companyId)
-        ->paginate(request('per_page', 15));
+        ->paginate();
     }
 
     public function getById(int $id, array $relations = [], array $relationsCount = [], $global = false): ?Brand

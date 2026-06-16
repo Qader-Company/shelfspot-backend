@@ -28,7 +28,7 @@ class AdminTaskController extends Controller
     public function index(AdminTaskIndexRequest $request)
     {
         $tasks = $this->taskRepository->getAll(
-            relations: $this->taskRepository->relations(),
+            relations: $this->taskRepository->listRelations(),
             filters: $request->filters()
         );
 
@@ -38,7 +38,7 @@ class AdminTaskController extends Controller
     public function show(int $id)
     {
         return ApiResponse::success(new TaskResource(
-            $this->task($id, $this->taskRepository->relations())
+            $this->task($id, $this->taskRepository->detailRelations())
         ));
     }
 

@@ -14,6 +14,9 @@ use Illuminate\Validation\Validator;
 
 class SubmitTaskServiceRequest extends FormRequest
 {
+    private const ALLOWED_UPLOAD_MIMES = 'jpg,jpeg,png,webp,pdf';
+    private const MAX_UPLOAD_KB = 10240;
+
     private ?Task $task = null;
     private ?TaskService $taskService = null;
     private ?Worker $worker = null;
@@ -29,7 +32,7 @@ class SubmitTaskServiceRequest extends FormRequest
             'form_data' => ['nullable', 'array'],
             'submission_files' => ['nullable', 'array'],
             'submission_files.*' => ['nullable', 'array'],
-            'submission_files.*.*' => ['file', 'max:10240'],
+            'submission_files.*.*' => ['file', 'mimes:'.self::ALLOWED_UPLOAD_MIMES, 'max:'.self::MAX_UPLOAD_KB],
         ];
     }
 

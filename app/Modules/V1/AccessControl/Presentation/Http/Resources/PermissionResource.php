@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Modules\V1\AccessControl\Presentation\Http\Resources;
+
+use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class PermissionResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'label' => PermissionCatalog::label($this->portal, $this->name),
+            'portal' => $this->portal,
+            'company_id' => $this->company_id,
+        ];
+    }
+}

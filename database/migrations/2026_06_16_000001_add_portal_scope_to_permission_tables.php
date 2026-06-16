@@ -25,20 +25,20 @@ return new class extends Migration
         });
     }
 
-    public function down(): void
-    {
-        Schema::table('roles', function (Blueprint $table) {
-            $table->dropUnique(['name', 'guard_name', 'portal', 'company_id']);
-            $table->dropConstrainedForeignId('company_id');
-            $table->dropColumn('portal');
-            $table->unique(['name', 'guard_name']);
-        });
-
-        Schema::table('permissions', function (Blueprint $table) {
-            $table->dropUnique(['name', 'guard_name', 'portal', 'company_id']);
-            $table->dropConstrainedForeignId('company_id');
-            $table->dropColumn('portal');
-            $table->unique(['name', 'guard_name']);
-        });
-    }
+//    public function down(): void
+//    {
+//        Schema::table('roles', function (Blueprint $table) {
+//            $table->dropUnique(['name', 'guard_name', 'portal', 'company_id']);
+//            $table->dropConstrainedForeignId('company_id');
+//            $table->dropColumn('portal');
+//            $table->unique(['name', 'guard_name']);
+//        });
+//
+//        Schema::table('permissions', function (Blueprint $table) {
+//            $table->dropUnique(['name', 'guard_name', 'portal', 'company_id']);
+//            $table->dropConstrainedForeignId('company_id');
+//            $table->dropColumn('portal');
+//            $table->unique(['name', 'guard_name']);
+//        });
+//    }
 };

@@ -4,8 +4,7 @@ use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Companies\Presentation\Http\Companies\CompanyController;
 
-Route::middleware('abilities:'. PortalTypeEnum::ADMIN->value .','. TokenTypeEnum::ACCESS_TOKEN->value)
-    ->controller(CompanyController::class)->group(function (){
+Route::controller(CompanyController::class)->group(function (){
         Route::get('/', 'index')->middleware('permission:'.AdminPermissionEnum::VIEW_COMPANY->value);
         Route::post('/', 'create')->middleware('permission:'.AdminPermissionEnum::CREATE_COMPANY->value);
         Route::post('/bulk-delete', 'bulkDelete')->middleware('permission:'.AdminPermissionEnum::DELETE_COMPANY->value);

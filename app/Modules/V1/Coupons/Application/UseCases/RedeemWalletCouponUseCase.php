@@ -19,7 +19,7 @@ class RedeemWalletCouponUseCase
     ) {
     }
 
-    public function execute(string $code): CompanyWalletTransaction
+    public function execute(string $code, ?int $performedBy = null): CompanyWalletTransaction
     {
         $companyId = $this->tenantContext->getCompanyId();
 
@@ -29,7 +29,7 @@ class RedeemWalletCouponUseCase
             ]);
         }
 
-        return DB::transaction(function () use ($code, $companyId) {
+        return DB::transaction(function () use ($code, $companyId, $performedBy) {
             $coupon = WalletCoupon::query()
                 ->where('code', strtoupper($code))
                 ->lockForUpdate()
@@ -53,7 +53,7 @@ class RedeemWalletCouponUseCase
                 'wallet_coupon_id' => $coupon->id,
                 'company_id' => $companyId,
                 'amount' => $coupon->amount,
-                'redeemed_by' => auth()->id(),
+                'redeemed_by' => $performedBy,
                 'redeemed_at' => now(),
             ]);
 
@@ -63,7 +63,7 @@ class RedeemWalletCouponUseCase
                 'company_id' => $companyId,
                 'amount' => $coupon->amount,
                 'description' => __('company.wallet.coupons.redemption_description', ['code' => $coupon->code]),
-                'performed_by' => auth()->id(),
+                'performed_by' => $performedBy,
                 'reference_type' => $redemption->getMorphClass(),
                 'reference_id' => $redemption->id,
             ], CompanyWalletTransactionTypeEnum::COUPON_REDEMPTION);

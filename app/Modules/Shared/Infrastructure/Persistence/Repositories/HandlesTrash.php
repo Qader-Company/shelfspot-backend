@@ -17,7 +17,7 @@ trait HandlesTrash
             ->onlyTrashed()
             ->when($filters, fn (Builder $query) => $query->filter($filters))
             ->latest('deleted_at')
-            ->paginate(request('per_page', 15));
+            ->paginate();
     }
 
     public function bulkDelete(array $ids): int

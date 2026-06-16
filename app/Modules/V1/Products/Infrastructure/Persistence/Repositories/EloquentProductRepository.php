@@ -19,7 +19,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
     }
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
-        return $this->query($relations, $relationsCount, $filters)->paginate(request('per_page', 15));
+        return $this->query($relations, $relationsCount, $filters)->paginate();
     }
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?Product

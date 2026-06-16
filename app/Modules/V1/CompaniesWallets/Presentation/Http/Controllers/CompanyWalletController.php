@@ -46,7 +46,7 @@ class CompanyWalletController extends Controller
 
     public function recharge(RechargeWalletRequest $request, RechargeWalletUseCase $rechargeUseCase)
     {
-        $transaction = $rechargeUseCase->execute($request->validated())->load('performedBy');
+        $transaction = $rechargeUseCase->execute($request->validated(), $request->user()?->id)->load('performedBy');
 
         return ApiResponse::success([
             'balance' => (float) $transaction->balance_after,
@@ -56,7 +56,7 @@ class CompanyWalletController extends Controller
 
     public function redeemCoupon(RedeemWalletCouponRequest $request, RedeemWalletCouponUseCase $redeemWalletCouponUseCase)
     {
-        $transaction = $redeemWalletCouponUseCase->execute($request->validated('code'))->load('performedBy');
+        $transaction = $redeemWalletCouponUseCase->execute($request->validated('code'), $request->user()?->id)->load('performedBy');
 
         return ApiResponse::success([
             'balance' => (float) $transaction->balance_after,

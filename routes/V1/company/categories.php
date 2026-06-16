@@ -20,7 +20,7 @@ Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEn
         Route::delete('/{id}', 'destroy')
             ->middleware('permission:'.CompanyPermissionEnum::DELETE_CATEGORY->value);
 
-        Route::preifx('excel')->group(function (){
+        Route::prefix('excel')->group(function (){
             Route::get('/template', 'excelTemplate')
                 ->middleware('permission:'.CompanyPermissionEnum::VIEW_CATEGORY->value);
             Route::get('/export', 'excelExport')
@@ -29,7 +29,7 @@ Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEn
                 ->middleware('permission:'.CompanyPermissionEnum::CREATE_CATEGORY->value);
         });
 
-        Route::preifx('trash')->group(function (){
+        Route::prefix('trash')->group(function (){
             Route::get('', 'trash')->middleware('permission:'.CompanyPermissionEnum::VIEW_CATEGORY->value);
             Route::post('/bulk-restore', 'bulkRestore')->middleware('permission:'.CompanyPermissionEnum::EDIT_CATEGORY->value);
             Route::delete('/bulk-force-delete', 'bulkForceDelete')->middleware('permission:'.CompanyPermissionEnum::DELETE_CATEGORY->value);

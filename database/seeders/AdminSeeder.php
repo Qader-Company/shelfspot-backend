@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
+use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Carbon\Carbon;
@@ -26,5 +26,7 @@ class AdminSeeder extends Seeder
         );
 
         $user->admin()->firstOrCreate([]);
+
+        app(FullAccessRoleProvisioner::class)->assignSuperAdminRole($user);
     }
 }

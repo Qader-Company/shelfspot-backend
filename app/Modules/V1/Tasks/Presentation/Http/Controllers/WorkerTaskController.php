@@ -44,7 +44,7 @@ class WorkerTaskController extends Controller
 
         $radius = $request->radiusKilometers();
 
-        $tasks = $this->taskRepository->TasksByCoordinates(
+        $tasks = $this->taskRepository->tasksByCoordinates(
             latitude: $latitude,
             longitude: $longitude,
             radiusKilometers: $radius,

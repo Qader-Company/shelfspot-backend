@@ -8,17 +8,17 @@ return [
         ],
 
         'admin' => [
-            ['prefix' => 'admin/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum']],
-            ['prefix' => 'admin/companies', 'file' => 'companies.php', 'middlewares' => ['auth:sanctum']],
-            ['prefix' => 'admin/wallet-coupons', 'file' => 'wallet-coupons.php', 'middlewares' => ['auth:sanctum']],
-            ['prefix' => 'admin/workers', 'file' => 'workers.php', 'middlewares' => ['auth:sanctum']],
-            ['prefix' => 'admin/tasks', 'file' => 'tasks.php', 'middlewares' => ['auth:sanctum']],
-            ['prefix' => 'admin/access-control', 'file' => 'access-control.php', 'middlewares' => ['auth:sanctum']],
-            ['prefix' => 'admin/companies/{company}/brands', 'file' => 'catalog-brands.php', 'middlewares' => ['auth:sanctum', 'tenant.route-company']],
-            ['prefix' => 'admin/companies/{company}/sub-brands', 'file' => 'catalog-sub-brands.php', 'middlewares' => ['auth:sanctum', 'tenant.route-company']],
-            ['prefix' => 'admin/companies/{company}/categories', 'file' => 'catalog-categories.php', 'middlewares' => ['auth:sanctum', 'tenant.route-company']],
-            ['prefix' => 'admin/companies/{company}/sub-categories', 'file' => 'catalog-sub-categories.php', 'middlewares' => ['auth:sanctum', 'tenant.route-company']],
-            ['prefix' => 'admin/companies/{company}/products', 'file' => 'catalog-products.php', 'middlewares' => ['auth:sanctum', 'tenant.route-company']],
+            ['prefix' => 'admin/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
+            ['prefix' => 'admin/companies', 'file' => 'companies.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
+            ['prefix' => 'admin/wallet-coupons', 'file' => 'wallet-coupons.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
+            ['prefix' => 'admin/workers', 'file' => 'workers.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
+            ['prefix' => 'admin/tasks', 'file' => 'tasks.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
+            ['prefix' => 'admin/access-control', 'file' => 'access-control.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
+            ['prefix' => 'admin/companies/{company}/brands', 'file' => 'catalog-brands.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
+            ['prefix' => 'admin/companies/{company}/sub-brands', 'file' => 'catalog-sub-brands.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
+            ['prefix' => 'admin/companies/{company}/categories', 'file' => 'catalog-categories.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
+            ['prefix' => 'admin/companies/{company}/sub-categories', 'file' => 'catalog-sub-categories.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
+            ['prefix' => 'admin/companies/{company}/products', 'file' => 'catalog-products.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
         ],
 
         'worker' => [

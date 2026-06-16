@@ -19,7 +19,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)
-            ->paginate(request('per_page', 15));
+            ->paginate();
     }
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?Task
@@ -46,7 +46,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         $task->delete();
     }
 
-    public function TasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator
+    public function tasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator
     {
         $distanceSql = $this->haversineSql();
 
@@ -155,7 +155,16 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
     }
 
-    public function relations(): array
+    public function listRelations(): array
+    {
+        return [
+            'services.service.translations',
+            'company',
+            'assignedWorker.user',
+        ];
+    }
+
+    public function detailRelations(): array
     {
         return [
             'services.service.translations',
@@ -168,5 +177,10 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             'company',
             'assignedWorker.user',
         ];
+    }
+
+    public function relations(): array
+    {
+        return $this->detailRelations();
     }
 }

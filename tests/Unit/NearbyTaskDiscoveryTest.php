@@ -57,7 +57,7 @@ class NearbyTaskDiscoveryTest extends TestCase
         $longitude = 31.2357;
         $radius = 5;
 
-        $tasks = app(EloquentTaskRepository::class)->TasksByCoordinates(
+        $tasks = app(EloquentTaskRepository::class)->tasksByCoordinates(
             latitude: $latitude,
             longitude: $longitude,
             radiusKilometers: $radius,

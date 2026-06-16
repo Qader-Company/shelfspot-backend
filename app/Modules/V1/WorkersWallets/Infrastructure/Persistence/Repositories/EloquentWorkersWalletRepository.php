@@ -14,7 +14,7 @@ class EloquentWorkersWalletRepository implements WorkersWalletRepositoryInterfac
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)
-            ->paginate(request('per_page', 15));
+            ->paginate();
     }
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?WorkersWallet

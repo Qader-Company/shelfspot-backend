@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Modules\V1\AccessControl\Presentation\Http\Controllers;
+
+use App\Facades\ApiResponse;
+use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
+use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
+use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
+use App\Modules\V1\AccessControl\Presentation\Http\Requests\StoreRoleRequest;
+use App\Modules\V1\AccessControl\Presentation\Http\Requests\StoreShelfSpotAdminRequest;
+use App\Modules\V1\AccessControl\Presentation\Http\Requests\UpdateRoleRequest;
+use App\Modules\V1\AccessControl\Presentation\Http\Requests\UpdateShelfSpotAdminRequest;
+use App\Modules\V1\AccessControl\Presentation\Http\Resources\ManagedAdminResource;
+use App\Modules\V1\Users\Domain\Models\User;
+use Illuminate\Http\JsonResponse;
+
+class ShelfSpotAdminManagementController extends AccessControlController
+{
+    private const PORTAL = PermissionCatalog::ADMIN_PORTAL;
+
+    public function __construct(
+        AccessControlRepositoryInterface $accessControlRepository,
+        private readonly ManagedAdminRepositoryInterface $managedAdminRepository
+    ) {
+        parent::__construct($accessControlRepository);
+    }
+
+    public function permissions(): JsonResponse { return $this->listPermissions(self::PORTAL); }
+    public function roles(): JsonResponse { return $this->listRoles(self::PORTAL); }
+    public function storeRole(StoreRoleRequest $request): JsonResponse { return $this->createRole($request, self::PORTAL); }
+    public function updateRole(UpdateRoleRequest $request, int $roleId): JsonResponse { return $this->modifyRole($request, self::PORTAL, $roleId); }
+    public function destroyRole(int $roleId): JsonResponse { return $this->deleteRole(self::PORTAL, $roleId); }
+
+    public function admins(): JsonResponse
+    {
+        return ApiResponse::success(ManagedAdminResource::collection($this->managedAdminRepository->shelfSpotAdmins()));
+    }
+
+    public function storeAdmin(StoreShelfSpotAdminRequest $request): JsonResponse
+    {
+        return ApiResponse::created(new ManagedAdminResource($this->managedAdminRepository->createShelfSpotAdmin($request->validated())));
+    }
+
+    public function updateAdmin(UpdateShelfSpotAdminRequest $request, User $user): JsonResponse
+    {
+        return ApiResponse::updated(new ManagedAdminResource($this->managedAdminRepository->updateShelfSpotAdmin($user, $request->validated())));
+    }
+}

@@ -2,6 +2,8 @@
 
 use App\Facades\ApiResponse;
 use App\Http\Middleware\CheckApiKey;
+use App\Http\Middleware\CheckScopedPermission;
+use App\Http\Middleware\CheckScopedRole;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetTenantFromHeader;
 use App\Http\Middleware\SetTenantFromRouteCompany;
@@ -16,8 +18,6 @@ use Illuminate\Validation\UnauthorizedException;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
-use Spatie\Permission\Middleware\PermissionMiddleware;
-use Spatie\Permission\Middleware\RoleMiddleware;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -35,8 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
             'locale' => SetLocale::class,
-            'permission' => PermissionMiddleware::class,
-            'role' => RoleMiddleware::class,
+            'permission' => CheckScopedPermission::class,
+            'role' => CheckScopedRole::class,
             'tenant' => SetTenantFromHeader::class,
             'tenant.route-company' => SetTenantFromRouteCompany::class,
             'tenant.user' => EnsureTenantUser::class,

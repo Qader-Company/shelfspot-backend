@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Companies\Application\UseCases;
 
+use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,7 @@ class CreateCompanyWithOwnerUseCase
     public function __construct(
         private readonly CompanyRepositoryInterface $companyRepository,
         private readonly CreateCompanyUserUseCase $createCompanyUserUseCase,
+        private readonly FullAccessRoleProvisioner $fullAccessRoleProvisioner,
     ) {
     }
 
@@ -18,7 +20,9 @@ class CreateCompanyWithOwnerUseCase
     {
         return DB::transaction(function () use ($attributes) {
             $company = $this->companyRepository->create($attributes);
-            $this->createCompanyUserUseCase->execute($company, $attributes, true);
+            $companyUser = $this->createCompanyUserUseCase->execute($company, $attributes, true);
+
+            $this->fullAccessRoleProvisioner->assignCompanyOwnerRole($companyUser->user, $company->id);
 
             return $company->load('users.user');
         });

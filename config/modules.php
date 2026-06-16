@@ -1,5 +1,13 @@
 <?php
 
+    $adminAuthMiddlewares = ['auth:sanctum', 'abilities:admin,access'];
+    $adminManageCompaniesMiddlewares = $adminAuthMiddlewares + ['tenant.route-company'];
+
+    $companyAuthMiddlewares = ['auth:sanctum', 'abilities:company,access'];
+    $companyMiddlewares = $companyAuthMiddlewares + ['tenant', 'tenant.user'];
+
+    $workerAuthMiddlewares = ['auth:sanctum', 'abilities:worker,access'];
+
 return [
     "routes" => [
         'public' => [
@@ -8,34 +16,111 @@ return [
         ],
 
         'admin' => [
-            ['prefix' => 'admin/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
-            ['prefix' => 'admin/companies', 'file' => 'companies.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
-            ['prefix' => 'admin/wallet-coupons', 'file' => 'wallet-coupons.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
-            ['prefix' => 'admin/workers', 'file' => 'workers.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
-            ['prefix' => 'admin/tasks', 'file' => 'tasks.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
-            ['prefix' => 'admin/access-control', 'file' => 'access-control.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access']],
-            ['prefix' => 'admin/companies/{company}/brands', 'file' => 'catalog-brands.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
-            ['prefix' => 'admin/companies/{company}/sub-brands', 'file' => 'catalog-sub-brands.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
-            ['prefix' => 'admin/companies/{company}/categories', 'file' => 'catalog-categories.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
-            ['prefix' => 'admin/companies/{company}/sub-categories', 'file' => 'catalog-sub-categories.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
-            ['prefix' => 'admin/companies/{company}/products', 'file' => 'catalog-products.php', 'middlewares' => ['auth:sanctum', 'abilities:admin,access', 'tenant.route-company']],
+            [
+                'prefix' => 'admin/services',
+                'file' => 'services.php',
+                'middlewares' => $adminAuthMiddlewares],
+            [
+                'prefix' => 'admin/companies',
+                'file' => 'companies.php',
+                'middlewares' => $adminAuthMiddlewares],
+            [
+                'prefix' => 'admin/wallet-coupons',
+                'file' => 'wallet-coupons.php',
+                'middlewares' => $adminAuthMiddlewares],
+            [
+                'prefix' => 'admin/workers',
+                'file' => 'workers.php',
+                'middlewares' => $adminAuthMiddlewares],
+            [
+                'prefix' => 'admin/tasks',
+                'file' => 'tasks.php',
+                'middlewares' => $adminAuthMiddlewares],
+            [
+                'prefix' => 'admin/access-control',
+                'file' => 'access-control.php',
+                'middlewares' => $adminAuthMiddlewares],
+            [
+                'prefix' => 'admin/companies/{company}/brands',
+                'file' => 'catalog-brands.php',
+                'middlewares' => $adminManageCompaniesMiddlewares],
+            [
+                'prefix' => 'admin/companies/{company}/sub-brands',
+                'file' => 'catalog-sub-brands.php',
+                'middlewares' => $adminManageCompaniesMiddlewares],
+            [
+                'prefix' => 'admin/companies/{company}/categories',
+                'file' => 'catalog-categories.php',
+                'middlewares' => $adminManageCompaniesMiddlewares],
+            [
+                'prefix' => 'admin/companies/{company}/sub-categories',
+                'file' => 'catalog-sub-categories.php',
+                'middlewares' => $adminManageCompaniesMiddlewares],
+            [
+                'prefix' => 'admin/companies/{company}/products',
+                'file' => 'catalog-products.php',
+                'middlewares' => $adminManageCompaniesMiddlewares],
         ],
 
         'worker' => [
-            ['prefix' => 'worker/account', 'file' => 'account.php', 'middlewares' => ['auth:sanctum']],
-            ['prefix' => 'worker/tasks', 'file' => 'tasks.php', 'middlewares' => ['auth:sanctum']],
+            [
+                'prefix' => 'worker/account',
+                'file' => 'account.php',
+                'middlewares' => $workerAuthMiddlewares
+            ],
+            [
+                'prefix' => 'worker/tasks',
+                'file' => 'tasks.php',
+                'middlewares' => $workerAuthMiddlewares
+            ],
         ],
 
         'company' => [
-            ['prefix' => 'company/brands', 'file' => 'brands.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
-            ['prefix' => 'company/sub-brands', 'file' => 'sub-brands.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
-            ['prefix' => 'company/categories', 'file' => 'categories.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
-            ['prefix' => 'company/sub-categories', 'file' => 'sub-categories.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
-            ['prefix' => 'company/products', 'file' => 'products.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
-            ['prefix' => 'company/services', 'file' => 'services.php', 'middlewares' => ['auth:sanctum']],
-            ['prefix' => 'company/wallets', 'file' => 'wallets.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
-            ['prefix' => 'company/tasks', 'file' => 'tasks.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
-            ['prefix' => 'company/access-control', 'file' => 'access-control.php', 'middlewares' => ['auth:sanctum', 'tenant', 'tenant.user']],
+            [
+                'prefix' => 'company/services',
+                'file' => 'services.php',
+                'middlewares' => $companyAuthMiddlewares
+            ],
+            [
+                'prefix' => 'company/brands',
+                'file' => 'brands.php',
+                'middlewares' => $companyMiddlewares
+            ],
+            [
+                'prefix' => 'company/sub-brands',
+                'file' => 'sub-brands.php',
+                'middlewares' => $companyMiddlewares
+            ],
+            [
+                'prefix' => 'company/categories',
+                'file' => 'categories.php',
+                'middlewares' => $companyMiddlewares
+            ],
+            [
+                'prefix' => 'company/sub-categories',
+                'file' => 'sub-categories.php',
+                'middlewares' => $companyMiddlewares
+            ],
+            [
+                'prefix' => 'company/products',
+                'file' => 'products.php',
+                'middlewares' => $companyMiddlewares
+            ],
+            [
+                'prefix' => 'company/wallets',
+                'file' => 'wallets.php',
+                'middlewares' => $companyMiddlewares
+            ],
+            [
+                'prefix' => 'company/tasks',
+                'file' => 'tasks.php',
+                'middlewares' => $companyMiddlewares
+            ],
+            [
+                'prefix' => 'company/access-control',
+                'file' => 'access-control.php',
+                'middlewares' => $companyMiddlewares
+            ],
         ]
     ],
 

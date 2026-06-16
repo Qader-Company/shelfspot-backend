@@ -5,8 +5,7 @@ use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('abilities:'.PortalTypeEnum::COMPANY->value.','.TokenTypeEnum::ACCESS_TOKEN->value)
-    ->controller(CompanyAdminManagementController::class)
+Route::controller(CompanyAdminManagementController::class)
     ->group(function () {
         Route::get('/permissions', 'permissions');
         Route::get('/roles', 'roles');

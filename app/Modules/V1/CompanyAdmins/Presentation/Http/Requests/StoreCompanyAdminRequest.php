@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\V1\AccessControl\Presentation\Http\Requests;
+namespace App\Modules\V1\CompanyAdmins\Presentation\Http\Requests;
 
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;

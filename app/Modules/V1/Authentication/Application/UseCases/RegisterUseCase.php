@@ -3,15 +3,13 @@
 namespace App\Modules\V1\Authentication\Application\UseCases;
 
 use App\Modules\V1\Authentication\Domain\Services\OtpService;
+use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
-use App\Modules\V1\Companies\Application\UseCases\CreateCompanyUserUseCase;
 use App\Modules\V1\Companies\Application\UseCases\CreateCompanyWithOwnerUseCase;
-use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
-use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
 use App\Modules\V1\Users\Domain\Models\User;
-use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
+use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
 use Illuminate\Support\Facades\DB;
 
 class RegisterUseCase

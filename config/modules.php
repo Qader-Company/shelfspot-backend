@@ -140,5 +140,5 @@ return [
         \App\Modules\V1\WorkersWallets\Infrastructure\Providers\WorkersWalletsModuleServiceProvider::class,
         \App\Modules\V1\Coupons\Infrastructure\Providers\CouponsModuleServiceProvider::class,
         \App\Modules\V1\Tasks\Infrastructure\Providers\TasksModuleServiceProvider::class,
-    ],
+        \App\Modules\V1\CompanyUsers\Infrastructure\Providers\CompanyUsersModuleServiceProvider::class,],
 ];

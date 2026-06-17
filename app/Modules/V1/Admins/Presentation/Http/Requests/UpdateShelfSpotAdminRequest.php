@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Modules\V1\AccessControl\Presentation\Http\Requests;
+namespace App\Modules\V1\Admins\Presentation\Http\Requests;
 
-use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateCompanyAdminRequest extends FormRequest
+class UpdateShelfSpotAdminRequest extends FormRequest
 {
     public function authorize(): bool { return true; }
 
@@ -20,12 +19,7 @@ class UpdateCompanyAdminRequest extends FormRequest
             'password' => ['sometimes', 'string', 'min:8'],
             'is_active' => ['sometimes', 'boolean'],
             'roles' => ['sometimes', 'array'],
-            'roles.*' => ['string', Rule::exists('roles', 'name')->where('portal', PermissionCatalog::COMPANY_PORTAL)->where('company_id', $this->companyId())],
+            'roles.*' => ['string', Rule::exists('roles', 'name')->where('portal', PermissionCatalog::ADMIN_PORTAL)->where('company_id', null)],
         ];
-    }
-
-    private function companyId(): int
-    {
-        return app(TenantContextInterface::class)->getCompanyId();
     }
 }

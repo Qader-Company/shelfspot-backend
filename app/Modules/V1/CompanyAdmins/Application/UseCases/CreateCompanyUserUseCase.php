@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\V1\Companies\Application\UseCases;
+namespace App\Modules\V1\CompanyAdmins\Application\UseCases;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
-use App\Modules\V1\Companies\Domain\Repositories\CompanyUserRepositoryInterface;
+use App\Modules\V1\CompanyUsers\Domain\Repositories\CompanyUserRepositoryInterface;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\DB;

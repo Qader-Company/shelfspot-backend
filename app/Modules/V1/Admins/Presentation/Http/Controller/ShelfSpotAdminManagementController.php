@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Modules\V1\AccessControl\Presentation\Http\Controllers;
+namespace App\Modules\V1\Admins\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
 use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
+use App\Modules\V1\AccessControl\Presentation\Http\Controllers\AccessControlController;
 use App\Modules\V1\AccessControl\Presentation\Http\Requests\StoreRoleRequest;
-use App\Modules\V1\AccessControl\Presentation\Http\Requests\StoreShelfSpotAdminRequest;
 use App\Modules\V1\AccessControl\Presentation\Http\Requests\UpdateRoleRequest;
-use App\Modules\V1\AccessControl\Presentation\Http\Requests\UpdateShelfSpotAdminRequest;
 use App\Modules\V1\AccessControl\Presentation\Http\Resources\ManagedAdminResource;
+use App\Modules\V1\Admins\Presentation\Http\Requests\StoreShelfSpotAdminRequest;
+use App\Modules\V1\Admins\Presentation\Http\Requests\UpdateShelfSpotAdminRequest;
 use App\Modules\V1\Users\Domain\Models\User;
-use Illuminate\Http\JsonResponse;
 
 class ShelfSpotAdminManagementController extends AccessControlController
 {

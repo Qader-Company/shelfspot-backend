@@ -1,9 +1,7 @@
 <?php
 
 use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
-use App\Modules\V1\AccessControl\Presentation\Http\Controllers\CompanyAdminManagementController;
-use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
-use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
+use App\Modules\V1\CompanyUsers\Presentation\Http\Controllers\CompanyAdminManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(CompanyAdminManagementController::class)

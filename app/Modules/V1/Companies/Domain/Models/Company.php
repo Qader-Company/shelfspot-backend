@@ -5,6 +5,7 @@ namespace App\Modules\V1\Companies\Domain\Models;
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
+use App\Modules\V1\CompanyUsers\Domain\Models\CompanyUser;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;

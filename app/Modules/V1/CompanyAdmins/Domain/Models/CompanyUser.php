@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Modules\V1\Companies\Domain\Models;
+namespace App\Modules\V1\CompanyUsers\Domain\Models;
 
+use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Users\Domain\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;

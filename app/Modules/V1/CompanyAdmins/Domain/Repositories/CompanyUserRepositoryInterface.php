@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\V1\Companies\Domain\Repositories;
+namespace App\Modules\V1\CompanyUsers\Domain\Repositories;
 
-use App\Modules\V1\Companies\Domain\Models\CompanyUser;
+use App\Modules\V1\CompanyUsers\Domain\Models\CompanyUser;
 
 interface CompanyUserRepositoryInterface
 {

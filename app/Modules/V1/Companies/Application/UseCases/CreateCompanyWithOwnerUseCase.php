@@ -5,6 +5,7 @@ namespace App\Modules\V1\Companies\Application\UseCases;
 use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
+use App\Modules\V1\CompanyAdmins\Application\UseCases\CreateCompanyUserUseCase;
 use Illuminate\Support\Facades\DB;
 
 class CreateCompanyWithOwnerUseCase

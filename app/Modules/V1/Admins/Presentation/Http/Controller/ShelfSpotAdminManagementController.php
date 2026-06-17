@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Admins\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
+use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
 use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
@@ -13,9 +14,13 @@ use App\Modules\V1\AccessControl\Presentation\Http\Resources\ManagedAdminResourc
 use App\Modules\V1\Admins\Presentation\Http\Requests\StoreShelfSpotAdminRequest;
 use App\Modules\V1\Admins\Presentation\Http\Requests\UpdateShelfSpotAdminRequest;
 use App\Modules\V1\Users\Domain\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ShelfSpotAdminManagementController extends AccessControlController
 {
+    use Filterable;
+
     private const PORTAL = PermissionCatalog::ADMIN_PORTAL;
 
     public function __construct(
@@ -49,11 +54,13 @@ class ShelfSpotAdminManagementController extends AccessControlController
     }
 
 
-    public function admins()
+    public function admins(Request $request)
     {
         return ApiResponse::success(
             ManagedAdminResource::collection(
-                $this->managedAdminRepository->shelfSpotAdmins()
+                $this->managedAdminRepository->shelfSpotAdmins(
+                    $this->acceptedFilters($request, ['is_active', 'active', 'role', 'search'])
+                )
             )
         );
     }
@@ -74,5 +81,12 @@ class ShelfSpotAdminManagementController extends AccessControlController
                 $this->managedAdminRepository->updateShelfSpotAdmin($user, $request->validated())
             )
         );
+    }
+
+    public function destroyAdmin(User $user): JsonResponse
+    {
+        $this->managedAdminRepository->deleteShelfSpotAdmin($user);
+
+        return ApiResponse::deleted();
     }
 }

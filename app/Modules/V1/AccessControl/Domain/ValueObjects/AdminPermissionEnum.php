@@ -30,6 +30,7 @@ enum AdminPermissionEnum: string
     case VIEW_ADMIN = 'view_admin';
     case CREATE_ADMIN = 'create_admin';
     case EDIT_ADMIN = 'edit_admin';
+    case DELETE_ADMIN = 'delete_admin';
 
     public function label(): string
     {

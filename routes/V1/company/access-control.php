@@ -14,4 +14,5 @@ Route::controller(CompanyAdminManagementController::class)
         Route::get('/admins', 'admins')->middleware('permission:'.CompanyPermissionEnum::VIEW_ADMIN->value);
         Route::post('/admins', 'storeAdmin')->middleware('permission:'.CompanyPermissionEnum::CREATE_ADMIN->value);
         Route::match(['put', 'patch'], '/admins/{user}', 'updateAdmin')->middleware('permission:'.CompanyPermissionEnum::EDIT_ADMIN->value);
+        Route::delete('/admins/{user}', 'destroyAdmin')->middleware('permission:'.CompanyPermissionEnum::DELETE_ADMIN->value);
     });

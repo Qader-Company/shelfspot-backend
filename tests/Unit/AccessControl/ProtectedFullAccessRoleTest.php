@@ -122,6 +122,36 @@ class ProtectedFullAccessRoleTest extends TestCase
         );
     }
 
+    public function test_super_admin_user_cannot_be_deleted(): void
+    {
+        $admin = app(EloquentManagedAdminRepository::class)->createShelfSpotAdmin([
+            'name' => 'Protected Super Admin',
+            'email' => 'protected-super-admin@example.com',
+            'password' => 'password123',
+        ]);
+        app(FullAccessRoleProvisioner::class)->assignSuperAdminRole($admin);
+
+        $this->expectException(AuthorizationException::class);
+
+        app(EloquentManagedAdminRepository::class)->deleteShelfSpotAdmin($admin);
+    }
+
+    public function test_company_owner_user_cannot_be_deleted(): void
+    {
+        $companyId = 10;
+        $owner = app(EloquentManagedAdminRepository::class)->createCompanyAdmin($companyId, [
+            'name' => 'Protected Owner',
+            'email' => 'protected-owner@example.com',
+            'password' => 'password123',
+        ]);
+        $owner->companyUser()->update(['is_owner' => true]);
+        app(FullAccessRoleProvisioner::class)->assignCompanyOwnerRole($owner, $companyId);
+
+        $this->expectException(AuthorizationException::class);
+
+        app(EloquentManagedAdminRepository::class)->deleteCompanyAdmin($companyId, $owner);
+    }
+
     public function test_company_owner_role_cannot_be_assigned_to_new_company_admin(): void
     {
         $companyId = 10;

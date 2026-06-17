@@ -7,12 +7,12 @@ use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
 use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
 use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
-use App\Modules\V1\Companies\Domain\Models\CompanyUser;
+use App\Modules\V1\CompanyUsers\Domain\Models\CompanyUser;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
@@ -27,9 +27,25 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
     public function createShelfSpotAdmin(array $attributes): User
     {
         return DB::transaction(function () use ($attributes) {
-            $user = User::create([...collect($attributes)->only(['name', 'email', 'password'])->all(), 'type' => PortalTypeEnum::ADMIN]);
-            ShelfSpotAdmin::create(['user_id' => $user->id, 'is_active' => $attributes['is_active'] ?? true]);
-            $this->syncRoles($user, PermissionCatalog::ADMIN_PORTAL, null, $attributes['roles'] ?? []);
+            $user = User::create([
+                'name' => $attributes['name'],
+                'email' => $attributes[ 'email'],
+                'password' => $attributes['password'],
+                'type' => PortalTypeEnum::ADMIN
+            ]);
+
+            ShelfSpotAdmin::create([
+                'user_id' => $user->id,
+                'is_active' => $attributes['is_active'] ?? true
+            ]);
+
+            $this->syncRoles(
+                $user,
+                PermissionCatalog::ADMIN_PORTAL,
+                null,
+                $attributes['roles'] ?? []
+            );
+
             return $user->load(['admin', 'roles']);
         });
     }
@@ -160,7 +176,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         };
     }
 
-    private function adminQuery(array $filters = []): Builder
+    private function adminQuery(array $filters = [])
     {
         return User::query()
             ->where('type', PortalTypeEnum::ADMIN)
@@ -171,7 +187,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
             ->latest();
     }
 
-    private function companyAdminQuery(int $companyId, array $filters = []): Builder
+    private function companyAdminQuery(int $companyId, array $filters = [])
     {
         return User::query()
             ->where('type', PortalTypeEnum::COMPANY)

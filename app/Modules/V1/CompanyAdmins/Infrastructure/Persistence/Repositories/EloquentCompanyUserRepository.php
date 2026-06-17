@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\V1\Companies\Infrastructure\Persistence\Repositories;
+namespace App\Modules\V1\CompanyUsers\Infrastructure\Persistence\Repositories;
 
-use App\Modules\V1\Companies\Domain\Models\CompanyUser;
-use App\Modules\V1\Companies\Domain\Repositories\CompanyUserRepositoryInterface;
+use App\Modules\V1\CompanyUsers\Domain\Models\CompanyUser;
+use App\Modules\V1\CompanyUsers\Domain\Repositories\CompanyUserRepositoryInterface;
 
 class EloquentCompanyUserRepository implements CompanyUserRepositoryInterface
 {

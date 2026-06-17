@@ -1,7 +1,7 @@
 <?php
 
 use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
-use App\Modules\V1\AccessControl\Presentation\Http\Controllers\ShelfSpotAdminManagementController;
+use App\Modules\V1\Admins\Presentation\Http\Controller\ShelfSpotAdminManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(ShelfSpotAdminManagementController::class)
@@ -16,6 +16,7 @@ Route::controller(ShelfSpotAdminManagementController::class)
             ->middleware('permission:'.AdminPermissionEnum::EDIT_ROLE->value);
         Route::delete('/roles/{roleId}', 'destroyRole')
             ->middleware('permission:'.AdminPermissionEnum::DELETE_ROLE->value);
+
         Route::get('/admins', 'admins')
             ->middleware('permission:'.AdminPermissionEnum::VIEW_ADMIN->value);
         Route::post('/admins', 'storeAdmin')

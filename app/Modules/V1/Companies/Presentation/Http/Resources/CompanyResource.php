@@ -2,7 +2,7 @@
 
 namespace App\Modules\V1\Companies\Presentation\Http\Resources;
 
-use App\Modules\V1\Companies\Presentation\Http\Resources\CompanyUserResource;
+use App\Modules\V1\CompanyAdmins\Presentation\Http\Resources\CompanyUserResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

@@ -122,7 +122,6 @@ class ProtectedFullAccessRoleTest extends TestCase
         );
     }
 
-
     public function test_super_admin_user_cannot_be_deleted(): void
     {
         $admin = app(EloquentManagedAdminRepository::class)->createShelfSpotAdmin([

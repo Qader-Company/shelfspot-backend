@@ -37,7 +37,7 @@ class CompanyAdminManagementController extends AccessControlController
     public function updateRole(UpdateRoleRequest $request, int $roleId): JsonResponse { return $this->modifyRole($request, self::PORTAL, $roleId, $this->companyId()); }
     public function destroyRole(int $roleId): JsonResponse { return $this->deleteRole(self::PORTAL, $roleId, $this->companyId()); }
 
-    public function admins(Request $request): JsonResponse
+    public function admins(Request $request)
     {
         return ApiResponse::success(
             ManagedAdminResource::collection(

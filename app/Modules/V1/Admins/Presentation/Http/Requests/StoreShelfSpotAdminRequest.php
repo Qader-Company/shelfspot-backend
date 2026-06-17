@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\V1\AccessControl\Presentation\Http\Requests;
+namespace App\Modules\V1\Admins\Presentation\Http\Requests;
 
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;

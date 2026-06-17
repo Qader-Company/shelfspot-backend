@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\AccessControl\Infrastructure\Persistence\Repositories;
 
+use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
 use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
@@ -9,6 +10,7 @@ use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
 use App\Modules\V1\Companies\Domain\Models\CompanyUser;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -77,8 +79,34 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         });
     }
 
+    /**
+     * @throws AuthorizationException
+     */
     private function syncRoles(User $user, string $portal, ?int $companyId, array $roleNames): void
     {
+        $this->ensureRolesCanBeAssigned($portal, $roleNames);
+
         $user->syncRoles($this->accessControlRepository->scopedRolesByNames($portal, $companyId, $roleNames));
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    private function ensureRolesCanBeAssigned(string $portal, array $roleNames): void
+    {
+        if (empty(array_intersect($roleNames, $this->protectedRoleNames($portal)))) {
+            return;
+        }
+
+        throw new AuthorizationException('The owner and super admin roles cannot be assigned to managed admins.');
+    }
+
+    private function protectedRoleNames(string $portal): array
+    {
+        return match ($portal) {
+            PermissionCatalog::ADMIN_PORTAL => [FullAccessRoleProvisioner::SUPER_ADMIN_ROLE],
+            PermissionCatalog::COMPANY_PORTAL => [FullAccessRoleProvisioner::COMPANY_OWNER_ROLE],
+            default => [],
+        };
     }
 }

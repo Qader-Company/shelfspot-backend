@@ -27,6 +27,7 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
     public function createRole(string $portal, ?int $companyId, array $attributes): Role
     {
         PermissionCatalog::sync($portal, $companyId);
+        $this->ensureRoleNameCanBeCreated($portal, $companyId, $attributes['name']);
         $role = Role::firstOrCreate(['name' => $attributes['name'], 'guard_name' => 'web', 'portal' => $portal, 'company_id' => $companyId]);
         $this->syncRolePermissions($role, $portal, $companyId, $attributes['permissions'] ?? []);
         return $role->load('permissions');
@@ -59,6 +60,16 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
     /**
      * @throws AuthorizationException
      */
+    private function ensureRoleNameCanBeCreated(string $portal, ?int $companyId, string $name): void
+    {
+        if ($this->isProtectedFullAccessRoleName($portal, $companyId, $name)) {
+            throw new AuthorizationException('The owner and super admin roles are managed by the system and cannot be created manually.');
+        }
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
     private function ensureRoleCanBeModified(Role $role): void
     {
         if ($this->isProtectedFullAccessRole($role)) {
@@ -68,12 +79,17 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
 
     private function isProtectedFullAccessRole(Role $role): bool
     {
-        return ($role->portal === PermissionCatalog::ADMIN_PORTAL
-                && $role->company_id === null
-                && $role->name === FullAccessRoleProvisioner::SUPER_ADMIN_ROLE)
-            || ($role->portal === PermissionCatalog::COMPANY_PORTAL
-                && $role->company_id !== null
-                && $role->name === FullAccessRoleProvisioner::COMPANY_OWNER_ROLE);
+        return $this->isProtectedFullAccessRoleName($role->portal, $role->company_id, $role->name);
+    }
+
+    private function isProtectedFullAccessRoleName(string $portal, ?int $companyId, string $name): bool
+    {
+        return ($portal === PermissionCatalog::ADMIN_PORTAL
+                && $companyId === null
+                && $name === FullAccessRoleProvisioner::SUPER_ADMIN_ROLE)
+            || ($portal === PermissionCatalog::COMPANY_PORTAL
+                && $companyId !== null
+                && $name === FullAccessRoleProvisioner::COMPANY_OWNER_ROLE);
     }
 
     private function syncRolePermissions(Role $role, string $portal, ?int $companyId, array $permissionNames): void

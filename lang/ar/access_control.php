@@ -29,6 +29,7 @@ return [
             'view_admin' => 'عرض الأدمنز',
             'create_admin' => 'إنشاء أدمن',
             'edit_admin' => 'تعديل أدمن',
+            'delete_admin' => 'حذف أدمن',
         ],
         'company' => [
             'view_brand' => 'عرض العلامات التجارية',
@@ -64,6 +65,7 @@ return [
             'view_admin' => 'عرض الأدمنز',
             'create_admin' => 'إنشاء أدمن',
             'edit_admin' => 'تعديل أدمن',
+            'delete_admin' => 'حذف أدمن',
         ],
     ],
 ];

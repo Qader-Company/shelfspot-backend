@@ -22,4 +22,6 @@ Route::controller(ShelfSpotAdminManagementController::class)
             ->middleware('permission:'.AdminPermissionEnum::CREATE_ADMIN->value);
         Route::match(['put', 'patch'], '/admins/{user}', 'updateAdmin')
             ->middleware('permission:'.AdminPermissionEnum::EDIT_ADMIN->value);
+        Route::delete('/admins/{user}', 'destroyAdmin')
+            ->middleware('permission:'.AdminPermissionEnum::DELETE_ADMIN->value);
     });

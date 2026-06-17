@@ -29,6 +29,7 @@ return [
             'view_admin' => 'View admins',
             'create_admin' => 'Create admin',
             'edit_admin' => 'Edit admin',
+            'delete_admin' => 'Delete admin',
         ],
         'company' => [
             'view_brand' => 'View brands',
@@ -64,6 +65,7 @@ return [
             'view_admin' => 'View admins',
             'create_admin' => 'Create admin',
             'edit_admin' => 'Edit admin',
+            'delete_admin' => 'Delete admin',
         ],
     ],
 ];

@@ -14,33 +14,33 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
 {
     public function permissions(string $portal, ?int $companyId = null): Collection
     {
-        PermissionCatalog::sync($portal, $companyId);
-        return $this->permissionQuery($portal, $companyId)->get();
+        PermissionCatalog::sync($portal);
+        return $this->permissionQuery($portal)->get();
     }
 
     public function roles(string $portal, ?int $companyId = null): Collection
     {
-        PermissionCatalog::sync($portal, $companyId);
+        PermissionCatalog::sync($portal);
         return $this->roleQuery($portal, $companyId)->with('permissions')->get();
     }
 
     public function createRole(string $portal, ?int $companyId, array $attributes): Role
     {
-        PermissionCatalog::sync($portal, $companyId);
+        PermissionCatalog::sync($portal);
         $this->ensureRoleNameCanBeCreated($portal, $companyId, $attributes['name']);
         $role = Role::firstOrCreate(['name' => $attributes['name'], 'guard_name' => 'web', 'portal' => $portal, 'company_id' => $companyId]);
-        $this->syncRolePermissions($role, $portal, $companyId, $attributes['permissions'] ?? []);
+        $this->syncRolePermissions($role, $portal, $attributes['permissions'] ?? []);
         return $role->load('permissions');
     }
 
     public function updateRole(string $portal, ?int $companyId, int $roleId, array $attributes): Role
     {
-        PermissionCatalog::sync($portal, $companyId);
+        PermissionCatalog::sync($portal);
         $role = $this->roleQuery($portal, $companyId)->findOrFail($roleId);
         $this->ensureRoleCanBeModified($role);
         $role->fill(collect($attributes)->only('name')->all())->save();
         if (array_key_exists('permissions', $attributes)) {
-            $this->syncRolePermissions($role, $portal, $companyId, $attributes['permissions']);
+            $this->syncRolePermissions($role, $portal, $attributes['permissions']);
         }
         return $role->load('permissions');
     }
@@ -92,9 +92,9 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
                 && $name === FullAccessRoleProvisioner::COMPANY_OWNER_ROLE);
     }
 
-    private function syncRolePermissions(Role $role, string $portal, ?int $companyId, array $permissionNames): void
+    private function syncRolePermissions(Role $role, string $portal, array $permissionNames): void
     {
-        $role->syncPermissions($this->permissionQuery($portal, $companyId)->whereIn('name', $permissionNames)->get());
+        $role->syncPermissions($this->permissionQuery($portal)->whereIn('name', $permissionNames)->get());
     }
 
     private function roleQuery(string $portal, ?int $companyId)
@@ -102,8 +102,8 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
         return Role::query()->where('portal', $portal)->where('company_id', $companyId);
     }
 
-    private function permissionQuery(string $portal, ?int $companyId)
+    private function permissionQuery(string $portal)
     {
-        return Permission::query()->where('portal', $portal)->where('company_id', $companyId);
+        return Permission::query()->where('portal', $portal);
     }
 }

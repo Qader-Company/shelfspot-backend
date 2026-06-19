@@ -33,10 +33,9 @@ class CheckScopedPermission
         $hasPermissionThroughRole = $user->roles()
             ->where('portal', $portal)
             ->where('company_id', $companyId)
-            ->whereHas('permissions', function ($query) use ($permissionNames, $portal, $companyId) {
+            ->whereHas('permissions', function ($query) use ($permissionNames, $portal) {
                 $query->whereIn('name', $permissionNames)
-                    ->where('portal', $portal)
-                    ->where('company_id', $companyId);
+                    ->where('portal', $portal);
             })
             ->exists();
 

@@ -45,14 +45,13 @@ class PermissionCatalog
         return $permission;
     }
 
-    public static function sync(string $portal, ?int $companyId = null): void
+    public static function sync(string $portal): void
     {
         foreach (self::cases($portal) as $permission) {
             Permission::firstOrCreate([
                 'name' => $permission->value,
                 'guard_name' => 'web',
                 'portal' => $portal,
-                'company_id' => $companyId,
             ]);
         }
     }

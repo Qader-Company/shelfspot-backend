@@ -42,7 +42,7 @@ class FullAccessRoleProvisioner
 
     private function ensureFullAccessRole(string $name, string $portal, ?int $companyId): Role
     {
-        PermissionCatalog::sync($portal, $companyId);
+        PermissionCatalog::sync($portal);
 
         $role = Role::firstOrCreate([
             'name' => $name,
@@ -54,7 +54,6 @@ class FullAccessRoleProvisioner
         $role->syncPermissions(
             Permission::query()
                 ->where('portal', $portal)
-                ->where('company_id', $companyId)
                 ->get()
         );
 

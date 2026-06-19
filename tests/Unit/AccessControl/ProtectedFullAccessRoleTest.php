@@ -4,10 +4,12 @@ namespace Tests\Unit\AccessControl;
 
 use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
+use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
 use App\Modules\V1\AccessControl\Infrastructure\Persistence\Repositories\EloquentAccessControlRepository;
 use App\Modules\V1\AccessControl\Infrastructure\Persistence\Repositories\EloquentManagedAdminRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class ProtectedFullAccessRoleTest extends TestCase
@@ -119,6 +121,35 @@ class ProtectedFullAccessRoleTest extends TestCase
             PermissionCatalog::COMPANY_PORTAL,
             $companyId,
             $role->id
+        );
+    }
+
+    public function test_company_permissions_are_shared_across_company_roles(): void
+    {
+        $permissionName = CompanyPermissionEnum::VIEW_BRAND->value;
+        $repository = app(EloquentAccessControlRepository::class);
+
+        $firstCompanyRole = $repository->createRole(
+            PermissionCatalog::COMPANY_PORTAL,
+            10,
+            ['name' => 'manager', 'permissions' => [$permissionName]]
+        );
+
+        $secondCompanyRole = $repository->createRole(
+            PermissionCatalog::COMPANY_PORTAL,
+            20,
+            ['name' => 'manager', 'permissions' => [$permissionName]]
+        );
+
+        $this->assertFalse(Schema::hasColumn('permissions', 'company_id'));
+        $this->assertDatabaseCount('permissions', count(CompanyPermissionEnum::cases()));
+        $this->assertDatabaseHas('permissions', [
+            'name' => $permissionName,
+            'portal' => PermissionCatalog::COMPANY_PORTAL,
+        ]);
+        $this->assertSame(
+            $firstCompanyRole->permissions->pluck('id')->all(),
+            $secondCompanyRole->permissions->pluck('id')->all()
         );
     }
 

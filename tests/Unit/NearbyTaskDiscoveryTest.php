@@ -47,7 +47,7 @@ class NearbyTaskDiscoveryTest extends TestCase
 
         $visible = $this->task($company, ['date' => '2026-06-10']);
         $this->task($company, ['date' => '2026-06-11']);
-        $this->task($company, ['status' => TaskStatusEnum::ACCEPTED]);
+        $this->task($company, ['status' => TaskStatusEnum::STARTED]);
         $this->task($company, ['payment_status' => TaskPaymentStatusEnum::PENDING]);
         $this->task($company, ['assigned_worker_id' => $assignedWorker->id]);
         $this->task($company, ['company_deleted_at' => now()]);

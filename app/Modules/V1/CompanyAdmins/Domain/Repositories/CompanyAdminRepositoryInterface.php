@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\V1\CompanyUsers\Domain\Repositories;
+namespace App\Modules\V1\CompanyAdmins\Domain\Repositories;
 
-use App\Modules\V1\CompanyUsers\Domain\Models\CompanyUser;
+use App\Modules\V1\CompanyAdmins\Domain\Models\CompanyUser;
 
-interface CompanyUserRepositoryInterface
+interface CompanyAdminRepositoryInterface
 {
     public function list(bool $active, array $filters);
 

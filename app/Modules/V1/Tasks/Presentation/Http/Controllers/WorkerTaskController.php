@@ -5,9 +5,9 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Controllers;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Support\Traits\Filterable;
-use App\Modules\V1\Tasks\Application\UseCases\AcceptTaskUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
@@ -77,7 +77,7 @@ class WorkerTaskController extends Controller
         );
     }
 
-    public function accept(int $id, Request $request, AcceptTaskUseCase $acceptTaskUseCase)
+    public function start(int $id, Request $request, StartTaskUseCase $acceptTaskUseCase)
     {
         $task = $acceptTaskUseCase->execute(
             $this->task($id),
@@ -89,7 +89,7 @@ class WorkerTaskController extends Controller
         );
     }
 
-    public function start(int $id, StartTaskRequest $request, StartTaskUseCase $startTaskUseCase)
+    public function execute(int $id, StartTaskRequest $request, StartExecuteTaskUseCase $startTaskUseCase)
     {
         $task = $startTaskUseCase->execute(
             task: $this->task($id),
@@ -98,7 +98,15 @@ class WorkerTaskController extends Controller
             longitude: (float) $request->validated('longitude')
         );
 
-        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+        return ApiResponse::updated(
+            new TaskResource(
+                $task->load([
+                    'services.service.translations',
+                    'services.products.product',
+                    'services.submission',
+                    'assignedWorker'
+                ])
+            ));
     }
 
     public function submitService(int $id, int $serviceId, SubmitTaskServiceRequest $request, SubmitTaskServiceUseCase $submitTaskServiceUseCase)
@@ -116,7 +124,7 @@ class WorkerTaskController extends Controller
 
     public function complete(int $id, Request $request, CompleteTaskUseCase $completeTaskUseCase)
     {
-        $task = $completeTaskUseCase->execute(
+        $completeTaskUseCase->execute(
             $this->task($id),
             $this->worker($request)
         );
@@ -126,7 +134,7 @@ class WorkerTaskController extends Controller
 
     public function cancel(int $id, WorkerCancelTaskRequest $request, WorkerCancelTaskUseCase $workerCancelTaskUseCase)
     {
-        $task = $workerCancelTaskUseCase->execute(
+        $workerCancelTaskUseCase->execute(
             task: $this->task($id),
             worker: $this->worker($request),
             reason: $request->validated('reason')

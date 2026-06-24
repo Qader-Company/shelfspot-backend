@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Modules\V1\Tasks\Application\Services\TaskActionsRules;
+
+use App\Modules\V1\Tasks\Domain\Models\Task;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use Illuminate\Validation\ValidationException;
+
+class CanStartTaskRule extends AbstractTaskActionRule
+{
+    public static function validate(Task $task, int $workerId = null): void
+    {
+        parent::validate($task, $workerId);
+
+        parent::insureTaskIsCharged($task);
+        parent::insureTaskIsNotDeleted($task);
+        parent::insureTaskDateIsSameDay($task);
+        parent::insureTaskAssignmentToWorker(
+            task: $task,
+            message: __('tasks.validation.accept_unassigned_only')
+        );
+        parent::insureTaskStatusIsNot(
+            task: $task,
+            statuses: [TaskStatusEnum::PENDING],
+            message: __('tasks.validation.accept_pending_only')
+        );
+
+    }
+}

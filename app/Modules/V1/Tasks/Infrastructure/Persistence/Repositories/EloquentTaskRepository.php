@@ -29,6 +29,17 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->first();
     }
 
+
+    public function getByIdAndLockedForUpdate(int $id, array $relations = [], array $relationsCount = []): ?Task
+    {
+        return $this->query($relations, $relationsCount)
+            ->where('id', $id)
+            ->lockForUpdate()
+            ->first();
+    }
+
+
+
     public function create(array $attributes): Task
     {
         $task = Task::create($attributes);

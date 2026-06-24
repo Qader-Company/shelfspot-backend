@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\V1\CompanyUsers\Domain\Models;
+namespace App\Modules\V1\CompanyAdmins\Domain\Models;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Users\Domain\Models\User;

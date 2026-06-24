@@ -46,8 +46,8 @@ class ShowAdminWorkerUseCase
     private function taskCounts(int $workerId): array
     {
         return [
-            'total_accepted' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::ACCEPTED),
-            'total_completed' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::COMPLETED),
+            'total_accepted' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::STARTED),
+            'total_completed' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::IN_REVIEW),
             'total_cancelled' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::WORKER_CANCELLED),
         ];
     }

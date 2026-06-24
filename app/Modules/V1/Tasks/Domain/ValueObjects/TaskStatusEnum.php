@@ -6,11 +6,11 @@ enum TaskStatusEnum: string
 {
     case DRAFT = 'draft';
     case PENDING = 'pending';
-    case ACCEPTED = 'accepted';
+    case STARTED = 'started';
     case IN_PROGRESS = 'in_progress';
-    case COMPLETED = 'completed';
-    case FAILED = 'failed';
     case WORKER_CANCELLED = 'worker_cancelled';
-    case COMPANY_DELETED = 'company_deleted';
-    case ADMIN_DELETED = 'admin_deleted';
+    case IN_REVIEW = 'completed';
+    case FAILED = 'failed';
+    case REJECTED = 'rejected';
+    case ACCEPTED = 'accepted';
 }

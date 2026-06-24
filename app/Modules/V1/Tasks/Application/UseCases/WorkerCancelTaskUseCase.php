@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
+use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanCancelTaskRule;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
@@ -19,15 +20,10 @@ class WorkerCancelTaskUseCase
     public function execute(Task $task, Worker $worker, string $reason): Task
     {
         return DB::transaction(function () use ($task, $worker, $reason) {
-            /** @var Task $lockedTask */
-            $lockedTask = $this->taskRepository
-                ->query()
-                ->whereKey($task->id)
-                ->lockForUpdate()
-                ->firstOrFail();
 
-            $fromStatus = $lockedTask->status;
-            $this->ensureTaskIsAvailableToBeAccepted($lockedTask, $worker->id);
+            $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
+
+            CanCancelTaskRule::validate($lockedTask, $worker->id);
 
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::WORKER_CANCELLED,
@@ -37,7 +33,7 @@ class WorkerCancelTaskUseCase
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,
-                $fromStatus,
+                $lockedTask->getOriginal('status'),
                 TaskStatusEnum::WORKER_CANCELLED,
                 $worker,
                 ['worker_id' => $worker->id, 'reason' => $reason]
@@ -45,16 +41,5 @@ class WorkerCancelTaskUseCase
 
             return $lockedTask->refresh();
         });
-    }
-
-    public function ensureTaskIsAvailableToBeAccepted($lockedTask, $workerId)
-    {
-        if (! in_array($lockedTask->status, [TaskStatusEnum::ACCEPTED, TaskStatusEnum::IN_PROGRESS], true)) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.cancel_active_only')]);
-        }
-
-        if ((int) $lockedTask->assigned_worker_id !== (int) $workerId) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.worker_not_assigned')]);
-        }
     }
 }

@@ -42,10 +42,10 @@ class AdminReassignTaskUseCase
 
             $now = now();
             $lockedTask->forceFill([
-                'status' => TaskStatusEnum::ACCEPTED,
+                'status' => TaskStatusEnum::STARTED,
                 'assigned_worker_id' => $worker->id,
                 'accepted_at' => $now,
-                'start_deadline_at' => $now->copy()->addMinutes(AcceptTaskUseCase::START_DEADLINE_MINUTES),
+                'start_deadline_at' => $now->copy()->addMinutes(StartTaskUseCase::START_DEADLINE_MINUTES),
                 'worker_cancelled_at' => null,
                 'worker_cancel_reason' => null,
             ])->save();
@@ -53,7 +53,7 @@ class AdminReassignTaskUseCase
             TaskStatusUpdated::dispatch(
                 $lockedTask,
                 $fromStatus,
-                TaskStatusEnum::ACCEPTED,
+                TaskStatusEnum::STARTED,
                 $worker,
                 ['reassigned_worker_id' => $worker->id]
             );
@@ -64,7 +64,7 @@ class AdminReassignTaskUseCase
 
     public function ensureTaskIsAvailableToBeReassigned($lockedTask, $workerId)
     {
-        if (! in_array($lockedTask->status, [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::ACCEPTED], true)) {
+        if (! in_array($lockedTask->status, [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::STARTED], true)) {
             throw ValidationException::withMessages(['task' => __('tasks.validation.reassign_cancelled_only')]);
         }
 

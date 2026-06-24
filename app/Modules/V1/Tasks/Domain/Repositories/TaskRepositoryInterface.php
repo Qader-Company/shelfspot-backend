@@ -14,6 +14,7 @@ interface TaskRepositoryInterface
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator;
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?Task;
+    public function getByIdAndLockedForUpdate(int $id, array $relations = [], array $relationsCount = []): ?Task;
 
     public function create(array $attributes): Task;
 

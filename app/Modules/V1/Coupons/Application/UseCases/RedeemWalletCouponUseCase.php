@@ -8,21 +8,21 @@ use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositor
 use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
 use App\Modules\V1\Coupons\Domain\Models\WalletCoupon;
 use App\Modules\V1\Coupons\Domain\Models\WalletCouponRedemption;
+use App\Modules\V1\Coupons\Domain\Repositories\CouponRepositoryInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RedeemWalletCouponUseCase
 {
     public function __construct(
-        private readonly TenantContextInterface $tenantContext,
         private readonly CompaniesWalletRepositoryInterface $walletRepository,
+        private readonly CouponRepositoryInterface $couponRepository,
     ) {
     }
 
-    public function execute(string $code, ?int $performedBy = null): CompanyWalletTransaction
+    public function execute(string $code, int $companyId, ?int $performedBy = null): CompanyWalletTransaction
     {
-        $companyId = $this->tenantContext->getCompanyId();
-
         if ($companyId === null) {
             throw ValidationException::withMessages([
                 'code' => __('company.wallet.coupons.invalid'),
@@ -30,12 +30,8 @@ class RedeemWalletCouponUseCase
         }
 
         return DB::transaction(function () use ($code, $companyId, $performedBy) {
-            $coupon = WalletCoupon::query()
-                ->where('code', strtoupper($code))
-                ->lockForUpdate()
-                ->first();
 
-            $this->ensureRedeemable($coupon, $companyId);
+            $coupon = $this->ensureCodeRedeemable($code, $companyId);
 
             $alreadyRedeemed = WalletCouponRedemption::query()
                 ->where('wallet_coupon_id', $coupon->id)
@@ -70,36 +66,28 @@ class RedeemWalletCouponUseCase
         });
     }
 
-    private function ensureRedeemable(?WalletCoupon $coupon, int $companyId): void
+    private function ensureCodeRedeemable($code, int $companyId): WalletCoupon
     {
-        if ($coupon === null) {
-            throw ValidationException::withMessages([
-                'code' => __('company.wallet.coupons.invalid'),
-            ]);
-        }
-
-        if (! $coupon->is_active) {
-            throw ValidationException::withMessages([
-                'code' => __('company.wallet.coupons.inactive'),
-            ]);
-        }
-
-        if ($coupon->isExpired()) {
-            throw ValidationException::withMessages([
-                'code' => __('company.wallet.coupons.expired'),
-            ]);
-        }
-
-        if (! $coupon->isAssignedToCompany($companyId)) {
-            throw ValidationException::withMessages([
-                'code' => __('company.wallet.coupons.assigned_to_another_company'),
-            ]);
-        }
+        /** @var WalletCoupon $coupon */
+        $coupon = $this->couponRepository->query()
+            ->where('code', strtoupper($code))
+            ->where('is_active', true)
+            ->where(function (Builder $query) {
+                $query->where('expires_at',null)
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->where(function (Builder $query) use ($companyId) {
+                $query->where('assigned_company_id',null)
+                    ->orWhere('assigned_company_id', $companyId);
+            })
+            ->lockForUpdate()
+            ->firstOrFail();
 
         if (! $coupon->hasRemainingRedemptions()) {
             throw ValidationException::withMessages([
                 'code' => __('company.wallet.coupons.max_redemptions_reached'),
             ]);
         }
+        return $coupon;
     }
 }

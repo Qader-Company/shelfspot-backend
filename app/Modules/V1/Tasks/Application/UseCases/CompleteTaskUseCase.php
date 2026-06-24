@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
+use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanCompleteTaskRule;
 use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
@@ -21,25 +22,18 @@ class CompleteTaskUseCase
     public function execute(Task $task, Worker $worker): Task
     {
         return DB::transaction(function () use ($task, $worker) {
-            /** @var Task $lockedTask */
-            $lockedTask = $this->taskRepository->query(['services'])
-                ->whereKey($task->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $fromStatus = $lockedTask->status;
-
-            $this->ensureTaskIsAvailableToBeAccepted($lockedTask, $worker);
+            $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
+            CanCompleteTaskRule::validate($task, $worker->id);
 
             $lockedTask->forceFill([
-                'status' => TaskStatusEnum::COMPLETED,
+                'status' => TaskStatusEnum::IN_REVIEW,
                 'completed_at' => now(),
             ])->save();
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,
-                $fromStatus,
-                TaskStatusEnum::COMPLETED,
+                $lockedTask->getOriginal('status'),
+                TaskStatusEnum::IN_REVIEW,
                 $worker,
                 ['worker_id' => $worker->id]
             );
@@ -48,25 +42,4 @@ class CompleteTaskUseCase
         });
     }
 
-    private function ensureTaskIsAvailableToBeAccepted($lockedTask, $workerId)
-    {
-        if ($lockedTask->status !== TaskStatusEnum::IN_PROGRESS) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.complete_in_progress_only')]);
-        }
-
-        if ((int) $lockedTask->assigned_worker_id !== (int) $workerId) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.worker_not_assigned')]);
-        }
-
-        if ($lockedTask->services->isEmpty()) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.complete_requires_services')]);
-        }
-
-        $hasIncompleteServices = $lockedTask->services
-            ->contains(fn ($service) => $service->status !== TaskServiceStatusEnum::COMPLETED);
-
-        if ($hasIncompleteServices) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.complete_requires_completed_services')]);
-        }
-    }
 }

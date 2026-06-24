@@ -22,7 +22,7 @@ class FailExpiredTaskUseCase
                     $query->where('status', TaskStatusEnum::PENDING->value)
                         ->whereDate('date', '<', now()->toDateString());
                 })->orWhere(function ($query) {
-                    $query->where('status', TaskStatusEnum::ACCEPTED->value)
+                    $query->where('status', TaskStatusEnum::STARTED->value)
                         ->whereNotNull('start_deadline_at')
                         ->where('start_deadline_at', '<', now());
                 });
@@ -70,7 +70,7 @@ class FailExpiredTaskUseCase
             return $task->date->isBefore(now()->startOfDay());
         }
 
-        return $task->status === TaskStatusEnum::ACCEPTED
+        return $task->status === TaskStatusEnum::STARTED
             && $task->start_deadline_at !== null
             && $task->start_deadline_at->isPast();
     }

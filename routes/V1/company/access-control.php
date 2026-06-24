@@ -1,7 +1,7 @@
 <?php
 
 use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
-use App\Modules\V1\CompanyUsers\Presentation\Http\Controllers\CompanyAdminManagementController;
+use App\Modules\V1\CompanyAdmins\Presentation\Http\Controllers\CompanyAdminManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(CompanyAdminManagementController::class)

@@ -3,7 +3,7 @@
 namespace App\Modules\V1\CompanyAdmins\Application\UseCases;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
-use App\Modules\V1\CompanyUsers\Domain\Repositories\CompanyUserRepositoryInterface;
+use App\Modules\V1\CompanyAdmins\Domain\Repositories\CompanyAdminRepositoryInterface;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\DB;
@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\DB;
 class CreateCompanyUserUseCase
 {
     public function __construct(
-        private UserRepositoryInterface $userRepository,
-        private CompanyUserRepositoryInterface $companyUserRepository,
+        private UserRepositoryInterface         $userRepository,
+        private CompanyAdminRepositoryInterface $companyUserRepository,
     )
     {
     }

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\V1\CompanyUsers\Infrastructure\Persistence\Repositories;
+namespace App\Modules\V1\CompanyAdmins\Infrastructure\Persistence\Repositories;
 
-use App\Modules\V1\CompanyUsers\Domain\Models\CompanyUser;
-use App\Modules\V1\CompanyUsers\Domain\Repositories\CompanyUserRepositoryInterface;
+use App\Modules\V1\CompanyAdmins\Domain\Models\CompanyUser;
+use App\Modules\V1\CompanyAdmins\Domain\Repositories\CompanyAdminRepositoryInterface;
 
-class EloquentCompanyUserRepository implements CompanyUserRepositoryInterface
+class EloquentCompanyUserRepository implements CompanyAdminRepositoryInterface
 {
     public function list(bool $active, array $filters)
     {

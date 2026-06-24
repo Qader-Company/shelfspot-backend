@@ -3,7 +3,7 @@
 namespace App\Modules\V1\Users\Domain\Models;
 
 use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
-use App\Modules\V1\CompanyUsers\Domain\Models\CompanyUser;
+use App\Modules\V1\CompanyAdmins\Domain\Models\CompanyUser;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Database\Factories\UserFactory;

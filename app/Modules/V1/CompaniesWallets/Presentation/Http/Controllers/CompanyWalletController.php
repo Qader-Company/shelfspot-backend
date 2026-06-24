@@ -4,6 +4,7 @@ namespace App\Modules\V1\CompaniesWallets\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\CompaniesWallets\Application\UseCases\RechargeWalletUseCase;
 use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
@@ -46,7 +47,10 @@ class CompanyWalletController extends Controller
 
     public function recharge(RechargeWalletRequest $request, RechargeWalletUseCase $rechargeUseCase)
     {
-        $transaction = $rechargeUseCase->execute($request->validated(), $request->user()?->id)->load('performedBy');
+        $transaction = $rechargeUseCase->execute(
+            $request->validated(),
+            $request->user()?->id
+        )->load('performedBy');
 
         return ApiResponse::success([
             'balance' => (float) $transaction->balance_after,
@@ -54,9 +58,13 @@ class CompanyWalletController extends Controller
         ], __('company.wallet.transaction.success'));
     }
 
-    public function redeemCoupon(RedeemWalletCouponRequest $request, RedeemWalletCouponUseCase $redeemWalletCouponUseCase)
+    public function redeemCoupon(RedeemWalletCouponRequest $request, RedeemWalletCouponUseCase $redeemWalletCouponUseCase, TenantContextInterface $tenantContext)
     {
-        $transaction = $redeemWalletCouponUseCase->execute($request->validated('code'), $request->user()?->id)->load('performedBy');
+        $transaction = $redeemWalletCouponUseCase->execute(
+            $request->validated('code'),
+            $request->user()?->id,
+            $tenantContext->getCompanyId(),
+        )->load('performedBy');
 
         return ApiResponse::success([
             'balance' => (float) $transaction->balance_after,

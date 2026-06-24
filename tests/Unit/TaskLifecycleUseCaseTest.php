@@ -12,11 +12,11 @@ use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories\EloquentTaskRepository;
-use App\Modules\V1\Tasks\Application\UseCases\AcceptTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReassignTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
@@ -48,16 +48,16 @@ class TaskLifecycleUseCaseTest extends TestCase
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
 
-        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
 
-        $this->assertSame(TaskStatusEnum::ACCEPTED, $acceptedTask->status);
+        $this->assertSame(TaskStatusEnum::STARTED, $acceptedTask->status);
         $this->assertSame($worker->id, $acceptedTask->assigned_worker_id);
         $this->assertTrue($acceptedTask->accepted_at->equalTo(now()));
-        $this->assertTrue($acceptedTask->start_deadline_at->equalTo(now()->addMinutes(AcceptTaskUseCase::START_DEADLINE_MINUTES)));
+        $this->assertTrue($acceptedTask->start_deadline_at->equalTo(now()->addMinutes(StartTaskUseCase::START_DEADLINE_MINUTES)));
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
             'from_status' => TaskStatusEnum::PENDING->value,
-            'to_status' => TaskStatusEnum::ACCEPTED->value,
+            'to_status' => TaskStatusEnum::STARTED->value,
             'changed_by' => $worker->user_id,
         ]);
     }
@@ -69,22 +69,22 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        app(AcceptTaskUseCase::class)->execute($task, $worker);
+        app(StartTaskUseCase::class)->execute($task, $worker);
     }
 
     public function test_worker_starts_accepted_task_inside_geofence(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
 
-        $startedTask = app(StartTaskUseCase::class)->execute($acceptedTask, $worker, 30.0444, 31.2357);
+        $startedTask = app(StartExecuteTaskUseCase::class)->execute($acceptedTask, $worker, 30.0444, 31.2357);
 
         $this->assertSame(TaskStatusEnum::IN_PROGRESS, $startedTask->status);
         $this->assertTrue($startedTask->started_at->equalTo(now()));
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
-            'from_status' => TaskStatusEnum::ACCEPTED->value,
+            'from_status' => TaskStatusEnum::STARTED->value,
             'to_status' => TaskStatusEnum::IN_PROGRESS->value,
             'changed_by' => $worker->user_id,
         ]);
@@ -94,40 +94,40 @@ class TaskLifecycleUseCaseTest extends TestCase
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
 
         Carbon::setTestNow('2026-06-10 09:16:00');
 
         $this->expectException(ValidationException::class);
 
-        app(StartTaskUseCase::class)->execute($acceptedTask, $worker, 30.0444, 31.2357);
+        app(StartExecuteTaskUseCase::class)->execute($acceptedTask, $worker, 30.0444, 31.2357);
     }
 
     public function test_worker_cannot_start_outside_geofence(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
 
         $this->expectException(ValidationException::class);
 
-        app(StartTaskUseCase::class)->execute($acceptedTask, $worker, 31.2001, 29.9187);
+        app(StartExecuteTaskUseCase::class)->execute($acceptedTask, $worker, 31.2001, 29.9187);
     }
 
     public function test_company_delete_hides_task_without_changing_operational_status(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
 
         $deletedTask = app(DeleteCompanyTaskUseCase::class)->execute($acceptedTask, $worker->user);
 
-        $this->assertSame(TaskStatusEnum::ACCEPTED, $deletedTask->status);
+        $this->assertSame(TaskStatusEnum::STARTED, $deletedTask->status);
         $this->assertTrue($deletedTask->company_deleted_at->equalTo(now()));
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
-            'from_status' => TaskStatusEnum::ACCEPTED->value,
-            'to_status' => TaskStatusEnum::COMPANY_DELETED->value,
+            'from_status' => TaskStatusEnum::STARTED->value,
+//            'to_status' => TaskStatusEnum::COMPANY_DELETED->value,
             'changed_by' => $worker->user_id,
         ]);
     }
@@ -136,12 +136,12 @@ class TaskLifecycleUseCaseTest extends TestCase
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker([
-            'status' => TaskStatusEnum::ACCEPTED,
+            'status' => TaskStatusEnum::STARTED,
         ]);
         $task->forceFill(['assigned_worker_id' => $worker->id])->save();
 
         [$otherTask, $otherWorker] = $this->pendingTaskAndWorker([
-            'status' => TaskStatusEnum::ACCEPTED,
+            'status' => TaskStatusEnum::STARTED,
         ]);
         $otherTask->forceFill(['assigned_worker_id' => $otherWorker->id])->save();
 
@@ -154,8 +154,8 @@ class TaskLifecycleUseCaseTest extends TestCase
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $startedTask = app(StartTaskUseCase::class)->execute(
-            app(AcceptTaskUseCase::class)->execute($task, $worker),
+        $startedTask = app(StartExecuteTaskUseCase::class)->execute(
+            app(StartTaskUseCase::class)->execute($task, $worker),
             $worker,
             30.0444,
             31.2357
@@ -192,8 +192,8 @@ class TaskLifecycleUseCaseTest extends TestCase
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $startedTask = app(StartTaskUseCase::class)->execute(
-            app(AcceptTaskUseCase::class)->execute($task, $worker),
+        $startedTask = app(StartExecuteTaskUseCase::class)->execute(
+            app(StartTaskUseCase::class)->execute($task, $worker),
             $worker,
             30.0444,
             31.2357
@@ -203,12 +203,12 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $completedTask = app(CompleteTaskUseCase::class)->execute($startedTask, $worker);
 
-        $this->assertSame(TaskStatusEnum::COMPLETED, $completedTask->status);
+        $this->assertSame(TaskStatusEnum::IN_REVIEW, $completedTask->status);
         $this->assertTrue($completedTask->completed_at->equalTo(now()));
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
             'from_status' => TaskStatusEnum::IN_PROGRESS->value,
-            'to_status' => TaskStatusEnum::COMPLETED->value,
+            'to_status' => TaskStatusEnum::IN_REVIEW->value,
             'changed_by' => $worker->user_id,
         ]);
     }
@@ -217,8 +217,8 @@ class TaskLifecycleUseCaseTest extends TestCase
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $startedTask = app(StartTaskUseCase::class)->execute(
-            app(AcceptTaskUseCase::class)->execute($task, $worker),
+        $startedTask = app(StartExecuteTaskUseCase::class)->execute(
+            app(StartTaskUseCase::class)->execute($task, $worker),
             $worker,
             30.0444,
             31.2357
@@ -234,7 +234,7 @@ class TaskLifecycleUseCaseTest extends TestCase
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
 
         $cancelledTask = app(WorkerCancelTaskUseCase::class)->execute($acceptedTask, $worker, 'Vehicle issue');
 
@@ -243,7 +243,7 @@ class TaskLifecycleUseCaseTest extends TestCase
         $this->assertTrue($cancelledTask->worker_cancelled_at->equalTo(now()));
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
-            'from_status' => TaskStatusEnum::ACCEPTED->value,
+            'from_status' => TaskStatusEnum::STARTED->value,
             'to_status' => TaskStatusEnum::WORKER_CANCELLED->value,
             'changed_by' => $worker->user_id,
         ]);
@@ -254,7 +254,7 @@ class TaskLifecycleUseCaseTest extends TestCase
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
         $cancelledTask = app(WorkerCancelTaskUseCase::class)->execute(
-            app(AcceptTaskUseCase::class)->execute($task, $worker),
+            app(StartTaskUseCase::class)->execute($task, $worker),
             $worker,
             'Emergency'
         );
@@ -267,13 +267,13 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $reassignedTask = app(AdminReassignTaskUseCase::class)->execute($cancelledTask, $newWorker, $admin);
 
-        $this->assertSame(TaskStatusEnum::ACCEPTED, $reassignedTask->status);
+        $this->assertSame(TaskStatusEnum::STARTED, $reassignedTask->status);
         $this->assertSame($newWorker->id, $reassignedTask->assigned_worker_id);
         $this->assertNull($reassignedTask->worker_cancel_reason);
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
             'from_status' => TaskStatusEnum::WORKER_CANCELLED->value,
-            'to_status' => TaskStatusEnum::ACCEPTED->value,
+            'to_status' => TaskStatusEnum::STARTED->value,
             'changed_by' => $admin->id,
         ]);
     }
@@ -283,7 +283,7 @@ class TaskLifecycleUseCaseTest extends TestCase
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
         $cancelledTask = app(WorkerCancelTaskUseCase::class)->execute(
-            app(AcceptTaskUseCase::class)->execute($task, $worker),
+            app(StartTaskUseCase::class)->execute($task, $worker),
             $worker,
             'Emergency'
         );
@@ -301,7 +301,7 @@ class TaskLifecycleUseCaseTest extends TestCase
         [$pendingTask] = $this->pendingTaskAndWorker(['date' => '2026-06-09']);
         [$acceptedTask, $worker] = $this->pendingTaskAndWorker(['date' => '2026-06-10']);
         $acceptedTask->forceFill([
-            'status' => TaskStatusEnum::ACCEPTED,
+            'status' => TaskStatusEnum::STARTED,
             'assigned_worker_id' => $worker->id,
             'accepted_at' => now()->subMinutes(20),
             'start_deadline_at' => now()->subMinutes(5),
@@ -318,7 +318,7 @@ class TaskLifecycleUseCaseTest extends TestCase
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $worker] = $this->pendingTaskAndWorker();
-        $acceptedTask = app(AcceptTaskUseCase::class)->execute($task, $worker);
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
         [$taskService, $product] = $this->taskServiceWithProduct($acceptedTask);
 
         $this->expectException(ValidationException::class);

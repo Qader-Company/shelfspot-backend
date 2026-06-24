@@ -65,7 +65,7 @@ class EloquentCouponRepository implements CouponRepositoryInterface
         $coupon->delete();
     }
 
-    private function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder
+    public function query(array $relations = [], array $relationsCount = [], array $filters = []): Builder
     {
         return WalletCoupon::query()
             ->when($filters, fn (Builder $query) => $query->filter($filters))

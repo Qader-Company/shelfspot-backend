@@ -2,16 +2,15 @@
 
 namespace App\Modules\Shared\Support\Traits;
 
+use Illuminate\Http\Request;
+
 trait Filterable
 {
-    public function acceptedFilters($request, $keys)
+    protected function acceptedFilters(Request $request, array $filters): array
     {
-        $filter = [];
-        foreach ($keys as $key) {
-            if($request->filled($key))
-                $filter[$key] = $request->query($key);
-        }
-        return $filter;
+        return collect($request->only($filters))
+            ->filter(fn ($value) => !is_null($value) && $value !== '')
+            ->toArray();
     }
 
 }

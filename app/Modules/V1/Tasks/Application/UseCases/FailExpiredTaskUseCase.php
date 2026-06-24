@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class FailExpiredTaskUseCase
 {
+    public const EXPIRED_PENDING_REASON = 'expired';
+    public const EXPIRED_START_DEADLINE_REASON = 'start_deadline_expired';
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TaskStatusHistoryRecorder $statusHistoryRecorder
@@ -49,15 +51,31 @@ class FailExpiredTaskUseCase
 
                 $fromStatus = $lockedTask->status;
 
-                $lockedTask->forceFill([
-                    'status' => TaskStatusEnum::FAILED,
-                ])->save();
+                $toStatus = $fromStatus === TaskStatusEnum::STARTED
+                    ? TaskStatusEnum::PENDING
+                    : TaskStatusEnum::FAILED;
+
+                $attributes = ['status' => $toStatus];
+                $reason = self::EXPIRED_PENDING_REASON;
+
+                if ($fromStatus === TaskStatusEnum::STARTED) {
+                    $attributes += [
+                        'assigned_worker_id' => null,
+                        'accepted_at' => null,
+                        'start_deadline_at' => null,
+                        'start_deadline_extension_minutes' => null,
+                        'start_deadline_extended_at' => null,
+                    ];
+                    $reason = self::EXPIRED_START_DEADLINE_REASON;
+                }
+
+                $lockedTask->forceFill($attributes)->save();
 
                 $this->statusHistoryRecorder->record(
                     task: $lockedTask,
                     fromStatus: $fromStatus,
-                    toStatus: TaskStatusEnum::FAILED,
-                    meta: ['reason' => 'expired']
+                    toStatus: $toStatus,
+                    meta: ['reason' => $reason]
                 );
 
                 $failed++;

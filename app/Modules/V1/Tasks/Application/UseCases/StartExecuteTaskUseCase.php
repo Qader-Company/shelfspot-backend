@@ -29,7 +29,7 @@ class StartExecuteTaskUseCase
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
             $fromStatus = $lockedTask->status;
 
-            CanExecuteTaskRule::validate($lockedTask, $worker->id);
+            CanExecuteTaskRule::validate($lockedTask, $worker);
 
             $distance = $this->geoDistanceCalculator->haversineKilometers(
                 fromLatitude: $latitude,

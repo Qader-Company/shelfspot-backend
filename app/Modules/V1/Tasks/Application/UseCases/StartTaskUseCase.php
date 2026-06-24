@@ -26,6 +26,8 @@ class StartTaskUseCase
         return DB::transaction(function () use ($task, $worker) {
             /** @var Task $lockedTask */
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
+            $fromStatus = $lockedTask->status;
+
             CanStartTaskRule::validate($lockedTask);
 
             $now = now();
@@ -38,7 +40,7 @@ class StartTaskUseCase
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,
-                $lockedTask->getOriginal('status'),
+                $fromStatus,
                 TaskStatusEnum::STARTED,
                 $worker,
                 [

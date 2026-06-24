@@ -5,9 +5,11 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Controllers;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReassignTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\AdminReopenTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminReassignTaskRequest;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminReopenTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminTaskIndexRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AvailableTaskWorkersRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
@@ -62,6 +64,17 @@ class AdminTaskController extends Controller
             'radius_km' => $radius,
             'workers' => WorkerResource::collection($workers)->response()->getData(true),
         ]);
+    }
+
+    public function reopen(int $id, AdminReopenTaskRequest $request, AdminReopenTaskUseCase $adminReopenTaskUseCase)
+    {
+        $task = $adminReopenTaskUseCase->execute(
+            task: $this->task($id),
+            admin: $request->user(),
+            reason: $request->validated('reason')
+        );
+
+        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
     }
 
     public function reassign(int $id, AdminReassignTaskRequest $request, AdminReassignTaskUseCase $adminReassignTaskUseCase)

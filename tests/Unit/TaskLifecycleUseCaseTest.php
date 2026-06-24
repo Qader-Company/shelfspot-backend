@@ -14,6 +14,10 @@ use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories\EloquentTaskRepository;
 use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReassignTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\AdminReopenTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\AutoAcceptExpiredReviewTasksUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
@@ -203,14 +207,94 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $completedTask = app(CompleteTaskUseCase::class)->execute($startedTask, $worker);
 
-        $this->assertSame(TaskStatusEnum::IN_REVIEW, $completedTask->status);
+        $this->assertSame(TaskStatusEnum::COMPLETED, $completedTask->status);
         $this->assertTrue($completedTask->completed_at->equalTo(now()));
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
             'from_status' => TaskStatusEnum::IN_PROGRESS->value,
-            'to_status' => TaskStatusEnum::IN_REVIEW->value,
+            'to_status' => TaskStatusEnum::COMPLETED->value,
             'changed_by' => $worker->user_id,
         ]);
+    }
+
+
+    public function test_company_accepts_completed_task(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->completedTaskAndWorker();
+        $companyUser = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+
+        $acceptedTask = app(CompanyAcceptTaskUseCase::class)->execute($task, $companyUser);
+
+        $this->assertSame(TaskStatusEnum::ACCEPTED, $acceptedTask->status);
+        $this->assertTrue($acceptedTask->company_accepted_at->equalTo(now()));
+        $this->assertDatabaseHas('task_status_histories', [
+            'task_id' => $task->id,
+            'from_status' => TaskStatusEnum::COMPLETED->value,
+            'to_status' => TaskStatusEnum::ACCEPTED->value,
+            'changed_by' => $companyUser->id,
+        ]);
+    }
+
+    public function test_company_rejects_completed_task_with_reason_before_review_window_expires(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->completedTaskAndWorker();
+        $companyUser = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+
+        $rejectedTask = app(CompanyRejectTaskUseCase::class)->execute($task, $companyUser, 'Photos do not match the requested shelf.');
+
+        $this->assertSame(TaskStatusEnum::REJECTED, $rejectedTask->status);
+        $this->assertSame('Photos do not match the requested shelf.', $rejectedTask->rejection_reason);
+        $this->assertTrue($rejectedTask->rejected_at->equalTo(now()));
+    }
+
+    public function test_company_cannot_reject_completed_task_after_review_window_expires(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->completedTaskAndWorker();
+        $companyUser = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+
+        Carbon::setTestNow($task->auto_accept_at);
+
+        $this->expectException(ValidationException::class);
+
+        app(CompanyRejectTaskUseCase::class)->execute($task, $companyUser, 'Too late rejection reason.');
+    }
+
+    public function test_auto_accept_expired_review_tasks(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->completedTaskAndWorker();
+
+        Carbon::setTestNow($task->auto_accept_at->copy()->addSecond());
+
+        $accepted = app(AutoAcceptExpiredReviewTasksUseCase::class)->execute();
+
+        $this->assertSame(1, $accepted);
+        $this->assertSame(TaskStatusEnum::ACCEPTED, $task->refresh()->status);
+        $this->assertTrue($task->company_accepted_at->equalTo(now()));
+        $this->assertTrue($task->auto_accepted_at->equalTo(now()));
+    }
+
+    public function test_admin_reopens_rejected_task_and_worker_executes_again(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->completedTaskAndWorker();
+        $companyUser = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+        $admin = User::factory()->create(['type' => PortalTypeEnum::ADMIN]);
+        $rejectedTask = app(CompanyRejectTaskUseCase::class)->execute($task, $companyUser, 'Need clearer execution evidence.');
+
+        $reopenedTask = app(AdminReopenTaskUseCase::class)->execute($rejectedTask, $admin, 'Company rejection is valid.');
+
+        $this->assertSame(TaskStatusEnum::REOPENED, $reopenedTask->status);
+        $this->assertNull($reopenedTask->auto_accept_at);
+        $this->assertSame('Company rejection is valid.', $reopenedTask->reopen_reason);
+        $this->assertSame(TaskServiceStatusEnum::PENDING, $reopenedTask->services()->first()->status);
+
+        $executedTask = app(StartExecuteTaskUseCase::class)->execute($reopenedTask, $worker, 30.0444, 31.2357);
+
+        $this->assertSame(TaskStatusEnum::IN_PROGRESS, $executedTask->status);
     }
 
     public function test_worker_cannot_complete_task_before_services_are_completed(): void
@@ -465,6 +549,24 @@ class TaskLifecycleUseCaseTest extends TestCase
         ]);
 
         return [$taskService, $product];
+    }
+
+
+    private function completedTaskAndWorker(): array
+    {
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $startedTask = app(StartExecuteTaskUseCase::class)->execute(
+            app(StartTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            30.0444,
+            31.2357
+        );
+        [$taskService] = $this->taskServiceWithProduct($startedTask);
+        $taskService->forceFill(['status' => TaskServiceStatusEnum::COMPLETED])->save();
+
+        $completedTask = app(CompleteTaskUseCase::class)->execute($startedTask, $worker);
+
+        return [$completedTask, $worker];
     }
 
 }

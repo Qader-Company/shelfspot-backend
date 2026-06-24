@@ -34,6 +34,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'start_deadline_at',
     'started_at',
     'completed_at',
+    'rejected_at',
+    'rejection_reason',
+    'company_accepted_at',
+    'auto_accept_at',
+    'auto_accepted_at',
+    'reopened_at',
+    'reopen_reason',
 //    'declined_at',
 //    'decline_reason',
     'worker_cancelled_at',
@@ -56,6 +63,11 @@ class Task extends Model
         'start_deadline_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'rejected_at' => 'datetime',
+        'company_accepted_at' => 'datetime',
+        'auto_accept_at' => 'datetime',
+        'auto_accepted_at' => 'datetime',
+        'reopened_at' => 'datetime',
 //        'declined_at' => 'datetime',
         'worker_cancelled_at' => 'datetime',
         'company_deleted_at' => 'datetime',
@@ -87,5 +99,10 @@ class Task extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(TaskStatusHistory::class);
+    }
+
+    public function reviewMessages(): HasMany
+    {
+        return $this->hasMany(TaskReviewMessage::class);
     }
 }

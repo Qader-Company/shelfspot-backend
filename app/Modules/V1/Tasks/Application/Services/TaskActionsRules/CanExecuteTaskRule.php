@@ -15,6 +15,7 @@ class CanExecuteTaskRule extends AbstractTaskActionRule
             $task,
             [
                 TaskStatusEnum::STARTED,
+                TaskStatusEnum::REOPENED,
             ],
             __('tasks.validation.start_accepted_only')
         );
@@ -24,7 +25,9 @@ class CanExecuteTaskRule extends AbstractTaskActionRule
             __('tasks.validation.worker_not_assigned')
         );
 
-        if ($task->start_deadline_at !== null && now()->greaterThan($task->start_deadline_at)) {
+        if ($task->status === TaskStatusEnum::STARTED
+            && $task->start_deadline_at !== null
+            && now()->greaterThan($task->start_deadline_at)) {
             throw ValidationException::withMessages(['task' => __('tasks.validation.start_deadline_expired')]);
         }
     }

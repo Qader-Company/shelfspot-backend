@@ -170,6 +170,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return [
             'services.service.translations',
+            'services.submission',
             'company',
             'assignedWorker.user',
         ];
@@ -179,6 +180,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return [
             'services.service.translations',
+            'services.submission',
             'services.products.product.media',
             'services.products.product.brand.media',
             'services.products.product.subBrand.media',

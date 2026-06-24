@@ -25,5 +25,11 @@ return [
         'reassign_cancelled_only' => 'لا يمكن إعادة تعيين المهمة إلا إذا كانت ملغاة من العامل أو مقبولة.',
         'reassign_active_worker_only' => 'لا يمكن إعادة تعيين المهمة إلا لعامل نشط.',
         'reassign_worker_busy' => 'هذا العامل لديه مهمة قيد التنفيذ بالفعل.',
+        'accept_completed_or_rejected_only' => 'لا يمكن للشركة قبول المهمة إلا بعد اكتمالها أو رفضها.',
+        'reject_completed_only' => 'لا يمكن رفض المهمة إلا بعد اكتمالها.',
+        'reject_review_window_expired' => 'انتهت فترة المراجعة ولا يمكن رفض هذه المهمة الآن.',
+        'reopen_rejected_only' => 'لا يمكن إعادة فتح المهمة إلا إذا كانت مرفوضة.',
+        'review_messages_unavailable' => 'رسائل المراجعة متاحة فقط بعد رفض المهمة.',
+        'review_messages_rejected_only' => 'لا يمكن إرسال رسائل المراجعة إلا أثناء رفض المهمة.',
     ],
 ];

@@ -13,16 +13,55 @@
 - قبول تلقائي للتاسك بعد انتهاء فترة مراجعة الشركة.
 - حساب نسبة تنفيذ التاسك بناءً على الخدمات التي تم تسليمها.
 
-## الحالة الحالية التي سيتم البناء عليها
+## حالة التنفيذ الحالية
 
-يوجد في المشروع أساس جيد لدورة حياة التاسك:
+تم تنفيذ النسخة الأولى من الـ backend lifecycle، وتشمل:
 
-- `TaskStatusEnum` يحتوي أغلب الحالات المطلوبة، لكنه يحتاج تنظيفًا لأن حالة `IN_REVIEW` قيمتها الحالية `completed`.
-- `Task` يحتوي بيانات التشغيل الأساسية مثل `date`, `execution_time`, `estimated_duration_minutes`, `expires_at`, `accepted_at`, `started_at`, و `completed_at`.
-- `Task` مرتبط بـ `services` و `statusHistories`.
-- `TaskServiceSubmission` موجود وسيظل هو مصدر بيانات تسليم كل خدمة داخل التاسك.
-- `CompleteTaskUseCase` هو مكان تحويل التاسك بعد انتهاء العامل من التنفيذ.
-- يوجد بالفعل scheduler لتشغيل أوامر دورية مثل فشل التاسكات المنتهية.
+- تنظيف `TaskStatusEnum`: تم اعتماد `COMPLETED = completed` بدل `IN_REVIEW`، وإضافة `REOPENED = reopened`.
+- إضافة حقول مراجعة التسليم على جدول `tasks`: `rejected_at`, `rejection_reason`, `company_accepted_at`, `auto_accept_at`, `auto_accepted_at`, `reopened_at`, و `reopen_reason`.
+- تحديث `Task` model بالـ fillable/casts والعلاقة الجديدة `reviewMessages`.
+- تحديث `CompleteTaskUseCase` ليحوّل التاسك إلى `completed` ويحسب `auto_accept_at` عند إكمال العامل للتاسك.
+- إضافة use cases لـ company accept/reject، admin reopen، والـ auto-accept.
+- إضافة command مجدول باسم `tasks:auto-accept-expired-review`.
+- إضافة review messages بين الأدمن والشركة بدون live chat أو notifications.
+- إضافة endpoints للشركة والأدمن لتنفيذ القبول/الرفض/إعادة الفتح والرسائل.
+- إضافة progress summary في `TaskResource` بناءً على `task_service_submissions` وحالة الخدمات.
+- تحديث اختبارات الـ lifecycle الأساسية، مع ملاحظة أن تشغيل الاختبارات داخل هذه البيئة يحتاج توفر `vendor/autoload.php`.
+
+## ملخص الملفات التي اتنفذت
+
+### Lifecycle Core
+
+- `app/Modules/V1/Tasks/Domain/ValueObjects/TaskStatusEnum.php`
+- `app/Modules/V1/Tasks/Application/UseCases/CompleteTaskUseCase.php`
+- `app/Modules/V1/Tasks/Application/Services/TaskActionsRules/CanExecuteTaskRule.php`
+- `app/Modules/V1/Tasks/Application/UseCases/CompanyAcceptTaskUseCase.php`
+- `app/Modules/V1/Tasks/Application/UseCases/CompanyRejectTaskUseCase.php`
+- `app/Modules/V1/Tasks/Application/UseCases/AdminReopenTaskUseCase.php`
+- `app/Modules/V1/Tasks/Application/UseCases/AutoAcceptExpiredReviewTasksUseCase.php`
+
+### Database
+
+- `database/migrations/2026_06_24_000000_add_review_lifecycle_fields_to_tasks_table.php`
+- `database/migrations/2026_06_24_000001_create_task_review_messages_table.php`
+
+### API Layer
+
+- `app/Modules/V1/Tasks/Presentation/Http/Controllers/CompanyTaskController.php`
+- `app/Modules/V1/Tasks/Presentation/Http/Controllers/AdminTaskController.php`
+- `app/Modules/V1/Tasks/Presentation/Http/Controllers/TaskReviewMessageController.php`
+- `routes/V1/company/tasks.php`
+- `routes/V1/admin/tasks.php`
+
+### Resources / Responses
+
+- `app/Modules/V1/Tasks/Presentation/Http/Resources/TaskResource.php`
+- `app/Modules/V1/Tasks/Presentation/Http/Resources/TaskReviewMessageResource.php`
+
+### Scheduler
+
+- `app/Console/Commands/AutoAcceptExpiredReviewTasksCommand.php`
+- `routes/console.php`
 
 ## حالات التاسك النهائية
 
@@ -712,29 +751,70 @@ progress
 
    القرار المقترح: نعم، لكن يتم overwrite لنفس `TaskServiceSubmission` عند إرسال بيانات جديدة.
 
-## ترتيب PRs المقترح
+## حالة مراحل التنفيذ
 
-### PR 1: Core Lifecycle + Review Window
+| Phase | الحالة | ملاحظات |
+| --- | --- | --- |
+| Phase 1: تنظيف حالات التاسك | ✅ تم | تم اعتماد `COMPLETED` وإضافة `REOPENED`. |
+| Phase 2: Migration لحقول المراجعة | ✅ تم | تم إضافة حقول الرفض/القبول/إعادة الفتح/الـ auto-accept. |
+| Phase 3: تعديل إكمال العامل للتاسك | ✅ تم | `CompleteTaskUseCase` يحسب `auto_accept_at` عند `completed`. |
+| Phase 4: قبول ورفض الشركة | ✅ تم | تم إضافة use cases و controller actions و routes. |
+| Phase 5: إعادة فتح التاسك بواسطة الأدمن | ✅ تم | `AdminReopenTaskUseCase` يعيد الخدمات إلى `pending`. |
+| Phase 6: دعم العامل بعد `reopened` | ✅ تم جزئيًا | العامل يستطيع تنفيذ `reopened -> in_progress`. يلزم اختبار API end-to-end لاحقًا. |
+| Phase 7: Auto Accept | ✅ تم | تم إضافة use case و command وجدولة كل دقيقة. |
+| Phase 8: Progress في Resource | ✅ تم | `TaskResource` يرجع total/completed/remaining/percentage. |
+| Phase 9: Review Messages | ✅ تم | تم إضافة table/model/controller/routes/resources. |
+| Phase 10: Tests | 🟡 تم جزئيًا | تم تحديث unit tests للـ lifecycle الأساسي، لكن يلزم تشغيل suite كامل بعد تجهيز dependencies. |
 
-- Status enum cleanup.
-- Migration لحقول القبول/الرفض/reopen/auto-accept.
-- Complete task إلى `completed`.
-- Company accept/reject.
-- Admin reopen.
-- Auto accept command/use case.
-- Tests للـ lifecycle الأساسي.
+## الخطوة الجاية المقترحة
 
-### PR 2: Progress from Service Submissions
+الخطوة الجاية الأفضل هي **اختبار وتثبيت الـ API contract عمليًا** قبل إضافة أي features جديدة.
 
-- Progress calculation.
-- TaskResource updates.
-- Tests للـ progress.
+### Next Step: API Contract + End-to-End Validation
 
-### PR 3: Review Messages
+#### الهدف
 
-- Messages table/model/resource.
-- Company/Admin message endpoints.
-- Tests للرسائل والصلاحيات.
+نتأكد إن الـ frontend هيعرف يتعامل مع الـ lifecycle الجديد بدون ambiguity، وإن كل endpoint بيرجع response واضح ومناسب لكل portal.
+
+#### المطلوب تنفيذه
+
+1. تشغيل migrations على بيئة local/dev فيها dependencies سليمة.
+2. تشغيل `TaskLifecycleUseCaseTest` ثم تشغيل test suite أوسع للـ Tasks.
+3. إضافة Feature/API tests للـ endpoints الجديدة:
+   - `POST /api/v1/company/tasks/{task}/accept`
+   - `POST /api/v1/company/tasks/{task}/reject`
+   - `POST /api/v1/admin/tasks/{task}/reopen`
+   - `GET/POST /api/v1/company/tasks/{task}/review-messages`
+   - `GET/POST /api/v1/admin/tasks/{task}/review-messages`
+4. توثيق response shape النهائي للـ frontend، خصوصًا:
+   - `status`
+   - `rejection_reason`
+   - `auto_accept_at`
+   - `company_accepted_at`
+   - `progress`
+   - `services[].submission`
+5. تجربة السيناريوهات يدويًا على API client:
+   - Worker complete task.
+   - Company reject with reason.
+   - Admin send message.
+   - Company reply.
+   - Admin reopen.
+   - Worker execute again.
+   - Worker submit services again.
+   - Worker complete again.
+   - Company accept.
+   - Auto accept after `auto_accept_at`.
+
+#### بعد الانتهاء من الخطوة دي
+
+نبدأ بعدها في **Frontend/Admin UX**:
+
+- شاشة company review للتسليم.
+- أزرار accept/reject مع reject modal.
+- إظهار countdown أو deadline للـ `auto_accept_at`.
+- شاشة admin rejected tasks.
+- thread رسائل admin/company.
+- زر reopen للأدمن.
 
 ## النتيجة المتوقعة بعد التنفيذ
 

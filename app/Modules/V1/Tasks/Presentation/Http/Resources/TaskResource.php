@@ -46,6 +46,14 @@ class TaskResource extends JsonResource
             'start_deadline_at' => $this->when($isWorker, $this->start_deadline_at?->toDateTimeString()),
             'started_at' => $this->started_at?->toDateTimeString(),
             'completed_at' => $this->completed_at?->toDateTimeString(),
+            'rejected_at' => $this->rejected_at?->toDateTimeString(),
+            'rejection_reason' => $this->rejection_reason,
+            'company_accepted_at' => $this->company_accepted_at?->toDateTimeString(),
+            'auto_accept_at' => $this->auto_accept_at?->toDateTimeString(),
+            'auto_accepted_at' => $this->auto_accepted_at?->toDateTimeString(),
+            'reopened_at' => $this->reopened_at?->toDateTimeString(),
+            'reopen_reason' => $this->reopen_reason,
+            'progress' => $this->progress(),
             'declined_at' => $this->declined_at?->toDateTimeString(),
             'decline_reason' => $this->decline_reason,
             'assigned_worker_id' => $this->when($isWorker || $this->relationLoaded('assignedWorker'), $this->assigned_worker_id),
@@ -59,11 +67,28 @@ class TaskResource extends JsonResource
 
     private function companyFacingStatus(): string
     {
-        return match ($this->status->value) {
-            'accepted', 'worker_cancelled' => 'in_progress',
-            'company_deleted' => 'pending',
-            'admin_deleted' => 'failed',
-            default => $this->status->value,
-        };
+        return $this->status->value;
+    }
+
+    private function progress(): array
+    {
+        if (! $this->relationLoaded('services')) {
+            return [
+                'total_services' => 0,
+                'completed_services' => 0,
+                'remaining_services' => 0,
+                'percentage' => 0,
+            ];
+        }
+
+        $total = $this->services->count();
+        $completed = $this->services->filter(fn ($service) => $service->submission !== null || $service->status?->value === 'completed')->count();
+
+        return [
+            'total_services' => $total,
+            'completed_services' => $completed,
+            'remaining_services' => max(0, $total - $completed),
+            'percentage' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
+        ];
     }
 }

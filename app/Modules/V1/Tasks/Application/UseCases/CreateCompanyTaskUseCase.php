@@ -70,6 +70,7 @@ class CreateCompanyTaskUseCase
 
             try {
                 $this->chargeTaskWalletUseCase->execute($task, $actor->id);
+                $task->refresh();
             } catch (InvalidArgumentException $exception) {
                 $task->forceFill(['payment_status' => TaskPaymentStatusEnum::FAILED])->save();
 

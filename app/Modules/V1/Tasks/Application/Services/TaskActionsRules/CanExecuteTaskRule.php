@@ -11,7 +11,7 @@ class CanExecuteTaskRule extends AbstractTaskActionRule
     public static function validate(Task $task, int $workerId = null): void
     {
         parent::validate($task, $workerId);
-        parent::insureTaskStatusIsNot(
+        parent::insureTaskStatusIsOneOf(
             $task,
             [
                 TaskStatusEnum::STARTED,

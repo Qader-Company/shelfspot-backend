@@ -4,14 +4,11 @@ namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanCompleteTaskRule;
-use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class CompleteTaskUseCase
 {
@@ -23,7 +20,9 @@ class CompleteTaskUseCase
     {
         return DB::transaction(function () use ($task, $worker) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
-            CanCompleteTaskRule::validate($task, $worker->id);
+            $lockedTask->loadMissing('services');
+
+            CanCompleteTaskRule::validate($lockedTask, $worker->id);
 
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::IN_REVIEW,

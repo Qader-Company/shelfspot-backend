@@ -3,42 +3,40 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
-use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanCancelTaskRule;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
-use App\Modules\V1\Workers\Domain\Models\Worker;
+use App\Modules\V1\Users\Domain\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-class WorkerCancelTaskUseCase
+class CompanyAcceptTaskUseCase
 {
     public function __construct(private readonly TaskRepositoryInterface $taskRepository)
     {
     }
 
-    public function execute(Task $task, Worker $worker, string $reason): Task
+    public function execute(Task $task, User $actor): Task
     {
-        return DB::transaction(function () use ($task, $worker, $reason) {
-
+        return DB::transaction(function () use ($task, $actor) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
-
             $fromStatus = $lockedTask->status;
 
-            CanCancelTaskRule::validate($lockedTask, $worker->id);
+            if (! in_array($fromStatus, [TaskStatusEnum::COMPLETED, TaskStatusEnum::REJECTED], true)) {
+                throw ValidationException::withMessages(['task' => __('tasks.validation.accept_completed_or_rejected_only')]);
+            }
 
             $lockedTask->forceFill([
-                'status' => TaskStatusEnum::WORKER_CANCELLED,
-                'worker_cancelled_at' => now(),
-                'worker_cancel_reason' => $reason,
+                'status' => TaskStatusEnum::ACCEPTED,
+                'company_accepted_at' => now(),
             ])->save();
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,
                 $fromStatus,
-                TaskStatusEnum::WORKER_CANCELLED,
-                $worker,
-                ['worker_id' => $worker->id, 'reason' => $reason]
+                TaskStatusEnum::ACCEPTED,
+                $actor,
+                ['actor_type' => 'company']
             );
 
             return $lockedTask->refresh();

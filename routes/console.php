@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('tasks:fail-expired')->everyMinute();
+Schedule::command('tasks:auto-accept-expired-review')->everyMinute();

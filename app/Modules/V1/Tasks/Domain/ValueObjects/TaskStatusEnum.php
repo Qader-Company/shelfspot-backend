@@ -9,8 +9,9 @@ enum TaskStatusEnum: string
     case STARTED = 'started';
     case IN_PROGRESS = 'in_progress';
     case WORKER_CANCELLED = 'worker_cancelled';
-    case IN_REVIEW = 'completed';
-    case FAILED = 'failed';
+    case COMPLETED = 'completed';
     case REJECTED = 'rejected';
     case ACCEPTED = 'accepted';
+    case REOPENED = 'reopened';
+    case FAILED = 'failed';
 }

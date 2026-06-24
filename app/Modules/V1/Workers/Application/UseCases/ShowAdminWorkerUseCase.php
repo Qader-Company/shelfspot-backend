@@ -47,7 +47,7 @@ class ShowAdminWorkerUseCase
     {
         return [
             'total_accepted' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::STARTED),
-            'total_completed' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::IN_REVIEW),
+            'total_completed' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::COMPLETED),
             'total_cancelled' => $this->taskRepository->countAssignedToWorkerByStatus($workerId, TaskStatusEnum::WORKER_CANCELLED),
         ];
     }

@@ -27,6 +27,8 @@ class StartExecuteTaskUseCase
     {
         return DB::transaction(function () use ($task, $worker, $latitude, $longitude) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
+            $fromStatus = $lockedTask->status;
+
             CanExecuteTaskRule::validate($lockedTask, $worker->id);
 
             $distance = $this->geoDistanceCalculator->haversineKilometers(
@@ -47,7 +49,7 @@ class StartExecuteTaskUseCase
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,
-                $lockedTask->getOriginal('status'),
+                $fromStatus,
                 TaskStatusEnum::IN_PROGRESS,
                 $worker,
                 [

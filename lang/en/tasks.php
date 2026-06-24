@@ -25,5 +25,11 @@ return [
         'reassign_cancelled_only' => 'Only worker-cancelled or accepted tasks can be reassigned.',
         'reassign_active_worker_only' => 'Tasks can only be reassigned to an active worker.',
         'reassign_worker_busy' => 'This worker already has an in-progress task.',
+        'accept_completed_or_rejected_only' => 'Only completed or rejected tasks can be accepted by the company.',
+        'reject_completed_only' => 'Only completed tasks can be rejected.',
+        'reject_review_window_expired' => 'The review window has expired; this task can no longer be rejected.',
+        'reopen_rejected_only' => 'Only rejected tasks can be reopened.',
+        'review_messages_unavailable' => 'Review messages are only available after a task is rejected.',
+        'review_messages_rejected_only' => 'Review messages can only be sent while the task is rejected.',
     ],
 ];

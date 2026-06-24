@@ -33,7 +33,7 @@ class GetCompanyDetailsUseCase
         );
         $company->setAttribute(
             'completed_requests_count',
-            $this->taskRepository->countForCompany($company->id, TaskStatusEnum::IN_REVIEW)
+            $this->taskRepository->countForCompany($company->id, TaskStatusEnum::COMPLETED)
         );
         $company->setAttribute(
             'pending_requests_count',

@@ -6,10 +6,13 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CreateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyRejectTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -54,6 +57,27 @@ class CompanyTaskController extends Controller
             $this->taskRepository->detailRelations()
         );
         return ApiResponse::success(new TaskResource($task));
+    }
+
+    public function accept(int $id, Request $request, CompanyAcceptTaskUseCase $companyAcceptTaskUseCase)
+    {
+        $task = $companyAcceptTaskUseCase->execute(
+            $this->getCompanyTask($id),
+            $request->user()
+        );
+
+        return ApiResponse::updated(new TaskResource($task));
+    }
+
+    public function reject(int $id, CompanyRejectTaskRequest $request, CompanyRejectTaskUseCase $companyRejectTaskUseCase)
+    {
+        $task = $companyRejectTaskUseCase->execute(
+            $this->getCompanyTask($id),
+            $request->user(),
+            $request->validated('reason')
+        );
+
+        return ApiResponse::updated(new TaskResource($task));
     }
 
     public function destroy(int $id, Request $request, DeleteCompanyTaskUseCase $deleteCompanyTaskUseCase)

@@ -57,6 +57,7 @@ return [
             'recharge_wallet' => 'شحن المحفظة',
             'view_task' => 'عرض المهام',
             'create_task' => 'إنشاء مهمة',
+            'edit_task' => 'تعديل مهمة',
             'delete_task' => 'حذف مهمة',
             'view_role' => 'عرض الأدوار',
             'create_role' => 'إنشاء دور',

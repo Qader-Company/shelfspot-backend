@@ -9,14 +9,14 @@ class FailExpiredTasksCommand extends Command
 {
     protected $signature = 'tasks:fail-expired {--limit= : Maximum number of tasks to process}';
 
-    protected $description = 'Mark pending or accepted tasks as failed when their execution windows expire.';
+    protected $description = 'Fail expired pending tasks and release accepted tasks whose start deadline expired.';
 
     public function handle(FailExpiredTaskUseCase $failExpiredTaskUseCase): int
     {
         $limit = $this->option('limit');
         $failed = $failExpiredTaskUseCase->execute($limit !== null ? (int) $limit : null);
 
-        $this->info("Failed {$failed} expired task(s).");
+        $this->info("Processed {$failed} expired task(s).");
 
         return self::SUCCESS;
     }

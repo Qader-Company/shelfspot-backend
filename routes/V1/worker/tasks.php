@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
         Route::get('/nearby', 'nearbyTasks');
         Route::get('/my', 'mine');
         Route::post('/{id}/start', 'start');
+        Route::post('/{id}/extend-start-deadline', 'extendStartDeadline');
         Route::post('/{id}/execute', 'execute');
         Route::post('/{id}/services/{serviceId}/submission', 'submitService');
         Route::post('/{id}/complete', 'complete');

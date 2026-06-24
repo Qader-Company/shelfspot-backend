@@ -22,6 +22,7 @@ use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
@@ -64,6 +65,36 @@ class TaskLifecycleUseCaseTest extends TestCase
             'to_status' => TaskStatusEnum::STARTED->value,
             'changed_by' => $worker->user_id,
         ]);
+    }
+
+
+    public function test_worker_extends_start_deadline_once_by_allowed_minutes(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
+
+        Carbon::setTestNow('2026-06-10 09:05:00');
+        $extendedTask = app(ExtendStartDeadlineUseCase::class)->execute($acceptedTask, $worker, 10);
+
+        $this->assertTrue($extendedTask->start_deadline_at->equalTo(Carbon::parse('2026-06-10 09:25:00')));
+        $this->assertSame(10, $extendedTask->start_deadline_extension_minutes);
+        $this->assertTrue($extendedTask->start_deadline_extended_at->equalTo(now()));
+
+        $this->expectException(ValidationException::class);
+
+        app(ExtendStartDeadlineUseCase::class)->execute($extendedTask, $worker, 5);
+    }
+
+    public function test_worker_cannot_extend_start_deadline_by_disallowed_minutes(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $acceptedTask = app(StartTaskUseCase::class)->execute($task, $worker);
+
+        $this->expectException(ValidationException::class);
+
+        app(ExtendStartDeadlineUseCase::class)->execute($acceptedTask, $worker, 20);
     }
 
     public function test_worker_cannot_accept_task_outside_execution_date(): void
@@ -379,7 +410,7 @@ class TaskLifecycleUseCaseTest extends TestCase
         app(AdminReassignTaskUseCase::class)->execute($cancelledTask, $busyWorker, null);
     }
 
-    public function test_expired_pending_and_accepted_tasks_are_failed(): void
+    public function test_expired_pending_tasks_are_failed_and_expired_accepted_tasks_return_to_pending(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$pendingTask] = $this->pendingTaskAndWorker(['date' => '2026-06-09']);
@@ -395,7 +426,11 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $this->assertSame(2, $failed);
         $this->assertSame(TaskStatusEnum::FAILED, $pendingTask->refresh()->status);
-        $this->assertSame(TaskStatusEnum::FAILED, $acceptedTask->refresh()->status);
+        $acceptedTask->refresh();
+        $this->assertSame(TaskStatusEnum::PENDING, $acceptedTask->status);
+        $this->assertNull($acceptedTask->assigned_worker_id);
+        $this->assertNull($acceptedTask->accepted_at);
+        $this->assertNull($acceptedTask->start_deadline_at);
     }
 
     public function test_worker_cannot_submit_task_service_before_task_started(): void

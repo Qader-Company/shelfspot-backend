@@ -6,12 +6,14 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\ExtendStartDeadlineRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\NearbyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StartTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\SubmitTaskServiceRequest;
@@ -87,6 +89,17 @@ class WorkerTaskController extends Controller
         return ApiResponse::updated(
             new TaskResource($task)
         );
+    }
+
+    public function extendStartDeadline(int $id, ExtendStartDeadlineRequest $request, ExtendStartDeadlineUseCase $extendStartDeadlineUseCase)
+    {
+        $task = $extendStartDeadlineUseCase->execute(
+            task: $this->task($id),
+            worker: $this->worker($request),
+            minutes: $request->minutes()
+        );
+
+        return ApiResponse::updated(new TaskResource($task));
     }
 
     public function execute(int $id, StartTaskRequest $request, StartExecuteTaskUseCase $startTaskUseCase)

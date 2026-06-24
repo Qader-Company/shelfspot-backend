@@ -44,6 +44,8 @@ class TaskResource extends JsonResource
             'charged_at' => $this->charged_at?->toDateTimeString(),
             'accepted_at' => $this->accepted_at?->toDateTimeString(),
             'start_deadline_at' => $this->when($isWorker, $this->start_deadline_at?->toDateTimeString()),
+            'start_deadline_extension_minutes' => $this->when($isWorker, $this->start_deadline_extension_minutes),
+            'start_deadline_extended_at' => $this->when($isWorker, $this->start_deadline_extended_at?->toDateTimeString()),
             'started_at' => $this->started_at?->toDateTimeString(),
             'completed_at' => $this->completed_at?->toDateTimeString(),
             'rejected_at' => $this->rejected_at?->toDateTimeString(),

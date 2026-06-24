@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 
 class CanReassignTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker, bool $workerHasInProgressTask = false): void
+    public static function validate(Task $task, Worker $worker = null, bool $workerHasInProgressTask = false): void
     {
         parent::validate($task, $worker->id);
         parent::insureTaskStatusIsOneOf(

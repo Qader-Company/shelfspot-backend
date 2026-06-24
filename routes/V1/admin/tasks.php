@@ -9,14 +9,19 @@ use Illuminate\Support\Facades\Route;
 Route::controller(AdminTaskController::class)->group(function () {
         Route::get('/', 'index')
             ->middleware('permission:'.AdminPermissionEnum::VIEW_TASK->value);
+
         Route::get('/{id}/available-workers', 'availableWorkers')
             ->middleware('permission:'.AdminPermissionEnum::REASSIGN_TASK->value);
-        Route::post('/{id}/reassign', 'reassign')
+
+        Route::patch('/{id}/reassign', 'reassign')
             ->middleware('permission:'.AdminPermissionEnum::REASSIGN_TASK->value);
+
         Route::post('/{id}/reopen', 'reopen')
             ->middleware('permission:'.AdminPermissionEnum::REASSIGN_TASK->value);
+
         Route::get('/{id}', 'show')
             ->middleware('permission:'.AdminPermissionEnum::VIEW_TASK->value);
+
     });
 
 Route::controller(TaskReviewMessageController::class)->group(function () {

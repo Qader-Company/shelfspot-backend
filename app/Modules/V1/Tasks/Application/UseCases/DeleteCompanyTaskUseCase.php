@@ -23,19 +23,10 @@ class DeleteCompanyTaskUseCase
             /** @var Task $lockedTask */
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
             CanDeleteTaskRule::validate($lockedTask);
-            $fromStatus = $lockedTask->status;
 
             $lockedTask->forceFill([
                 'company_deleted_at' => now(),
             ])->save();
-
-            TaskStatusUpdated::dispatch(
-                $lockedTask,
-                $fromStatus,
-                $fromStatus,
-                $actor,
-                ['action' => 'company_deleted']
-            );
 
             return $lockedTask->refresh();
         });

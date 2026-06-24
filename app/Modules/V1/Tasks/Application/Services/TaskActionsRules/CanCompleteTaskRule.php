@@ -5,13 +5,14 @@ namespace App\Modules\V1\Tasks\Application\Services\TaskActionsRules;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Validation\ValidationException;
 
 class CanCompleteTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, int $workerId = null): void
+    public static function validate(Task $task, Worker $worker = null): void
     {
-        parent::validate($task, $workerId);
+        parent::validate($task, $worker->id);
         parent::insureTaskStatusIsOneOf(
             $task,
             [
@@ -21,7 +22,7 @@ class CanCompleteTaskRule extends AbstractTaskActionRule
         );
         parent::insureTaskAssignmentToWorker(
             $task,
-            $workerId,
+            $worker->id,
             __('tasks.validation.worker_not_assigned')
         );
         self::checkTaskService($task);

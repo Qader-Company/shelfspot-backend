@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
+use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\AbstractTaskActionRule;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
@@ -22,9 +23,11 @@ class AdminReopenTaskUseCase
         return DB::transaction(function () use ($task, $admin, $reason) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id, ['services']);
 
-            if ($lockedTask->status !== TaskStatusEnum::REJECTED) {
-                throw ValidationException::withMessages(['task' => __('tasks.validation.reopen_rejected_only')]);
-            }
+            AbstractTaskActionRule::insureTaskStatusIsOneOf(
+                $lockedTask,
+                [TaskStatusEnum::REJECTED],
+                __('tasks.validation.reopen_rejected_only')
+            );
 
             $fromStatus = $lockedTask->status;
             $lockedTask->forceFill([

@@ -23,7 +23,7 @@ class CompleteTaskUseCase
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
             $lockedTask->loadMissing('services');
 
-            CanCompleteTaskRule::validate($lockedTask, $worker->id);
+            CanCompleteTaskRule::validate($lockedTask, $worker);
 
             $fromStatus = $lockedTask->status;
 

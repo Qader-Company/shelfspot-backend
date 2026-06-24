@@ -19,8 +19,7 @@ class FailExpiredTaskUseCase
 
     public function execute(?int $limit = null): int
     {
-        $query = Task::query()
-            ->whereNull('company_deleted_at')
+        $query = $this->taskRepository->query()
             ->where(function ($query) {
                 $query->where(function ($query) {
                     $query->where('status', TaskStatusEnum::PENDING->value)

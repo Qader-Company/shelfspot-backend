@@ -50,8 +50,9 @@ class TaskReviewMessageController extends Controller
         $task = $this->task($id);
         $this->ensureCanViewMessages($task);
 
+        $messages = $task->reviewMessages()->with('sender')->oldest()->cursorPaginate();
         return ApiResponse::success(
-            TaskReviewMessageResource::collection($task->reviewMessages()->with('sender')->oldest()->get())
+            TaskReviewMessageResource::collection($messages)
                 ->response()
                 ->getData(true)
         );

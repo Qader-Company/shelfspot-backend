@@ -5,13 +5,14 @@ namespace App\Modules\V1\Tasks\Application\Services\TaskActionsRules;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Validation\ValidationException;
 
 class CanStartTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, int $workerId = null): void
+    public static function validate(Task $task, Worker $worker = null): void
     {
-        parent::validate($task, $workerId);
+        parent::validate($task, $worker->id);
 
         parent::insureTaskIsCharged($task);
         parent::insureTaskIsNotDeleted($task);

@@ -3,12 +3,12 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
+use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\AbstractTaskActionRule;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class CompanyAcceptTaskUseCase
 {
@@ -22,9 +22,11 @@ class CompanyAcceptTaskUseCase
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
             $fromStatus = $lockedTask->status;
 
-            if (! in_array($fromStatus, [TaskStatusEnum::COMPLETED, TaskStatusEnum::REJECTED], true)) {
-                throw ValidationException::withMessages(['task' => __('tasks.validation.accept_completed_or_rejected_only')]);
-            }
+            AbstractTaskActionRule::insureTaskStatusIsOneOf(
+                task: $lockedTask,
+                statuses: [TaskStatusEnum::COMPLETED, TaskStatusEnum::REJECTED],
+                message: ('tasks.validation.accept_completed_or_rejected_only')
+            );
 
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::ACCEPTED,

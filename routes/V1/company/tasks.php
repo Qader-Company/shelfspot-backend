@@ -8,16 +8,32 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 
 Route::controller(CompanyTaskController::class)
     ->group(function () {
-        Route::get('/', 'index')->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
-        Route::post('/', 'store')->middleware('permission:'.CompanyPermissionEnum::CREATE_TASK->value);
-        Route::post('/{id}/accept', 'accept')->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
-        Route::post('/{id}/reject', 'reject')->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
-        Route::get('/{id}', 'show')->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
-        Route::delete('/{id}', 'destroy')->middleware('permission:'.CompanyPermissionEnum::DELETE_TASK->value);
+        Route::get('/', 'index')
+            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+
+        Route::post('/', 'store')
+            ->middleware('permission:'.CompanyPermissionEnum::CREATE_TASK->value);
+
+        Route::patch('/{id}/accept', 'accept')
+            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+
+        Route::post('/{id}/reject', 'reject')
+            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+
+        Route::get('/{id}', 'show')
+            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+
+        Route::delete('/{id}', 'destroy')
+            ->middleware('permission:'.CompanyPermissionEnum::DELETE_TASK->value);
+
     });
 
 Route::controller(TaskReviewMessageController::class)
     ->group(function () {
-        Route::get('/{id}/review-messages', 'indexForCompany')->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
-        Route::post('/{id}/review-messages', 'storeForCompany')->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+        Route::get('/{id}/review-messages', 'indexForCompany')
+            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+
+        Route::post('/{id}/review-messages', 'storeForCompany')
+            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+
     });

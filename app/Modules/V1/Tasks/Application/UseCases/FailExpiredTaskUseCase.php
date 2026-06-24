@@ -2,15 +2,19 @@
 
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
+use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanFailExpiredTaskRule;
 use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Domain\Models\Task;
+use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use Illuminate\Support\Facades\DB;
 
 class FailExpiredTaskUseCase
 {
-    public function __construct(private readonly TaskStatusHistoryRecorder $statusHistoryRecorder)
-    {
+    public function __construct(
+        private readonly TaskRepositoryInterface $taskRepository,
+        private readonly TaskStatusHistoryRecorder $statusHistoryRecorder
+    ) {
     }
 
     public function execute(?int $limit = null): int
@@ -38,9 +42,9 @@ class FailExpiredTaskUseCase
         $query->get()->each(function (Task $task) use (&$failed) {
             DB::transaction(function () use ($task, &$failed) {
                 /** @var Task $lockedTask */
-                $lockedTask = Task::query()->whereKey($task->id)->lockForUpdate()->firstOrFail();
+                $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
 
-                if (! $this->isExpired($lockedTask)) {
+                if (! CanFailExpiredTaskRule::isExpired($lockedTask)) {
                     return;
                 }
 
@@ -62,16 +66,5 @@ class FailExpiredTaskUseCase
         });
 
         return $failed;
-    }
-
-    private function isExpired(Task $task): bool
-    {
-        if ($task->status === TaskStatusEnum::PENDING) {
-            return $task->date->isBefore(now()->startOfDay());
-        }
-
-        return $task->status === TaskStatusEnum::STARTED
-            && $task->start_deadline_at !== null
-            && $task->start_deadline_at->isPast();
     }
 }

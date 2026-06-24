@@ -3,13 +3,13 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
+use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanReassignTaskRule;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class AdminReassignTaskUseCase
 {
@@ -21,24 +21,16 @@ class AdminReassignTaskUseCase
     {
         return DB::transaction(function () use ($task, $worker, $admin) {
             /** @var Task $lockedTask */
-            $lockedTask = $this->taskRepository
-                ->query()
-                ->whereKey($task->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+            $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
 
             $fromStatus = $lockedTask->status;
 
-            $this->ensureTaskIsAvailableToBeReassigned($lockedTask, $worker);
-
-            $hasInProgressTask = $this->taskRepository->query()
+            $workerHasInProgressTask = $this->taskRepository->query()
                 ->where('assigned_worker_id', $worker->id)
                 ->where('status', TaskStatusEnum::IN_PROGRESS->value)
                 ->exists();
 
-            if ($hasInProgressTask) {
-                throw ValidationException::withMessages(['worker' => __('tasks.validation.reassign_worker_busy')]);
-            }
+            CanReassignTaskRule::validate($lockedTask, $worker, $workerHasInProgressTask);
 
             $now = now();
             $lockedTask->forceFill([
@@ -60,16 +52,5 @@ class AdminReassignTaskUseCase
 
             return $lockedTask->refresh();
         });
-    }
-
-    public function ensureTaskIsAvailableToBeReassigned(Task $lockedTask, Worker $worker): void
-    {
-        if (! in_array($lockedTask->status, [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::STARTED], true)) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.reassign_cancelled_only')]);
-        }
-
-        if (! $worker->is_active) {
-            throw ValidationException::withMessages(['worker' => __('tasks.validation.reassign_active_worker_only')]);
-        }
     }
 }

@@ -29,6 +29,7 @@ enum CompanyPermissionEnum: string
     case RECHARGE_WALLET = 'recharge_wallet';
     case VIEW_TASK = 'view_task';
     case CREATE_TASK = 'create_task';
+    case EDIT_TASK = 'edit_task';
     case DELETE_TASK = 'delete_task';
     case VIEW_ROLE = 'view_role';
     case CREATE_ROLE = 'create_role';

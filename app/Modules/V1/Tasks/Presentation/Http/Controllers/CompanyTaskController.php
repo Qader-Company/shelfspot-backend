@@ -10,6 +10,7 @@ use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CreateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\UpdateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyRejectTaskRequest;
@@ -48,6 +49,17 @@ class CompanyTaskController extends Controller
         );
 
         return ApiResponse::message(__('api.created'));
+    }
+
+    public function update(int $id, StoreCompanyTaskRequest $request, UpdateCompanyTaskUseCase $updateCompanyTaskUseCase)
+    {
+        $task = $updateCompanyTaskUseCase->execute(
+            $this->getCompanyTask($id),
+            $request->validated(),
+            $request->allFiles()
+        );
+
+        return ApiResponse::updated(new TaskResource($task));
     }
 
     public function show(int $id)

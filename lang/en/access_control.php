@@ -57,6 +57,7 @@ return [
             'recharge_wallet' => 'Recharge wallet',
             'view_task' => 'View tasks',
             'create_task' => 'Create task',
+            'edit_task' => 'Edit task',
             'delete_task' => 'Delete task',
             'view_role' => 'View roles',
             'create_role' => 'Create role',

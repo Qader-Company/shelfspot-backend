@@ -14,7 +14,6 @@ class CanDeleteTaskRule extends AbstractTaskActionRule
         parent::insureTaskStatusIsNot(
             $task,
             [
-                TaskStatusEnum::STARTED,
                 TaskStatusEnum::IN_PROGRESS,
                 TaskStatusEnum::WORKER_CANCELLED,
                 TaskStatusEnum::IN_REVIEW,

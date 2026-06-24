@@ -29,7 +29,7 @@ class AdminReassignTaskUseCase
 
             $fromStatus = $lockedTask->status;
 
-            $this->ensureTaskIsAvailableToBeReassigned($lockedTask, $worker->id);
+            $this->ensureTaskIsAvailableToBeReassigned($lockedTask, $worker);
 
             $hasInProgressTask = $this->taskRepository->query()
                 ->where('assigned_worker_id', $worker->id)
@@ -54,7 +54,7 @@ class AdminReassignTaskUseCase
                 $lockedTask,
                 $fromStatus,
                 TaskStatusEnum::STARTED,
-                $worker,
+                $admin ?? $worker,
                 ['reassigned_worker_id' => $worker->id]
             );
 
@@ -62,13 +62,13 @@ class AdminReassignTaskUseCase
         });
     }
 
-    public function ensureTaskIsAvailableToBeReassigned($lockedTask, $workerId)
+    public function ensureTaskIsAvailableToBeReassigned(Task $lockedTask, Worker $worker): void
     {
         if (! in_array($lockedTask->status, [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::STARTED], true)) {
             throw ValidationException::withMessages(['task' => __('tasks.validation.reassign_cancelled_only')]);
         }
 
-        if (! $workerId) {
+        if (! $worker->is_active) {
             throw ValidationException::withMessages(['worker' => __('tasks.validation.reassign_active_worker_only')]);
         }
     }

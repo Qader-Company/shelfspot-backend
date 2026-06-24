@@ -17,37 +17,46 @@ Abstract class AbstractTaskActionRule
         }
     }
 
-    protected function insureTaskIsCharged(Task $task): void
+    protected static function insureTaskIsCharged(Task $task): void
     {
         if ($task->payment_status !== TaskPaymentStatusEnum::CHARGED) {
             throw ValidationException::withMessages(['task' => __('tasks.validation.accept_charged_only')]);
         }
     }
 
-    protected function insureTaskStatusIsNot(Task $task, array $statuses, string $message): void
+    protected static function insureTaskStatusIsOneOf(Task $task, array $statuses, string $message): void
     {
-        if ( in_array($task->status, $statuses) ) {
+        if (! in_array($task->status, $statuses, true)) {
             throw ValidationException::withMessages([
-                'task' => $message
+                'task' => $message,
             ]);
         }
     }
 
-    protected function insureTaskIsNotDeleted(Task $task): void
+    protected static function insureTaskStatusIsNot(Task $task, array $statuses, string $message): void
+    {
+        if (in_array($task->status, $statuses, true)) {
+            throw ValidationException::withMessages([
+                'task' => $message,
+            ]);
+        }
+    }
+
+    protected static function insureTaskIsNotDeleted(Task $task): void
     {
         if ($task->company_deleted_at !== null) {
             throw ValidationException::withMessages(['task' => __('tasks.validation.accept_deleted_task')]);
         }
     }
 
-    protected function insureTaskDateIsSameDay(Task $task): void
+    protected static function insureTaskDateIsSameDay(Task $task): void
     {
         if (!$task->date->isSameDay(now())) {
             throw ValidationException::withMessages(['task' => __('tasks.validation.accept_execution_date_only')]);
         }
     }
 
-    protected function insureTaskAssignmentToWorker(Task $task, int $workerId = null, string $message): void
+    protected static function insureTaskAssignmentToWorker(Task $task, int $workerId = null, string $message): void
     {
         if ($task->assigned_worker_id !== $workerId) {
             throw ValidationException::withMessages(['task' => $message]);

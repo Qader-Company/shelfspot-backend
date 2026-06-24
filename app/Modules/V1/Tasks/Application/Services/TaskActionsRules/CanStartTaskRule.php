@@ -20,7 +20,7 @@ class CanStartTaskRule extends AbstractTaskActionRule
             task: $task,
             message: __('tasks.validation.accept_unassigned_only')
         );
-        parent::insureTaskStatusIsNot(
+        parent::insureTaskStatusIsOneOf(
             task: $task,
             statuses: [TaskStatusEnum::PENDING],
             message: __('tasks.validation.accept_pending_only')

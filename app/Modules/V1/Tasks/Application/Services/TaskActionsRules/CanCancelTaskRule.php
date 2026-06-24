@@ -15,7 +15,7 @@ class CanCancelTaskRule extends AbstractTaskActionRule
             workerId: $workerId,
             message: __('tasks.validation.worker_not_assigned')
         );
-        parent::insureTaskStatusIsNot(
+        parent::insureTaskStatusIsOneOf(
             task: $task,
             statuses: [TaskStatusEnum::STARTED, TaskStatusEnum::IN_PROGRESS],
             message: __('tasks.validation.cancel_active_only')

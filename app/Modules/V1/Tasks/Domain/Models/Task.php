@@ -48,6 +48,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'worker_cancelled_at',
     'worker_cancel_reason',
     'company_deleted_at',
+    'company_purged_at',
     'payment_status',
     'charged_at',
 ])]
@@ -74,6 +75,7 @@ class Task extends Model
 //        'declined_at' => 'datetime',
         'worker_cancelled_at' => 'datetime',
         'company_deleted_at' => 'datetime',
+        'company_purged_at' => 'datetime',
         'charged_at' => 'datetime',
         'status' => TaskStatusEnum::class,
         'payment_status' => TaskPaymentStatusEnum::class,

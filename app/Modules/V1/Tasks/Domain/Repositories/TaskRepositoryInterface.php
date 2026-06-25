@@ -22,6 +22,18 @@ interface TaskRepositoryInterface
 
     public function delete(Task $task): void;
 
+    public function getCompanyTrash(int $companyId, array $relations = [], array $filters = []): LengthAwarePaginator;
+
+    public function getCompanyDeletedForAdmin(array $relations = [], array $filters = []): LengthAwarePaginator;
+
+    public function getCompanyDeletedById(int $id, array $relations = [], bool $includePurged = false): ?Task;
+
+    public function restoreCompanyDeleted(Task $task): Task;
+
+    public function purgeForCompany(Task $task): Task;
+
+    public function forceDeleteCompanyDeleted(Task $task): void;
+
     public function tasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator;
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator;

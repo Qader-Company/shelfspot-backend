@@ -20,6 +20,9 @@ use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ForceDeleteCompanyDeletedTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\PurgeCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\RestoreCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
@@ -165,6 +168,65 @@ class TaskLifecycleUseCaseTest extends TestCase
 //            'to_status' => TaskStatusEnum::COMPANY_DELETED->value,
             'changed_by' => $worker->user_id,
         ]);
+    }
+
+
+    public function test_company_trash_restore_and_purge_are_company_scoped_visibility_changes(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $deletedTask = app(DeleteCompanyTaskUseCase::class)->execute($task, $worker->user);
+
+        $repository = app(EloquentTaskRepository::class);
+
+        $this->assertNull($repository->getById($task->id));
+        $this->assertSame([$task->id], $repository->getCompanyTrash($task->company_id)->pluck('id')->all());
+
+        $restoredTask = app(RestoreCompanyTaskUseCase::class)->execute($deletedTask);
+
+        $this->assertNull($restoredTask->company_deleted_at);
+        $this->assertNotNull($repository->getById($task->id));
+        $this->assertSame([], $repository->getCompanyTrash($task->company_id)->pluck('id')->all());
+
+        $deletedAgain = app(DeleteCompanyTaskUseCase::class)->execute($restoredTask, $worker->user);
+        $purgedTask = app(PurgeCompanyTaskUseCase::class)->execute($deletedAgain);
+
+        $this->assertTrue($purgedTask->company_purged_at->equalTo(now()));
+        $this->assertNull($repository->getById($task->id));
+        $this->assertSame([], $repository->getCompanyTrash($task->company_id)->pluck('id')->all());
+        $this->assertSame([$task->id], $repository->getCompanyDeletedForAdmin()->pluck('id')->all());
+        $this->assertDatabaseHas('tasks', ['id' => $task->id]);
+    }
+
+    public function test_admin_can_force_delete_company_deleted_task_only(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $deletedTask = app(DeleteCompanyTaskUseCase::class)->execute($task, $worker->user);
+
+        $repository = app(EloquentTaskRepository::class);
+
+        $this->assertSame([$task->id], $repository->getCompanyDeletedForAdmin()->pluck('id')->all());
+
+        app(ForceDeleteCompanyDeletedTaskUseCase::class)->execute($deletedTask);
+
+        $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
+    }
+
+    public function test_company_cannot_delete_in_progress_task(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $startedTask = app(StartExecuteTaskUseCase::class)->execute(
+            app(StartTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            30.0444,
+            31.2357
+        );
+
+        $this->expectException(ValidationException::class);
+
+        app(DeleteCompanyTaskUseCase::class)->execute($startedTask, $worker->user);
     }
 
     public function test_repository_returns_tasks_assigned_to_worker_only(): void

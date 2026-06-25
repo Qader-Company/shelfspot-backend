@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
     Route::controller(WorkerTaskController::class)->group(function () {
         Route::get('/nearby', 'nearbyTasks');
         Route::get('/my', 'mine');
+        Route::get('/{id}', 'show');
         Route::post('/{id}/start', 'start');
         Route::post('/{id}/extend-start-deadline', 'extendStartDeadline');
         Route::post('/{id}/execute', 'execute');

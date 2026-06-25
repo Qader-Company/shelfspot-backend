@@ -89,6 +89,14 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         };
     }
 
+    public function assignedTaskForWorker(int $taskId, int $workerId, array $relations = []): ?Task
+    {
+        return $this->query($relations)
+            ->whereKey($taskId)
+            ->where('assigned_worker_id', $workerId)
+            ->first();
+    }
+
 
     public function assignedToWorkerForAdmin(int $workerId, array $filters = [], array $relations = []): Collection
     {

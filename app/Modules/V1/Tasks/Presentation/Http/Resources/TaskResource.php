@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
 
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -12,9 +13,8 @@ class TaskResource extends JsonResource
     public function toArray(Request $request): array
     {
         $userType = $request->user()?->type;
-        $userTypeValue = $userType instanceof \BackedEnum ? $userType->value : $userType;
-        $isWorker = $userTypeValue === 'worker';
-        $isCompany = $userTypeValue === 'company';
+        $isWorker = $userType->value === 'worker';
+        $isCompany = $userType->value === 'company';
 
         return [
             'id' => $this->id,
@@ -49,12 +49,12 @@ class TaskResource extends JsonResource
             'started_at' => $this->started_at?->toDateTimeString(),
             'completed_at' => $this->completed_at?->toDateTimeString(),
             'rejected_at' => $this->rejected_at?->toDateTimeString(),
-            'rejection_reason' => $this->rejection_reason,
+            'rejection_reason' => $this->when($this->rejection_reason, $this->rejection_reason),
             'company_accepted_at' => $this->company_accepted_at?->toDateTimeString(),
             'auto_accept_at' => $this->auto_accept_at?->toDateTimeString(),
             'auto_accepted_at' => $this->auto_accepted_at?->toDateTimeString(),
             'reopened_at' => $this->reopened_at?->toDateTimeString(),
-            'reopen_reason' => $this->reopen_reason,
+            'reopen_reason' => $this->when($this->reopen_reason, $this->reopen_reason),
             'progress' => $this->progress(),
             'declined_at' => $this->declined_at?->toDateTimeString(),
             'decline_reason' => $this->decline_reason,
@@ -69,6 +69,9 @@ class TaskResource extends JsonResource
 
     private function companyFacingStatus(): string
     {
+        if($this->status === TaskStatusEnum::WORKER_CANCELLED){
+            return TaskStatusEnum::IN_PROGRESS->value;
+        };
         return $this->status->value;
     }
 
@@ -84,7 +87,9 @@ class TaskResource extends JsonResource
         }
 
         $total = $this->services->count();
-        $completed = $this->services->filter(fn ($service) => $service->submission !== null || $service->status?->value === 'completed')->count();
+        $completed = $this->services->filter(
+            fn ($service) => $service->status?->value === 'completed'
+        )->count();
 
         return [
             'total_services' => $total,

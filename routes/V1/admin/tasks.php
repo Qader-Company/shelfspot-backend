@@ -1,7 +1,6 @@
 <?php
 
 use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
-use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Controllers\AdminTaskController;
 use App\Modules\V1\Tasks\Presentation\Http\Controllers\TaskReviewMessageController;
 use Illuminate\Support\Facades\Route;

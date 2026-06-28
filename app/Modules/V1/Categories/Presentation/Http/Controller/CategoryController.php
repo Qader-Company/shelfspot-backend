@@ -30,10 +30,18 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $filters = $this->acceptedFilters(request(), ['name', 'active', 'brand_id', 'sub_brand_id']);
-        $categories = $this->categoryRepository->getAll(filters: $filters);
-
-        return ApiResponse::success(CategoryResource::collection($categories)->response()->getData(true));
+        $filters = $this->acceptedFilters(
+            request(), ['name', 'active', 'brand_id', 'sub_brand_id']
+        );
+        $categories = $this->categoryRepository->getAll(
+            relations: ['brand', 'subBrand'],
+            filters: $filters,
+        );
+        return ApiResponse::success(
+            CategoryResource::collection($categories)
+                ->response()
+                ->getData(true)
+        );
     }
 
     public function show(string $id)

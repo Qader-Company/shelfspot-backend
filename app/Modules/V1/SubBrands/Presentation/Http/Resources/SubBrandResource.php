@@ -13,7 +13,7 @@ class SubBrandResource extends JsonResource
             'id' => $this->id,
             'deleted_at' => $this->when($this->deleted_at, $this->deleted_at?->toISOString()),
             'name' => $this->name,
-            'logo' => $this->getMedia('logo')->first()?->getUrl(),
+            'logo' => $this->whenLoaded('media',$this->getMedia('logo')->first()?->getUrl()),
             'active' => (bool) $this->is_active,
             'brand' => $this->whenLoaded(
                 relationship: 'brand',

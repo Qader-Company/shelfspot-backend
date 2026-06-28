@@ -39,7 +39,10 @@ class CompanyTaskController extends Controller
             filters: $filters
         );
 
-        return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));
+        return ApiResponse::success(
+            TaskResource::collection($tasks)
+            ->response()->getData(true)
+        );
     }
 
 

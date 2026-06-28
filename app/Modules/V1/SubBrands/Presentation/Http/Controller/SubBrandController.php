@@ -31,7 +31,7 @@ class SubBrandController extends Controller
             request(), ['name', 'active', 'brand_id']
         );
         $subBrands = $this->subBrandRepository->getAll(
-            relations: ['media'],
+            relations: ['media','brand'],
             filters: $filters
         );
         return ApiResponse::success(

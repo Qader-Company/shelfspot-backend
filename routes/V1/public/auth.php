@@ -27,6 +27,11 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
             'throttle:auth-refresh',
         ]);
 
+    Route::post('{type}/{purpose}/send-otp', [AuthController::class, 'sendTypedOTP'])
+        ->where('type', implode('|', PortalTypeEnum::values()))
+        ->where('purpose', implode('|', OtpPurposeEnum::values()))
+        ->middleware('throttle:auth-otp-send');
+
     Route::post('{purpose}/send-otp', [AuthController::class, 'sendOTP'])
         ->where('purpose', implode('|', OtpPurposeEnum::values()))
         ->middleware('throttle:auth-otp-send');

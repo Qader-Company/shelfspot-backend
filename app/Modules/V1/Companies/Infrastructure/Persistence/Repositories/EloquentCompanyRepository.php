@@ -44,13 +44,21 @@ class EloquentCompanyRepository implements CompanyRepositoryInterface
     {
         return DB::transaction(function () use ($company, $attributes) {
             $company->update($attributes);
+
+            if (array_key_exists('is_active', $attributes) && ! (bool) $attributes['is_active']) {
+                $this->revokeCompanyUserTokens($company);
+            }
+
             return $company;
         });
     }
 
     public function delete(Company $company): void
     {
-        $company->delete();
+        DB::transaction(function () use ($company) {
+            $this->revokeCompanyUserTokens($company);
+            $company->delete();
+        });
     }
 
     private function query(array $relations, array $relationsCount, array $filters = [])
@@ -58,5 +66,13 @@ class EloquentCompanyRepository implements CompanyRepositoryInterface
         return Company::when($filters, fn($q) => $q->filter($filters))
             ->when($relations, fn($q) => $q->with($relations))
             ->when($relationsCount, fn($q) => $q->withCount($relationsCount));
+    }
+
+    private function revokeCompanyUserTokens(Company $company): void
+    {
+        $company->users()
+            ->with('user')
+            ->get()
+            ->each(fn ($companyUser) => $companyUser->user?->tokens()->delete());
     }
 }

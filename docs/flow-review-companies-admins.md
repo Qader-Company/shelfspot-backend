@@ -70,11 +70,14 @@ Company admin update requests now validate email uniqueness only against `users`
 
 ## Issues / gaps found
 
-### P1 - Company active/deleted state side effects need explicit policy
+### Company lifecycle policy
 
-`is_active = false` blocks company users through activation checks, but soft-deleting a company and its effects on active sessions, catalog visibility, and running tasks need a clearly documented product rule.
-
-**Suggested fix:** define policy for active/inactive/deleted companies and add tests around login/access/task behavior.
+- `is_active = false` means the company is administratively suspended.
+- Suspended companies cannot log in or use company tenant routes because activation and tenant-user checks require an active company.
+- When a company is suspended, all existing tokens for company users are revoked so active sessions must log in again if the company is later reactivated.
+- Soft-deleting a company behaves as a stronger administrative disable: company-user tokens are revoked and company portal access is blocked.
+- Soft delete should not automatically cancel, refund, or mutate running tasks. Running tasks remain an operational/admin concern so we do not create hidden financial or worker-side side effects from a company profile action.
+- Restore/reactivation does not restore old tokens; users must log in again.
 
 ### P1 - Company admin deletion deletes the shared user row
 
@@ -96,12 +99,12 @@ Company slug includes name, industry, CR number, and random suffix. Updating nam
 
 ## Proposed implementation plan
 
-### Step 1 - Lifecycle policy
+### Step 1 - Lifecycle policy tests
 
-1. Document behavior for inactive company.
-2. Document behavior for soft-deleted company.
-3. Decide whether active tokens should be revoked when a company is disabled.
-4. Decide what happens to running tasks when company is disabled/deleted.
+1. Company deactivation revokes company-user tokens.
+2. Company soft delete revokes company-user tokens.
+3. Reactivation does not restore old tokens.
+4. Running tasks are not automatically cancelled or refunded by company deactivation/delete.
 
 ### Step 2 - Tests needed
 
@@ -114,4 +117,4 @@ Company slug includes name, industry, CR number, and random suffix. Updating nam
 
 ## Suggested next action
 
-Add the company creation/show/update tests, then define the inactive/deleted company lifecycle policy before moving to the Catalog family flow.
+Add the company lifecycle tests above, then move to the Catalog family flow.

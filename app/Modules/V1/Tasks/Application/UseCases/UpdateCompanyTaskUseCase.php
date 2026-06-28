@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanUpdateTaskRule;
+use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
@@ -30,19 +31,19 @@ class UpdateCompanyTaskUseCase
             CanUpdateTaskRule::validate($lockedTask);
 
             $taskServices = $data['services'];
-            $subtotal = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
+            $totalPrice = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
             $estimatedDuration = collect($taskServices)->sum(fn (array $service) => (int) $service['execution_time_minutes']);
 
             $lockedTask->forceFill([
                 'date' => $data['date'],
                 'execution_time' => self::FIXED_EXECUTION_TIME,
+                'expires_at' => TaskExpiryDate::fromExecutionDate($data['date']),
                 'estimated_duration_minutes' => $estimatedDuration,
                 'latitude' => $data['location']['latitude'],
                 'longitude' => $data['location']['longitude'],
                 'location_name' => $data['location']['location_name'] ?? null,
                 'address' => $data['location']['address'] ?? null,
-                'subtotal' => $subtotal,
-                'total_price' => $subtotal,
+                'total_price' => $totalPrice,
                 'notes' => $data['notes'] ?? null,
             ])->save();
 

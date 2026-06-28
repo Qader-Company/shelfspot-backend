@@ -53,7 +53,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
                     continue;
                 }
 
-                if (! $this->validateUniqueSku($attributes, $rowNumber)) {
+                if (! $this->validateUniqueFields($attributes, $rowNumber)) {
                     continue;
                 }
 
@@ -141,6 +141,10 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
             $rules['sku'] = ['nullable', 'string', 'max:255'];
         }
 
+        if (in_array('barcode', $this->config['fillable'], true)) {
+            $rules['barcode'] = ['nullable', 'string', 'max:255'];
+        }
+
         if (in_array('description', $this->config['fillable'], true)) {
             $rules['description'] = ['nullable', 'string'];
         }
@@ -222,21 +226,25 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         return $modelClass::query()->find($id);
     }
 
-    private function validateUniqueSku(array $attributes, int $rowNumber): bool
+    private function validateUniqueFields(array $attributes, int $rowNumber): bool
     {
-        if (! array_key_exists('sku', $attributes) || ! filled($attributes['sku'])) {
-            return true;
-        }
-
+        $uniqueFields = $this->config['unique_fields'] ?? ['sku'];
         $modelClass = $this->config['model'];
-        $exists = $modelClass::query()
-            ->where('sku', $attributes['sku'])
-            ->when(filled($attributes['id'] ?? null), fn ($query) => $query->whereKeyNot($attributes['id']))
-            ->exists();
 
-        if ($exists) {
-            $this->addError($rowNumber, ['The sku has already been used for another product in the current company.']);
-            return false;
+        foreach ($uniqueFields as $field) {
+            if (! array_key_exists($field, $attributes) || ! filled($attributes[$field])) {
+                continue;
+            }
+
+            $exists = $modelClass::query()
+                ->where($field, $attributes[$field])
+                ->when(filled($attributes['id'] ?? null), fn ($query) => $query->whereKeyNot($attributes['id']))
+                ->exists();
+
+            if ($exists) {
+                $this->addError($rowNumber, ["The {$field} has already been used for another product in the current company."]);
+                return false;
+            }
         }
 
         return true;

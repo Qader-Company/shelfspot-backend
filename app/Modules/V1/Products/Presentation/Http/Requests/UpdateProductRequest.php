@@ -2,7 +2,10 @@
 
 namespace App\Modules\V1\Products\Presentation\Http\Requests;
 
+use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Validator;
@@ -22,6 +25,7 @@ class UpdateProductRequest extends FormRequest
             'sub_category_id' => ['nullable', new ExistsInCurrentCompany('sub_categories')],
             'description' => 'nullable|string',
             'sku' => 'nullable|string|max:255',
+            'barcode' => ['nullable', 'string', 'max:255', $this->uniqueBarcodeRule()],
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'is_active' => 'sometimes|boolean',
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Companies\Presentation\Http\Requests;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
+use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -25,7 +26,14 @@ class RegisterCompanyRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:companies,email',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:companies,email',
+                Rule::unique('users', 'email')->where('type', PortalTypeEnum::COMPANY->value),
+            ],
             'phone' => 'required|string|max:255|unique:companies,phone',
             'password' => [
                 Password::min(8)->mixedCase(),

@@ -34,7 +34,7 @@ class OtpEmailTest extends TestCase
         $this->postJson('/api/v1/auth/company/register', $this->companyRegistrationPayload())
             ->assertSuccessful();
 
-        Mail::assertSent(OtpMail::class, function (OtpMail $mail) {
+        Mail::assertQueued(OtpMail::class, function (OtpMail $mail) {
             return $mail->purpose === OtpPurposeEnum::EMAIL_VERIFICATION
                 && strlen($mail->code) === 6;
         });
@@ -52,7 +52,7 @@ class OtpEmailTest extends TestCase
         $this->postJson('/api/v1/auth/password-reset/send-otp', ['email' => 'reset@example.com'])
             ->assertSuccessful();
 
-        Mail::assertSent(OtpMail::class, function (OtpMail $mail) {
+        Mail::assertQueued(OtpMail::class, function (OtpMail $mail) {
             return $mail->purpose === OtpPurposeEnum::PASSWORD_RESET;
         });
     }
@@ -64,7 +64,7 @@ class OtpEmailTest extends TestCase
         $this->postJson('/api/v1/auth/password-reset/send-otp', ['email' => 'missing@example.com'])
             ->assertSuccessful();
 
-        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
     }
 
     public function test_registration_otp_email_uses_arabic_locale(): void
@@ -79,7 +79,7 @@ class OtpEmailTest extends TestCase
 
         $expectedSubject = __('otp.subject_verification', ['app' => config('app.name')], 'ar');
 
-        Mail::assertSent(OtpMail::class, function (OtpMail $mail) use ($expectedSubject) {
+        Mail::assertQueued(OtpMail::class, function (OtpMail $mail) use ($expectedSubject) {
             return $mail->envelope()->subject === $expectedSubject;
         });
     }

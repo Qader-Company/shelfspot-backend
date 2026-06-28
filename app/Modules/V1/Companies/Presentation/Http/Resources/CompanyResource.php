@@ -26,7 +26,7 @@ class CompanyResource extends JsonResource
             'cr_number' => $this->cr_number ,
             'industry' => $this->industry->label() ,
             'is_active' => $this->is_active,
-            'users' => CompanyUserResource::collection($this->whenLoaded('companyUsers')),
+            'users' => CompanyUserResource::collection($this->whenLoaded('users')),
             'latest_tasks' => TaskResource::collection($this->whenLoaded('latestTasks')),
             'total_requests_count' => $this->when(isset($this->total_requests_count), (int) $this->total_requests_count),
             'completed_requests_count' => $this->when(isset($this->completed_requests_count), (int) $this->completed_requests_count),

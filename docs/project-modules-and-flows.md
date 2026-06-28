@@ -401,3 +401,5 @@
 ## أول Flow مقترح نبدأ به
 
 أقترح نبدأ بـ **Authentication: login/register/token flows** أو **Tenant + Access Control** قبل الدخول على Tasks، لأن أي مشكلة فيهم ستؤثر على كل modules الأخرى.
+
+تم فتح أول مراجعة تفصيلية في `docs/flow-review-authentication.md`.

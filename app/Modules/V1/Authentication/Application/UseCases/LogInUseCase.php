@@ -58,12 +58,13 @@ class LogInUseCase
         ];
 
         if($needsVerification){
-            $data['data']['verify_token'] = $this->tokenIssuer->create($user, $userType, TokenTypeEnum::VERIFY_TOKEN);
+            $data['data']['verification_token'] = $this->tokenIssuer->create($user, $userType, TokenTypeEnum::VERIFY_TOKEN);
             $data['message'] = __('auth.verify_account');
             $data['code'] = Response::HTTP_FORBIDDEN;
             $this->otpService->generateAndSend(
                 $user->email,
                 OtpPurposeEnum::EMAIL_VERIFICATION,
+                $userType,
                 $user->name
             );
         } else {

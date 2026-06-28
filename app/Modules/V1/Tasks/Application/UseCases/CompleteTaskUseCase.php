@@ -31,7 +31,6 @@ class CompleteTaskUseCase
                 'status' => TaskStatusEnum::COMPLETED,
                 'completed_at' => now(),
                 'auto_accept_at' => $this->autoAcceptAt($lockedTask),
-                'auto_accepted_at' => null,
             ])->save();
 
             TaskStatusUpdated::dispatch(

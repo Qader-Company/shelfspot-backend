@@ -53,13 +53,11 @@
 
 Product create and update now return `ProductResource` with media and catalog relations loaded instead of generic message-only responses. This keeps catalog API responses consistent with the improved company create/update flow and helps frontend state sync.
 
+### 3. Hardened product hierarchy validation
+
+Product create/update now validate that a selected sub-brand belongs to the selected/effective brand and that a selected sub-category belongs to the selected/effective category. Selecting a sub-brand without a brand, or a sub-category without a category, is rejected.
+
 ## Issues / gaps found
-
-### P1 - Product relationship consistency is only company-scoped, not hierarchy-scoped
-
-Current validation ensures selected IDs belong to the current company, but it does not prove that `sub_brand_id` belongs to the selected `brand_id`, or that `sub_category_id` belongs to the selected `category_id`.
-
-**Suggested fix:** add cross-field validation after base rules to ensure selected sub-brand/category hierarchy is internally consistent.
 
 ### P1 - SKU uniqueness policy is unclear
 
@@ -83,9 +81,8 @@ Soft-deleted products are hidden from normal catalog queries, but old tasks may 
 
 ### Step 1 - Product validation hardening
 
-1. Add hierarchy validation: sub-brand must belong to brand when both are supplied.
-2. Add hierarchy validation: sub-category must belong to category when both are supplied.
-3. Decide and enforce SKU uniqueness policy.
+1. Decide and enforce SKU uniqueness policy.
+2. Add tests for product hierarchy validation.
 
 ### Step 2 - Product Excel review
 
@@ -105,4 +102,4 @@ Soft-deleted products are hidden from normal catalog queries, but old tasks may 
 
 ## Suggested next action
 
-Harden product hierarchy validation first, then continue with the Product Excel flow before applying the same catalog review pattern to Brands, SubBrands, Categories, and SubCategories.
+Decide the SKU uniqueness policy, then continue with the Product Excel flow before applying the same catalog review pattern to Brands, SubBrands, Categories, and SubCategories.

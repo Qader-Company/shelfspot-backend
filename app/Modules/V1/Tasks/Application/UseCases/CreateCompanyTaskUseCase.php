@@ -35,7 +35,7 @@ class CreateCompanyTaskUseCase
     {
         return DB::transaction(function () use ($data, $actor, $files) {
             $taskServices = $data['services'];
-            $subtotal = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
+            $totalPrice = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
             $estimatedDuration = collect($taskServices)->sum(fn (array $service) => (int) $service['execution_time_minutes']);
 
             $task = $this->taskRepository->create([
@@ -47,8 +47,7 @@ class CreateCompanyTaskUseCase
                 'longitude' => $data['location']['longitude'],
                 'location_name' => $data['location']['location_name'] ?? null,
                 'address' => $data['location']['address'] ?? null,
-                'subtotal' => $subtotal,
-                'total_price' => $subtotal,
+                'total_price' => $totalPrice,
                 'notes' => $data['notes'] ?? null,
                 'status' => TaskStatusEnum::DRAFT,
                 'payment_status' => TaskPaymentStatusEnum::PENDING,

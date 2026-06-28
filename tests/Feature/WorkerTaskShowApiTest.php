@@ -89,7 +89,6 @@ class WorkerTaskShowApiTest extends TestCase
             'estimated_duration_minutes' => 60,
             'latitude' => 30.0444,
             'longitude' => 31.2357,
-            'subtotal' => 100,
             'total_price' => 100,
             'status' => TaskStatusEnum::COMPLETED,
             'payment_status' => TaskPaymentStatusEnum::CHARGED,

@@ -34,7 +34,6 @@ class TaskResource extends JsonResource
                 'location_name' => $this->location_name,
                 'address' => $this->address,
             ],
-            'subtotal' => $this->subtotal,
             'total_price' => $this->total_price,
             'notes' => $this->notes,
             'status' => $isCompany ? $this->companyFacingStatus() : $this->status->value,

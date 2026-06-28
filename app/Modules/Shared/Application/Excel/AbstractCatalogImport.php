@@ -14,6 +14,8 @@ use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 
 abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas
 {
+    private const MAX_ROWS = 1000;
+
     private int $created = 0;
     private int $updated = 0;
     private int $skipped = 0;
@@ -26,6 +28,11 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function collection(Collection $rows): void
     {
+        if ($rows->count() > self::MAX_ROWS) {
+            $this->addError(0, ['The uploaded file exceeds the maximum allowed rows.'], 'file');
+            return;
+        }
+
         DB::transaction(function () use ($rows): void {
             foreach ($rows as $index => $row) {
                 $rowNumber = $index + 2;
@@ -45,7 +52,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
                 $validator = Validator::make($attributes, $this->rules());
 
                 if ($validator->fails()) {
-                    $this->addError($rowNumber, $validator->errors()->all());
+                    $this->addValidationErrors($rowNumber, $validator->errors()->messages());
                     continue;
                 }
 
@@ -111,12 +118,12 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
             $parentId = $this->resolveParentId($parent['model'], $value);
 
             if ($parent['required'] && $parentId === null) {
-                $this->addError($rowNumber, ["The {$heading} column is required and must match one of the template dropdown values."]);
+                $this->addError($rowNumber, ["The {$heading} column is required and must match one of the template dropdown values."], $heading);
                 return null;
             }
 
             if (filled($value) && $parentId === null) {
-                $this->addError($rowNumber, ["The selected {$heading} value does not exist for the current company."]);
+                $this->addError($rowNumber, ["The selected {$heading} value does not exist for the current company."], $heading);
                 return null;
             }
 
@@ -198,10 +205,20 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     private function validateRelations(array $attributes, int $rowNumber): bool
     {
+        if (($attributes['sub_brand_id'] ?? null) && ! ($attributes['brand_id'] ?? null)) {
+            $this->addError($rowNumber, ['The brand column is required when sub_brand is selected.'], 'brand');
+            return false;
+        }
+
+        if (($attributes['sub_category_id'] ?? null) && ! ($attributes['category_id'] ?? null)) {
+            $this->addError($rowNumber, ['The category column is required when sub_category is selected.'], 'category');
+            return false;
+        }
+
         if (isset($attributes['brand_id'], $attributes['sub_brand_id']) && $attributes['brand_id'] && $attributes['sub_brand_id']) {
             $subBrand = $this->findParent($this->config['parents']['sub_brand']['model'] ?? null, $attributes['sub_brand_id']);
             if ($subBrand && (int) $subBrand->brand_id !== (int) $attributes['brand_id']) {
-                $this->addError($rowNumber, ['The selected sub_brand does not belong to the selected brand.']);
+                $this->addError($rowNumber, ['The selected sub_brand does not belong to the selected brand.'], 'sub_brand');
                 return false;
             }
         }
@@ -209,7 +226,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         if (isset($attributes['category_id'], $attributes['sub_category_id']) && $attributes['category_id'] && $attributes['sub_category_id']) {
             $subCategory = $this->findParent($this->config['parents']['sub_category']['model'] ?? null, $attributes['sub_category_id']);
             if ($subCategory && (int) $subCategory->category_id !== (int) $attributes['category_id']) {
-                $this->addError($rowNumber, ['The selected sub_category does not belong to the selected category.']);
+                $this->addError($rowNumber, ['The selected sub_category does not belong to the selected category.'], 'sub_category');
                 return false;
             }
         }
@@ -228,23 +245,23 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     private function validateUniqueFields(array $attributes, int $rowNumber): bool
     {
-        $uniqueFields = $this->config['unique_fields'] ?? ['sku'];
+        if (! array_key_exists('sku', $attributes) || ! filled($attributes['sku'])) {
+            return true;
+        }
+
+        if (! filled($attributes['id'] ?? null)) {
+            return true;
+        }
+
         $modelClass = $this->config['model'];
+        $exists = $modelClass::query()
+            ->where('sku', $attributes['sku'])
+            ->whereKeyNot($attributes['id'])
+            ->exists();
 
-        foreach ($uniqueFields as $field) {
-            if (! array_key_exists($field, $attributes) || ! filled($attributes[$field])) {
-                continue;
-            }
-
-            $exists = $modelClass::query()
-                ->where($field, $attributes[$field])
-                ->when(filled($attributes['id'] ?? null), fn ($query) => $query->whereKeyNot($attributes['id']))
-                ->exists();
-
-            if ($exists) {
-                $this->addError($rowNumber, ["The {$field} has already been used for another product in the current company."]);
-                return false;
-            }
+        if ($exists) {
+            $this->addError($rowNumber, ['The sku has already been used for another product in the current company.'], 'sku');
+            return false;
         }
 
         return true;
@@ -260,9 +277,13 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
             $model = $modelClass::query()->find($id);
 
             if (! $model) {
-                $this->addError($rowNumber, ["No {$this->config['module']} record was found with id {$id} for the current company."]);
+                $this->addError($rowNumber, ["No {$this->config['module']} record was found with id {$id} for the current company."], 'id');
                 return;
             }
+        }
+
+        if (! $model && filled($attributes['sku'] ?? null)) {
+            $model = $modelClass::query()->where('sku', $attributes['sku'])->first();
         }
 
         if ($model) {
@@ -275,11 +296,24 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         $this->created++;
     }
 
-    private function addError(int $rowNumber, array $messages): void
+    private function addValidationErrors(int $rowNumber, array $errors): void
     {
-        $this->errors[] = [
+        foreach ($errors as $column => $messages) {
+            $this->addError($rowNumber, $messages, $column);
+        }
+    }
+
+    private function addError(int $rowNumber, array $messages, ?string $column = null): void
+    {
+        $error = [
             'row' => $rowNumber,
             'messages' => array_values($messages),
         ];
+
+        if ($column !== null) {
+            $error['column'] = $column;
+        }
+
+        $this->errors[] = $error;
     }
 }

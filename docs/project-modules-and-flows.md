@@ -405,3 +405,4 @@
 تم فتح أول مراجعة تفصيلية في `docs/flow-review-authentication.md`.
 وتم فتح مراجعة **Tenant + Access Control** في `docs/flow-review-tenant-access-control.md`.
 وتم فتح مراجعة **Companies + Company Admins/Admins** في `docs/flow-review-companies-admins.md`.
+وتم فتح مراجعة **Catalog Products** في `docs/flow-review-catalog-products.md`.

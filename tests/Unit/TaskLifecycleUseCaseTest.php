@@ -7,6 +7,7 @@ use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
+use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
@@ -49,6 +50,14 @@ class TaskLifecycleUseCaseTest extends TestCase
         Carbon::setTestNow();
 
         parent::tearDown();
+    }
+
+    public function test_task_expiry_is_midnight_after_execution_date(): void
+    {
+        $this->assertSame(
+            '2026-06-29 00:00:00',
+            TaskExpiryDate::fromExecutionDate('2026-06-28')->toDateTimeString()
+        );
     }
 
     public function test_worker_accepts_pending_charged_task_on_execution_date(): void
@@ -471,10 +480,20 @@ class TaskLifecycleUseCaseTest extends TestCase
         app(AdminReassignTaskUseCase::class)->execute($cancelledTask, $busyWorker, null);
     }
 
-    public function test_expired_pending_tasks_are_failed_and_expired_accepted_tasks_return_to_pending(): void
+    public function test_expired_pending_and_cancelled_tasks_are_failed_and_expired_accepted_tasks_return_to_pending(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
-        [$pendingTask] = $this->pendingTaskAndWorker(['date' => '2026-06-09']);
+        [$pendingTask] = $this->pendingTaskAndWorker([
+            'date' => '2026-06-09',
+            'expires_at' => '2026-06-10 00:00:00',
+        ]);
+        [$cancelledTask] = $this->pendingTaskAndWorker([
+            'date' => '2026-06-09',
+            'expires_at' => '2026-06-10 00:00:00',
+            'status' => TaskStatusEnum::WORKER_CANCELLED,
+            'worker_cancelled_at' => '2026-06-09 14:00:00',
+            'worker_cancel_reason' => 'Vehicle issue',
+        ]);
         [$acceptedTask, $worker] = $this->pendingTaskAndWorker(['date' => '2026-06-10']);
         $acceptedTask->forceFill([
             'status' => TaskStatusEnum::STARTED,
@@ -485,8 +504,9 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $failed = app(FailExpiredTaskUseCase::class)->execute();
 
-        $this->assertSame(2, $failed);
+        $this->assertSame(3, $failed);
         $this->assertSame(TaskStatusEnum::FAILED, $pendingTask->refresh()->status);
+        $this->assertSame(TaskStatusEnum::FAILED, $cancelledTask->refresh()->status);
         $acceptedTask->refresh();
         $this->assertSame(TaskStatusEnum::PENDING, $acceptedTask->status);
         $this->assertNull($acceptedTask->assigned_worker_id);

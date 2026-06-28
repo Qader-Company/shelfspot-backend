@@ -24,8 +24,12 @@ class FailExpiredTaskUseCase
         $query = $this->taskRepository->query()
             ->where(function ($query) {
                 $query->where(function ($query) {
-                    $query->where('status', TaskStatusEnum::PENDING->value)
-                        ->whereDate('date', '<', now()->toDateString());
+                    $query->whereIn('status', [
+                        TaskStatusEnum::PENDING->value,
+                        TaskStatusEnum::WORKER_CANCELLED->value,
+                    ])
+                        ->whereNotNull('expires_at')
+                        ->where('expires_at', '<=', now());
                 })->orWhere(function ($query) {
                     $query->where('status', TaskStatusEnum::STARTED->value)
                         ->whereNotNull('start_deadline_at')

@@ -69,6 +69,23 @@ Product Excel keeps the user-facing template free of internal IDs and uses `sku`
 
 Catalog Excel import now rejects files over 1000 rows at the backend level, matching the template validation range. Row-level errors can also include a `column` key so the frontend can point users to the specific field that needs fixing.
 
+### 7. Product delete policy with tasks
+
+Products can be deleted from the company catalog normally. Soft delete hides them from future catalog usage, and force delete is allowed to permanently remove the catalog product. If the product is linked to task-service-products, the database cascade removes those product links from the task; we do not keep catalog snapshots on tasks. Services remain the stable task definition and are not deleted by catalog cleanup.
+
+
+### 8. Cascaded trash actions for catalog parents
+
+Catalog parent delete/restore/force-delete actions now cascade to their catalog children so the visible catalog tree stays consistent. Children deleted by a parent cascade are stamped with parent metadata, so parent restore only restores the children removed by that parent action and does not resurrect children that users had already deleted manually:
+
+- Brand actions cascade to sub-brands, categories, sub-categories, and products.
+- Sub-brand actions cascade to categories, sub-categories, and products.
+- Category actions cascade to sub-categories and products.
+- Sub-category actions cascade to products.
+- Cascade restore is marker-aware: it clears the parent delete marker only for children it restores.
+
+This keeps the company catalog behavior aligned with the product delete decision: catalog records can be removed from the company catalog without preserving task snapshots, while services remain the stable task definition.
+
 ## Issues / gaps found
 
 ### P1 - Excel import still needs a broader performance/UX pass
@@ -76,12 +93,6 @@ Catalog Excel import now rejects files over 1000 rows at the backend level, matc
 Product Excel import can create or update many records and is high risk for partial data and memory issues.
 
 **Suggested fix:** review chunking and import transaction behavior in a dedicated pass.
-
-### P2 - Product delete policy with tasks needs confirmation
-
-Soft-deleted products are hidden from normal catalog queries, but old tasks may reference products through task-service-products snapshots/relations.
-
-**Suggested fix:** confirm that deleting a product only prevents future task usage and does not mutate historical task data.
 
 ## Proposed implementation plan
 
@@ -103,7 +114,7 @@ Soft-deleted products are hidden from normal catalog queries, but old tasks may 
 3. Company cannot create product with mismatched category/sub-category.
 4. Product create/update returns full `ProductResource`.
 5. Product index search filters by product name/SKU.
-6. Force deleting product removes associated media.
+6. Force deleting product removes associated media and catalog product links from tasks.
 
 ## Suggested next action
 

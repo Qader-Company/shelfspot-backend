@@ -76,12 +76,13 @@ Products can be deleted from the company catalog normally. Soft delete hides the
 
 ### 8. Cascaded trash actions for catalog parents
 
-Catalog parent delete/restore/force-delete actions now cascade to their catalog children so the visible catalog tree stays consistent:
+Catalog parent delete/restore/force-delete actions now cascade to their catalog children so the visible catalog tree stays consistent. Children deleted by a parent cascade are stamped with parent metadata, so parent restore only restores the children removed by that parent action and does not resurrect children that users had already deleted manually:
 
 - Brand actions cascade to sub-brands, categories, sub-categories, and products.
 - Sub-brand actions cascade to categories, sub-categories, and products.
 - Category actions cascade to sub-categories and products.
 - Sub-category actions cascade to products.
+- Cascade restore is marker-aware: it clears the parent delete marker only for children it restores.
 
 This keeps the company catalog behavior aligned with the product delete decision: catalog records can be removed from the company catalog without preserving task snapshots, while services remain the stable task definition.
 

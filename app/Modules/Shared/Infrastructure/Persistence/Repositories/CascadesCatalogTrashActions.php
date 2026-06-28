@@ -95,32 +95,63 @@ trait CascadesCatalogTrashActions
     protected function deleteWithCatalogChildren(Model $model): void
     {
         DB::transaction(function () use ($model): void {
-            $this->cascadeCatalogChildren($model, 'delete');
+            foreach ($this->trashCascadeRelations() as $relation) {
+                $query = $model->{$relation}();
+
+                $children = $query->get();
+                $query->update($this->catalogParentDeleteMarker($model));
+                $children->each(fn (Model $child) => $child->delete());
+            }
+
             $model->delete();
         });
     }
 
     private function restoreCatalogChildren(Model $model): void
     {
-        $this->cascadeCatalogChildren($model, 'restore', true);
+        foreach ($this->trashCascadeRelations() as $relation) {
+            $model->{$relation}()
+                ->withTrashed()
+                ->onlyTrashed()
+                ->where($this->catalogParentDeleteMarker($model))
+                ->get()
+                ->each(function (Model $child): void {
+                    $child->restore();
+                    $child->forceFill($this->emptyCatalogParentDeleteMarker())->save();
+                });
+        }
     }
 
     private function forceDeleteCatalogChildren(Model $model): void
     {
-        $this->cascadeCatalogChildren($model, 'forceDelete', true);
+        foreach ($this->trashCascadeRelations() as $relation) {
+            $model->{$relation}()
+                ->withTrashed()
+                ->get()
+                ->each(fn (Model $child) => $child->forceDelete());
+        }
     }
 
-    private function cascadeCatalogChildren(Model $model, string $action, bool $withTrashed = false): void
+    /**
+     * @return array<string, int|string>
+     */
+    private function catalogParentDeleteMarker(Model $model): array
     {
-        foreach ($this->trashCascadeRelations() as $relation) {
-            $query = $model->{$relation}();
+        return [
+            'deleted_by_catalog_parent_type' => $model->getMorphClass(),
+            'deleted_by_catalog_parent_id' => $model->getKey(),
+        ];
+    }
 
-            if ($withTrashed) {
-                $query->withTrashed();
-            }
-
-            $query->get()->each(fn (Model $child) => $child->{$action}());
-        }
+    /**
+     * @return array<string, null>
+     */
+    private function emptyCatalogParentDeleteMarker(): array
+    {
+        return [
+            'deleted_by_catalog_parent_type' => null,
+            'deleted_by_catalog_parent_id' => null,
+        ];
     }
 
     private function findTrashCascadeModel(int $id): ?Model

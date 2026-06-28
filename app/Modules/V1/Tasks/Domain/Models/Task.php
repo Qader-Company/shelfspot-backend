@@ -22,7 +22,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'latitude',
     'location_name',
     'address',
-    'subtotal',
     'total_price',
     'rescheduled_from_task_id',
     'notes',
@@ -56,7 +55,6 @@ class Task extends Model
     protected $casts = [
         'date' => 'date',
         'execution_time' => 'datetime:H:i:s',
-        'subtotal' => 'decimal:2',
         'total_price' => 'decimal:2',
         'expires_at' => 'datetime',
         'accepted_at' => 'datetime',

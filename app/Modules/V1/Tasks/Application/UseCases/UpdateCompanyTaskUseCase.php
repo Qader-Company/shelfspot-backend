@@ -30,7 +30,7 @@ class UpdateCompanyTaskUseCase
             CanUpdateTaskRule::validate($lockedTask);
 
             $taskServices = $data['services'];
-            $subtotal = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
+            $totalPrice = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
             $estimatedDuration = collect($taskServices)->sum(fn (array $service) => (int) $service['execution_time_minutes']);
 
             $lockedTask->forceFill([
@@ -41,8 +41,7 @@ class UpdateCompanyTaskUseCase
                 'longitude' => $data['location']['longitude'],
                 'location_name' => $data['location']['location_name'] ?? null,
                 'address' => $data['location']['address'] ?? null,
-                'subtotal' => $subtotal,
-                'total_price' => $subtotal,
+                'total_price' => $totalPrice,
                 'notes' => $data['notes'] ?? null,
             ])->save();
 

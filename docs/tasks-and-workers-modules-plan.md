@@ -497,7 +497,7 @@ after_picture_files[]=<file>
 3. Pricing Service:
    - يجمع أسعار Services.
    - يتحقق من الحد الأدنى لكل Service.
-   - يحسب `subtotal` و `total_price`.
+   - يحسب `total_price`.
 4. Wallet Charging:
    - التحقق من كفاية رصيد الشركة.
    - إنشاء Wallet transaction من نوع task payment/debit.

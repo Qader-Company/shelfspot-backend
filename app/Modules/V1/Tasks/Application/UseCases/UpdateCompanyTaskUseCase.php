@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanUpdateTaskRule;
+use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
@@ -36,6 +37,7 @@ class UpdateCompanyTaskUseCase
             $lockedTask->forceFill([
                 'date' => $data['date'],
                 'execution_time' => self::FIXED_EXECUTION_TIME,
+                'expires_at' => TaskExpiryDate::fromExecutionDate($data['date']),
                 'estimated_duration_minutes' => $estimatedDuration,
                 'latitude' => $data['location']['latitude'],
                 'longitude' => $data['location']['longitude'],

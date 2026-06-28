@@ -12,6 +12,7 @@ use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
+use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -42,6 +43,7 @@ class CreateCompanyTaskUseCase
                 'company_id' => $this->tenantContext->getCompanyId(),
                 'date' => $data['date'],
                 'execution_time' => self::FIXED_EXECUTION_TIME,
+                'expires_at' => TaskExpiryDate::fromExecutionDate($data['date']),
                 'estimated_duration_minutes' => $estimatedDuration,
                 'latitude' => $data['location']['latitude'],
                 'longitude' => $data['location']['longitude'],

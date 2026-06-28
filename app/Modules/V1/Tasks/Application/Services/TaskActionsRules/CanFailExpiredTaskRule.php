@@ -11,8 +11,8 @@ class CanFailExpiredTaskRule extends AbstractTaskActionRule
     {
         parent::validate($task);
 
-        if ($task->status === TaskStatusEnum::PENDING) {
-            return $task->date->isBefore(now()->startOfDay());
+        if (in_array($task->status, [TaskStatusEnum::PENDING, TaskStatusEnum::WORKER_CANCELLED], true)) {
+            return $task->expires_at !== null && $task->expires_at->lessThanOrEqualTo(now());
         }
 
         return $task->status === TaskStatusEnum::STARTED

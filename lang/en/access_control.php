@@ -17,6 +17,7 @@ return [
             'edit_worker' => 'Edit worker',
             'delete_worker' => 'Delete worker',
             'view_task' => 'View tasks',
+            'delete_task' => 'Delete task',
             'reassign_task' => 'Reassign task',
             'view_wallet_coupon' => 'View wallet coupons',
             'create_wallet_coupon' => 'Create wallet coupon',

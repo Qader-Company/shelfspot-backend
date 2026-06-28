@@ -6,6 +6,7 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReassignTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReopenTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ForceDeleteCompanyDeletedTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminReassignTaskRequest;
@@ -39,6 +40,35 @@ class AdminTaskController extends Controller
                 ->response()
                 ->getData(true)
         );
+    }
+
+
+    public function companyDeleted(AdminTaskIndexRequest $request)
+    {
+        $tasks = $this->taskRepository->getCompanyDeletedForAdmin(
+            relations: $this->taskRepository->listRelations(),
+            filters: $request->filters()
+        );
+
+        return ApiResponse::success(
+            TaskResource::collection($tasks)
+                ->response()
+                ->getData(true)
+        );
+    }
+
+    public function showCompanyDeleted(int $id)
+    {
+        return ApiResponse::success(new TaskResource(
+            $this->companyDeletedTask($id, $this->taskRepository->detailRelations())
+        ));
+    }
+
+    public function forceDeleteCompanyDeleted(int $id, ForceDeleteCompanyDeletedTaskUseCase $forceDeleteCompanyDeletedTaskUseCase)
+    {
+        $forceDeleteCompanyDeletedTaskUseCase->execute($this->companyDeletedTask($id));
+
+        return ApiResponse::message(__('api.force_deleted'));
     }
 
     public function show(int $id)
@@ -88,6 +118,18 @@ class AdminTaskController extends Controller
         );
 
         return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+    }
+
+
+    private function companyDeletedTask(int $id, array $relations = ['services.service.translations', 'assignedWorker']): Task
+    {
+        $task = $this->taskRepository->getCompanyDeletedById($id, $relations, includePurged: true);
+
+        if (! $task) {
+            throw new ModelNotFoundException(__('api.not_found'));
+        }
+
+        return $task;
     }
 
     private function task(int $id, array $relations = ['services.service.translations', 'assignedWorker']): Task

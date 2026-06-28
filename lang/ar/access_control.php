@@ -17,6 +17,7 @@ return [
             'edit_worker' => 'تعديل عامل',
             'delete_worker' => 'حذف عامل',
             'view_task' => 'عرض المهام',
+            'delete_task' => 'حذف مهمة',
             'reassign_task' => 'إعادة تعيين مهمة',
             'view_wallet_coupon' => 'عرض كوبونات المحفظة',
             'create_wallet_coupon' => 'إنشاء كوبون محفظة',

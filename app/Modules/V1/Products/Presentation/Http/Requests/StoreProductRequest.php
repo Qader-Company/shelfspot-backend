@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreProductRequest extends FormRequest
@@ -24,8 +25,12 @@ class StoreProductRequest extends FormRequest
             'category_id' => ['nullable', new ExistsInCurrentCompany('categories')],
             'sub_category_id' => ['nullable', new ExistsInCurrentCompany('sub_categories')],
             'description' => 'nullable|string',
-            'sku' => 'nullable|string|max:255',
-            'barcode' => ['nullable', 'string', 'max:255', $this->uniqueBarcodeRule()],
+            'sku' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('products', 'sku')->where('company_id', $this->companyId()),
+            ],
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'is_active' => 'required|boolean',
         ];
@@ -73,5 +78,10 @@ class StoreProductRequest extends FormRequest
             ->where('id', $subCategoryId)
             ->where('category_id', $categoryId)
             ->exists();
+    }
+
+    private function companyId(): ?int
+    {
+        return app(TenantContextInterface::class)->getCompanyId();
     }
 }

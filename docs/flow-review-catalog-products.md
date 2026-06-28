@@ -57,19 +57,25 @@ Product create and update now return `ProductResource` with media and catalog re
 
 Product create/update now validate that a selected sub-brand belongs to the selected/effective brand and that a selected sub-category belongs to the selected/effective category. Selecting a sub-brand without a brand, or a sub-category without a category, is rejected.
 
+### 4. Enforced company-scoped SKU uniqueness in requests
+
+The products table already has a unique `(company_id, sku)` constraint. Product create/update validation now mirrors that database rule, so duplicate SKUs in the same company are rejected at validation time instead of surfacing as database errors.
+
+### 5. Improved product Excel update/import safety
+
+Product Excel keeps the user-facing template free of internal IDs and uses `sku` as the update key when present. If an imported row has a SKU matching an existing product in the current company, that product is updated; otherwise a new product is created. Shared catalog import validation also rejects sub-brand values without a brand and sub-category values without a category, mirroring Product API validation in Excel imports.
+
+### 6. Enforced backend Excel import row limit and clearer errors
+
+Catalog Excel import now rejects files over 1000 rows at the backend level, matching the template validation range. Row-level errors can also include a `column` key so the frontend can point users to the specific field that needs fixing.
+
 ## Issues / gaps found
 
-### P1 - SKU uniqueness policy is unclear
+### P1 - Excel import still needs a broader performance/UX pass
 
-`sku` is optional and not unique. If product SKU should identify company catalog products, uniqueness should be enforced per company.
+Product Excel import can create or update many records and is high risk for partial data and memory issues.
 
-**Suggested fix:** decide whether SKU is optional metadata or a company-scoped unique identifier. If unique, add validation and a database unique index for `(company_id, sku)` where SKU is not null where supported.
-
-### P1 - Excel import needs a dedicated pass
-
-Product Excel import can create or update many records and is high risk for partial data, relationship mismatch, and memory issues.
-
-**Suggested fix:** review `ProductExcelService`, `ProductImport`, and shared catalog Excel abstractions in the next catalog sub-pass.
+**Suggested fix:** review chunking and import transaction behavior in a dedicated pass.
 
 ### P2 - Product delete policy with tasks needs confirmation
 
@@ -81,15 +87,14 @@ Soft-deleted products are hidden from normal catalog queries, but old tasks may 
 
 ### Step 1 - Product validation hardening
 
-1. Decide and enforce SKU uniqueness policy.
-2. Add tests for product hierarchy validation.
+1. Add tests for product hierarchy validation.
+2. Add tests for company-scoped SKU uniqueness validation.
 
 ### Step 2 - Product Excel review
 
-1. Review template columns and required fields.
-2. Review import validation and row-level errors.
-3. Confirm import transaction/chunk strategy.
-4. Confirm relationship resolution respects tenant and hierarchy.
+1. Review import chunk strategy.
+2. Confirm transaction behavior for mixed valid/invalid rows.
+3. Add Excel import tests for SKU-based updates, hierarchy mismatch, row limit, and duplicate SKU behavior.
 
 ### Step 3 - Product tests needed
 
@@ -102,4 +107,4 @@ Soft-deleted products are hidden from normal catalog queries, but old tasks may 
 
 ## Suggested next action
 
-Decide the SKU uniqueness policy, then continue with the Product Excel flow before applying the same catalog review pattern to Brands, SubBrands, Categories, and SubCategories.
+Continue with the Product Excel flow before applying the same catalog review pattern to Brands, SubBrands, Categories, and SubCategories.

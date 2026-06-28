@@ -55,8 +55,6 @@ class TaskResource extends JsonResource
             'reopened_at' => $this->reopened_at?->toDateTimeString(),
             'reopen_reason' => $this->reopen_reason,
             'progress' => $this->progress(),
-            'declined_at' => $this->declined_at?->toDateTimeString(),
-            'decline_reason' => $this->decline_reason,
             'assigned_worker_id' => $this->when($isWorker || $this->relationLoaded('assignedWorker'), $this->assigned_worker_id),
             'assigned_worker' => new WorkerResource($this->whenLoaded('assignedWorker')),
             'distance_km' => $this->when(isset($this->distance_km), fn () => round((float) $this->distance_km, 3)),

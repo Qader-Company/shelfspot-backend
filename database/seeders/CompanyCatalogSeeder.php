@@ -93,6 +93,7 @@ class CompanyCatalogSeeder extends Seeder
                         'sub_category_id' => $subCategoryId,
                         'name' => $product['name'],
                         'sku' => $product['sku'],
+                        'barcode' => $product['barcode'] ?? null,
                         'description' => 'Seeded demo product for '.$companyName.'.',
                         'is_active' => true,
                         'updated_at' => $now,

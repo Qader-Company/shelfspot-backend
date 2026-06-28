@@ -23,7 +23,6 @@ return new class extends Migration
             $table->string('location_name')->nullable();
             $table->text('address')->nullable();
 
-            $table->decimal('subtotal', 10, 2)->default(0);
             $table->decimal('total_price', 10, 2)->default(0);
 
             $table->foreignId('rescheduled_from_task_id')->nullable()->constrained('tasks')->nullOnDelete();

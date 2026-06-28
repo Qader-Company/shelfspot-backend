@@ -33,6 +33,7 @@ class RegisterUseCase
             $this->otpService->generateAndSend(
                 $attributes['email'],
                 OtpPurposeEnum::EMAIL_VERIFICATION,
+                $userType,
                 $user->name
             );
 
@@ -63,4 +64,3 @@ class RegisterUseCase
     }
 
 }
-

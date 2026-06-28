@@ -69,7 +69,6 @@ class TaskReviewLifecycleApiTest extends TestCase
                     'rejection_reason',
                     'company_accepted_at',
                     'auto_accept_at',
-                    'auto_accepted_at',
                     'reopened_at',
                     'reopen_reason',
                     'progress' => [

@@ -8,5 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('tasks:fail-expired')->everyMinute();
+Schedule::command('tasks:fail-expired')->dailyAt('00:00');
 Schedule::command('tasks:auto-accept-expired-review')->everyMinute();

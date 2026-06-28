@@ -18,6 +18,7 @@ enum AdminPermissionEnum: string
     case EDIT_WORKER = 'edit_worker';
     case DELETE_WORKER = 'delete_worker';
     case VIEW_TASK = 'view_task';
+    case DELETE_TASK = 'delete_task';
     case REASSIGN_TASK = 'reassign_task';
     case VIEW_WALLET_COUPON = 'view_wallet_coupon';
     case CREATE_WALLET_COUPON = 'create_wallet_coupon';

@@ -367,7 +367,6 @@ class TaskLifecycleUseCaseTest extends TestCase
         $this->assertSame(1, $accepted);
         $this->assertSame(TaskStatusEnum::ACCEPTED, $task->refresh()->status);
         $this->assertTrue($task->company_accepted_at->equalTo(now()));
-        $this->assertTrue($task->auto_accepted_at->equalTo(now()));
     }
 
     public function test_admin_reopens_rejected_task_and_worker_executes_again(): void

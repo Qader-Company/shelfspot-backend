@@ -9,6 +9,7 @@ use App\Modules\V1\AccessControl\Domain\Models\Role;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Auth\Access\AuthorizationException;
+use Spatie\Permission\PermissionRegistrar;
 
 class EloquentAccessControlRepository implements AccessControlRepositoryInterface
 {
@@ -30,6 +31,7 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
         $this->ensureRoleNameCanBeCreated($portal, $companyId, $attributes['name']);
         $role = Role::firstOrCreate(['name' => $attributes['name'], 'guard_name' => 'web', 'portal' => $portal, 'company_id' => $companyId]);
         $this->syncRolePermissions($role, $portal, $attributes['permissions'] ?? []);
+        $this->forgetCachedPermissions();
         return $role->load('permissions');
     }
 
@@ -42,6 +44,7 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
         if (array_key_exists('permissions', $attributes)) {
             $this->syncRolePermissions($role, $portal, $attributes['permissions']);
         }
+        $this->forgetCachedPermissions();
         return $role->load('permissions');
     }
 
@@ -50,6 +53,7 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
         $role = $this->roleQuery($portal, $companyId)->findOrFail($roleId);
         $this->ensureRoleCanBeModified($role);
         $role->delete();
+        $this->forgetCachedPermissions();
     }
 
     public function scopedRolesByNames(string $portal, ?int $companyId, array $names): Collection
@@ -95,6 +99,11 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
     private function syncRolePermissions(Role $role, string $portal, array $permissionNames): void
     {
         $role->syncPermissions($this->permissionQuery($portal)->whereIn('name', $permissionNames)->get());
+    }
+
+    private function forgetCachedPermissions(): void
+    {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     private function roleQuery(string $portal, ?int $companyId)

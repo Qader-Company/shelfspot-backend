@@ -33,7 +33,7 @@ class ProductController extends Controller
     {
         $filters = $this->acceptedFilters(
             request(),
-            ['name', 'active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id']
+            ['search', 'active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id']
         );
         $products = $this->productRepository->getAll(
             relations: ['media', 'brand', 'subBrand', 'category', 'subCategory'],
@@ -69,22 +69,28 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         $data = $request->validated();
-        $this->productRepository->create(
+        $product = $this->productRepository->create(
             $data,
             image: $data['image'] ?? null
         );
-        return ApiResponse::message(__('api.created'));
+
+        return ApiResponse::created(
+            new ProductResource($product->load(['media', 'brand', 'subBrand', 'category', 'subCategory']))
+        );
     }
 
     public function update(UpdateProductRequest $request, string $id)
     {
         $data = $request->validated();
-        $this->productRepository->update(
+        $product = $this->productRepository->update(
             $this->getProduct($id),
             $data,
             image: $data['image'] ?? null
         );
-        return ApiResponse::message(__('api.updated'));
+
+        return ApiResponse::updated(
+            new ProductResource($product->refresh()->load(['media', 'brand', 'subBrand', 'category', 'subCategory']))
+        );
     }
 
     public function destroy(string $id)

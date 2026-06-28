@@ -52,7 +52,6 @@ class TaskResource extends JsonResource
             'rejection_reason' => $this->rejection_reason,
             'company_accepted_at' => $this->company_accepted_at?->toDateTimeString(),
             'auto_accept_at' => $this->auto_accept_at?->toDateTimeString(),
-            'auto_accepted_at' => $this->auto_accepted_at?->toDateTimeString(),
             'reopened_at' => $this->reopened_at?->toDateTimeString(),
             'reopen_reason' => $this->reopen_reason,
             'progress' => $this->progress(),

@@ -4,6 +4,7 @@ namespace App\Modules\V1\CompanyAdmins\Presentation\Http\Requests;
 
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
+use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -16,7 +17,13 @@ class UpdateCompanyAdminRequest extends FormRequest
         $user = $this->route('user');
         return [
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user?->id)],
+            'email' => [
+                'sometimes',
+                'email',
+                Rule::unique('users', 'email')
+                    ->where('type', PortalTypeEnum::COMPANY->value)
+                    ->ignore($user?->id),
+            ],
             'password' => ['sometimes', 'string', 'min:8'],
             'is_active' => ['sometimes', 'boolean'],
             'roles' => ['sometimes', 'array'],

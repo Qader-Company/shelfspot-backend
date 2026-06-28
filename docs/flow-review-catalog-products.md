@@ -73,6 +73,18 @@ Catalog Excel import now rejects files over 1000 rows at the backend level, matc
 
 Products can be deleted from the company catalog normally. Soft delete hides them from future catalog usage, and force delete is allowed to permanently remove the catalog product. If the product is linked to task-service-products, the database cascade removes those product links from the task; we do not keep catalog snapshots on tasks. Services remain the stable task definition and are not deleted by catalog cleanup.
 
+
+### 8. Cascaded trash actions for catalog parents
+
+Catalog parent delete/restore/force-delete actions now cascade to their catalog children so the visible catalog tree stays consistent:
+
+- Brand actions cascade to sub-brands, categories, sub-categories, and products.
+- Sub-brand actions cascade to categories, sub-categories, and products.
+- Category actions cascade to sub-categories and products.
+- Sub-category actions cascade to products.
+
+This keeps the company catalog behavior aligned with the product delete decision: catalog records can be removed from the company catalog without preserving task snapshots, while services remain the stable task definition.
+
 ## Issues / gaps found
 
 ### P1 - Excel import still needs a broader performance/UX pass

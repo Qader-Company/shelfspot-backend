@@ -204,11 +204,15 @@ Routes constrain most values, but controllers pass `tryFrom` results directly to
 3. Revoke refresh token on logout for the same session.
 4. Add token pruning command/schedule if missing.
 
+**Product decision:** multi-session is allowed. Logout should revoke only the current token/session, not all user sessions. Access/refresh pairing can be added later with a `session_id`/device identifier if product needs per-device session management, suspicious refresh-token reuse detection, or “logout this device” semantics that revoke both the current access token and its paired refresh token.
+
 ### Step 5 - Move external side effects after commit
 
 1. Send OTP mails after DB commit.
 2. Queue OTP mail where possible.
 3. Add tests/fakes around mail sending.
+
+**Implementation note:** OTP mails are queued after commit so the request does not wait for SMTP delivery and no OTP email is dispatched before the surrounding database transaction is committed.
 
 ## Tests needed
 

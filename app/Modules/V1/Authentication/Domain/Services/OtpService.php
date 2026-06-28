@@ -35,7 +35,7 @@ class OtpService
 
         Mail::to($email)
             ->locale(app()->getLocale())
-            ->send(new OtpMail($code, $purpose, $name, $expiresInMinutes));
+            ->queue((new OtpMail($code, $purpose, $name, $expiresInMinutes))->afterCommit());
     }
 
     public function validate(string $email, string $token, OtpPurposeEnum $purpose, PortalTypeEnum $portal): bool

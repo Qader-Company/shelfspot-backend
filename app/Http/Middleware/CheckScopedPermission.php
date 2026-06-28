@@ -29,6 +29,10 @@ class CheckScopedPermission
             ? $this->tenantContext->getCompanyId()
             : null;
 
+        if ($portal === PermissionCatalog::COMPANY_PORTAL && ! $companyId) {
+            throw new AccessDeniedHttpException();
+        }
+
         $permissionNames = $this->parsePipeSeparatedValues($permissions);
         $hasPermissionThroughRole = $user->roles()
             ->where('portal', $portal)

@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['name', 'company_id', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id', 'slug', 'description', 'sku', 'is_active'])]
+#[Fillable(['name', 'company_id', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id', 'slug', 'description', 'sku', 'barcode', 'is_active'])]
 class Product extends Model implements HasMedia
 {
     use BelongsToCompany, InteractsWithMedia, DeletesMediaOnForceDelete, Filterable, SoftDeletes;

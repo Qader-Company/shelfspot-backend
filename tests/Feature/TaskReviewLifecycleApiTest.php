@@ -69,7 +69,6 @@ class TaskReviewLifecycleApiTest extends TestCase
                     'rejection_reason',
                     'company_accepted_at',
                     'auto_accept_at',
-                    'auto_accepted_at',
                     'reopened_at',
                     'reopen_reason',
                     'progress' => [
@@ -201,7 +200,6 @@ class TaskReviewLifecycleApiTest extends TestCase
             'estimated_duration_minutes' => 60,
             'latitude' => 30.0444,
             'longitude' => 31.2357,
-            'subtotal' => 100,
             'total_price' => 100,
             'status' => TaskStatusEnum::COMPLETED,
             'payment_status' => TaskPaymentStatusEnum::CHARGED,

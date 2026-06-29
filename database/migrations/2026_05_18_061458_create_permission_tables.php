@@ -28,8 +28,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('guard_name');
             $table->timestamps();
-
-            $table->unique(['name', 'guard_name']);
+            $table->string('portal')
+                ->nullable()
+                ->index();
+            $table->unique(['name', 'guard_name', 'portal']);
         });
 
         /**
@@ -37,17 +39,22 @@ return new class extends Migration
          */
         Schema::create($tableNames['roles'], static function (Blueprint $table) use ($teams, $columnNames) {
             $table->id(); // role id
+            $table->string('portal')->nullable();
+            $table->foreignId('company_id')->nullable()
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->string('name');
+            $table->string('guard_name');
+            $table->index(['portal', 'company_id']);
+            $table->timestamps();
             if ($teams || config('permission.testing')) { // permission.testing is a fix for sqlite testing
                 $table->unsignedBigInteger($columnNames['team_foreign_key'])->nullable();
                 $table->index($columnNames['team_foreign_key'], 'roles_team_foreign_key_index');
             }
-            $table->string('name');
-            $table->string('guard_name');
-            $table->timestamps();
             if ($teams || config('permission.testing')) {
                 $table->unique([$columnNames['team_foreign_key'], 'name', 'guard_name']);
             } else {
-                $table->unique(['name', 'guard_name']);
+                $table->unique(['name', 'guard_name', 'portal', 'company_id']);
             }
         });
 

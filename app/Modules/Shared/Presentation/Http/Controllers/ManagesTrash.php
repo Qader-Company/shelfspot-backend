@@ -26,21 +26,34 @@ trait ManagesTrash
     {
         $count = $this->trashRepository()->bulkDelete($request->ids());
 
-        return ApiResponse::message(__('api.bulk_deleted', ['count' => $count]));
+        return ApiResponse::message(
+            $this->usesQueuedDelete()
+                ? __('api.bulk_delete_queued', ['count' => $count])
+                : __('api.bulk_deleted', ['count' => $count]),
+            $this->usesQueuedDelete() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
+        );
     }
 
     public function restore(string $id)
     {
         $this->ensureTrashActionSucceeded($this->trashRepository()->restore((int) $id));
 
-        return ApiResponse::message(__('api.restored'));
+        return ApiResponse::message(
+            $this->usesQueuedRestore() ? __('api.restore_queued') : __('api.restored'),
+            $this->usesQueuedRestore() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
+        );
     }
 
     public function bulkRestore(BulkActionRequest $request)
     {
         $count = $this->trashRepository()->bulkRestore($request->ids());
 
-        return ApiResponse::message(__('api.bulk_restored', ['count' => $count]));
+        return ApiResponse::message(
+            $this->usesQueuedRestore()
+                ? __('api.bulk_restore_queued', ['count' => $count])
+                : __('api.bulk_restored', ['count' => $count]),
+            $this->usesQueuedRestore() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
+        );
     }
 
     public function forceDelete(string $id)

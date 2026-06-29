@@ -16,6 +16,7 @@ use App\Modules\V1\Categories\Presentation\Http\Resources\CategoryResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class CategoryController extends Controller
 {
@@ -64,7 +65,7 @@ class CategoryController extends Controller
     public function destroy(string $id)
     {
         $this->categoryRepository->delete($this->getCategory($id));
-        return ApiResponse::deleted();
+        return ApiResponse::message(__('api.delete_queued'), Response::HTTP_ACCEPTED);
     }
 
 

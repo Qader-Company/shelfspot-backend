@@ -15,6 +15,7 @@ use App\Modules\V1\SubBrands\Presentation\Http\Resources\SubBrandResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class SubBrandController extends Controller
 {
@@ -63,7 +64,7 @@ class SubBrandController extends Controller
     {
         $subBrand = $this->getSubBrand($id);
         $this->subBrandRepository->delete($subBrand);
-        return ApiResponse::deleted();
+        return ApiResponse::message(__('api.delete_queued'), Response::HTTP_ACCEPTED);
     }
 
     public function excelTemplate(): BinaryFileResponse

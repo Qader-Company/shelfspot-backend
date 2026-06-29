@@ -3,6 +3,7 @@
 namespace App\Modules\Shared\Infrastructure\Persistence\Repositories;
 
 use App\Modules\Shared\Application\Jobs\ForceDeleteCatalogItemJob;
+use App\Modules\Shared\Application\Jobs\SoftDeleteCatalogItemJob;
 use App\Modules\Shared\Domain\ValueObjects\CatalogPurgeStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -97,17 +98,11 @@ trait CascadesCatalogTrashActions
 
     protected function deleteWithCatalogChildren(Model $model): void
     {
-        DB::transaction(function () use ($model): void {
-            foreach ($this->trashCascadeRelations() as $relation) {
-                $query = $model->{$relation}();
-
-                $children = $query->get();
-                $query->update($this->catalogParentDeleteMarker($model));
-                $children->each(fn (Model $child) => $child->delete());
-            }
-
-            $model->delete();
-        });
+        SoftDeleteCatalogItemJob::dispatch(
+            $model::class,
+            $model->getKey(),
+            $this->trashCascadeRelations(),
+        )->afterCommit();
     }
 
     private function restoreCatalogChildren(Model $model): void
@@ -123,6 +118,11 @@ trait CascadesCatalogTrashActions
                     $child->forceFill($this->emptyCatalogParentDeleteMarker())->save();
                 });
         }
+    }
+
+    public function usesQueuedDelete(): bool
+    {
+        return true;
     }
 
     public function usesQueuedForceDelete(): bool

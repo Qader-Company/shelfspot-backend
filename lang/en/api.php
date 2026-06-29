@@ -17,6 +17,8 @@ return [
     'restore_blocked_by_purge' => 'This item cannot be restored while permanent deletion is queued.',
     'bulk_force_deleted' => ':count items permanently deleted successfully',
     'deleted' => 'Deleted successfully',
+    'delete_queued' => 'Deletion has been queued.',
+    'bulk_delete_queued' => ':count items have been queued for deletion.',
     'bulk_deleted_successfully' => ':count orders deleted successfully',
     'ids_required' => 'You must provide at least one order id',
     'join' => 'joined successfully',

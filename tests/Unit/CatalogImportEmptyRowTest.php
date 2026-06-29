@@ -41,4 +41,14 @@ class CatalogImportEmptyRowTest extends TestCase
             'is_active' => 'yes',
         ]));
     }
+
+    public function test_catalog_import_only_registers_the_first_workbook_sheet(): void
+    {
+        $import = new class ([
+            'headings' => ['name', 'brand', 'is_active'],
+        ]) extends AbstractCatalogImport {
+        };
+
+        $this->assertSame([0 => $import], $import->sheets());
+    }
 }

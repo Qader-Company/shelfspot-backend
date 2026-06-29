@@ -7,6 +7,7 @@ use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
 use App\Modules\Shared\Presentation\Http\Requests\BulkActionRequest;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Symfony\Component\HttpFoundation\Response;
 
 trait ManagesTrash
 {
@@ -46,14 +47,28 @@ trait ManagesTrash
     {
         $this->ensureTrashActionSucceeded($this->trashRepository()->forceDelete((int) $id));
 
-        return ApiResponse::message(__('api.force_deleted'));
+        return ApiResponse::message(
+            $this->usesQueuedForceDelete() ? __('api.force_delete_queued') : __('api.force_deleted'),
+            $this->usesQueuedForceDelete() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
+        );
     }
 
     public function bulkForceDelete(BulkActionRequest $request)
     {
         $count = $this->trashRepository()->bulkForceDelete($request->ids());
 
-        return ApiResponse::message(__('api.bulk_force_deleted', ['count' => $count]));
+        return ApiResponse::message(
+            $this->usesQueuedForceDelete()
+                ? __('api.bulk_force_delete_queued', ['count' => $count])
+                : __('api.bulk_force_deleted', ['count' => $count]),
+            $this->usesQueuedForceDelete() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
+        );
+    }
+
+    private function usesQueuedForceDelete(): bool
+    {
+        return method_exists($this->trashRepository(), 'usesQueuedForceDelete')
+            && $this->trashRepository()->usesQueuedForceDelete();
     }
 
     private function ensureTrashActionSucceeded(bool $succeeded): void

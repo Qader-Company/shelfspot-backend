@@ -29,23 +29,27 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function collection(Collection $rows): void
     {
-        $this->totalRows = $rows->count();
+        $normalizedRows = $rows
+            ->map(fn ($row, int $index): array => [
+                'index' => $index,
+                'data' => $this->normalizeRow($row->toArray()),
+            ]);
+
+        $importRows = $normalizedRows
+            ->reject(fn (array $row): bool => $this->isEmptyRow($row['data']));
+
+        $this->skipped = $normalizedRows->count() - $importRows->count();
+        $this->totalRows = $importRows->count();
 
         if ($this->totalRows > self::MAX_ROWS) {
             $this->addError(0, ['The uploaded file exceeds the maximum allowed rows.'], 'file');
             return;
         }
 
-        DB::transaction(function () use ($rows): void {
-            foreach ($rows as $index => $row) {
-                $rowNumber = $index + 2;
-                $data = $this->normalizeRow($row->toArray());
-
-                if ($this->isEmptyRow($data)) {
-                    $this->skipped++;
-                    continue;
-                }
-
+        DB::transaction(function () use ($importRows): void {
+            foreach ($importRows as $row) {
+                $rowNumber = $row['index'] + 2;
+                $data = $row['data'];
                 $attributes = $this->attributesFromRow($data, $rowNumber);
 
                 if ($attributes === null) {
@@ -90,13 +94,18 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     private function isEmptyRow(array $row): bool
     {
-        foreach ($this->config['headings'] as $heading) {
+        foreach ($this->contentHeadings() as $heading) {
             if (filled($row[$heading] ?? null)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    private function contentHeadings(): array
+    {
+        return array_values(array_diff($this->config['headings'], ['id', 'is_active']));
     }
 
     private function attributesFromRow(array $row, int $rowNumber): ?array

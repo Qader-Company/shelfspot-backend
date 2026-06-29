@@ -38,14 +38,22 @@ trait ManagesTrash
     {
         $this->ensureTrashActionSucceeded($this->trashRepository()->restore((int) $id));
 
-        return ApiResponse::message(__('api.restored'));
+        return ApiResponse::message(
+            $this->usesQueuedRestore() ? __('api.restore_queued') : __('api.restored'),
+            $this->usesQueuedRestore() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
+        );
     }
 
     public function bulkRestore(BulkActionRequest $request)
     {
         $count = $this->trashRepository()->bulkRestore($request->ids());
 
-        return ApiResponse::message(__('api.bulk_restored', ['count' => $count]));
+        return ApiResponse::message(
+            $this->usesQueuedRestore()
+                ? __('api.bulk_restore_queued', ['count' => $count])
+                : __('api.bulk_restored', ['count' => $count]),
+            $this->usesQueuedRestore() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
+        );
     }
 
     public function forceDelete(string $id)
@@ -74,6 +82,12 @@ trait ManagesTrash
     {
         return method_exists($this->trashRepository(), 'usesQueuedDelete')
             && $this->trashRepository()->usesQueuedDelete();
+    }
+
+    private function usesQueuedRestore(): bool
+    {
+        return method_exists($this->trashRepository(), 'usesQueuedRestore')
+            && $this->trashRepository()->usesQueuedRestore();
     }
 
     private function usesQueuedForceDelete(): bool

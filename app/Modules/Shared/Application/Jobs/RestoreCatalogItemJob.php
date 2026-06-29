@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class SoftDeleteCatalogItemJob implements ShouldQueue
+class RestoreCatalogItemJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -29,25 +29,29 @@ class SoftDeleteCatalogItemJob implements ShouldQueue
     public function handle(): void
     {
         $this->modelQuery()
+            ->onlyTrashed()
             ->whereKey($this->modelIds)
             ->chunkById(100, function ($models): void {
-                $models->each(fn (Model $model): mixed => $this->softDeleteModelWithChildren($model));
+                $models->each(fn (Model $model): mixed => $this->restoreModelWithChildren($model));
             });
     }
 
-    private function softDeleteModelWithChildren(Model $model): void
+    private function restoreModelWithChildren(Model $model): void
     {
+        $model->restore();
+
         foreach ($this->relations as $relation) {
             $model->{$relation}()
-                ->chunkById(100, function ($children) use ($model): void {
-                    $children->each(function (Model $child) use ($model): void {
-                        $child->forceFill($this->catalogParentDeleteMarker($model))->save();
-                        $child->delete();
+                ->withTrashed()
+                ->onlyTrashed()
+                ->where($this->catalogParentDeleteMarker($model))
+                ->chunkById(100, function ($children): void {
+                    $children->each(function (Model $child): void {
+                        $child->restore();
+                        $child->forceFill($this->emptyCatalogParentDeleteMarker())->save();
                     });
                 });
         }
-
-        $model->delete();
     }
 
     private function modelQuery(): Builder
@@ -65,6 +69,17 @@ class SoftDeleteCatalogItemJob implements ShouldQueue
         return [
             'deleted_by_catalog_parent_type' => $model->getMorphClass(),
             'deleted_by_catalog_parent_id' => $model->getKey(),
+        ];
+    }
+
+    /**
+     * @return array<string, null>
+     */
+    private function emptyCatalogParentDeleteMarker(): array
+    {
+        return [
+            'deleted_by_catalog_parent_type' => null,
+            'deleted_by_catalog_parent_id' => null,
         ];
     }
 }

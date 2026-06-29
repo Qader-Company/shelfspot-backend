@@ -5,6 +5,7 @@ namespace App\Modules\Shared\Application\Jobs;
 use App\Modules\Shared\Domain\ValueObjects\CatalogPurgeStatus;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -17,23 +18,28 @@ class ForceDeleteCatalogItemJob implements ShouldQueue
 
     /**
      * @param class-string<Model> $modelClass
+     * @param array<int, int> $modelIds
      * @param array<int, string> $relations
      */
     public function __construct(
         private readonly string $modelClass,
-        private readonly int $modelId,
+        private readonly array $modelIds,
         private readonly array $relations,
     ) {
     }
 
     public function handle(): void
     {
-        $model = $this->findModel();
+        $this->modelQuery()
+            ->onlyTrashed()
+            ->whereKey($this->modelIds)
+            ->chunkById(100, function ($models): void {
+                $models->each(fn (Model $model): mixed => $this->forceDeleteModelWithChildren($model));
+            });
+    }
 
-        if (! $model) {
-            return;
-        }
-
+    private function forceDeleteModelWithChildren(Model $model): void
+    {
         try {
             foreach ($this->relations as $relation) {
                 $model->{$relation}()
@@ -45,24 +51,22 @@ class ForceDeleteCatalogItemJob implements ShouldQueue
 
             $model->forceDelete();
         } catch (Throwable $exception) {
-            $this->markFailed($exception);
+            $this->markFailed($model, $exception);
 
             throw $exception;
         }
     }
 
-    private function findModel(): ?Model
+    private function modelQuery(): Builder
     {
         $modelClass = $this->modelClass;
 
-        return $modelClass::query()
-            ->onlyTrashed()
-            ->find($this->modelId);
+        return $modelClass::query();
     }
 
-    private function markFailed(Throwable $exception): void
+    private function markFailed(Model $model, Throwable $exception): void
     {
-        $this->findModel()?->forceFill([
+        $model->forceFill([
             'purge_status' => CatalogPurgeStatus::FAILED,
             'purge_failure_reason' => $exception->getMessage(),
         ])->save();

@@ -1,7 +1,7 @@
 <?php
 namespace App\Modules\V1\SubBrands\Infrastructure\Persistence\Repositories;
 
-use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -10,11 +10,16 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentSubBrandRepository implements SubBrandRepositoryInterface
 {
-    use HandlesTrash;
+    use CascadesCatalogTrashActions;
 
     protected function trashableModel(): string
     {
         return SubBrand::class;
+    }
+
+    protected function trashCascadeRelations(): array
+    {
+        return ['categories', 'subCategories', 'products'];
     }
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
@@ -49,7 +54,7 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
 
     public function delete(SubBrand $subBrand): void
     {
-        $subBrand->delete();
+        $this->deleteWithCatalogChildren($subBrand);
     }
 
     private function query(array $relations, array $relationsCount, array $filters = [])

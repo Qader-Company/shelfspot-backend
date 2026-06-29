@@ -2,18 +2,23 @@
 
 namespace App\Modules\V1\Categories\Infrastructure\Persistence\Repositories;
 
-use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class EloquentCategoryRepository implements CategoryRepositoryInterface
 {
-    use HandlesTrash;
+    use CascadesCatalogTrashActions;
 
     protected function trashableModel(): string
     {
         return Category::class;
+    }
+
+    protected function trashCascadeRelations(): array
+    {
+        return ['subCategories', 'products'];
     }
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
@@ -39,7 +44,7 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
 
     public function delete(Category $category): void
     {
-        $category->delete();
+        $this->deleteWithCatalogChildren($category);
     }
 
     private function query(array $relations, array $relationsCount, array $filters = [])

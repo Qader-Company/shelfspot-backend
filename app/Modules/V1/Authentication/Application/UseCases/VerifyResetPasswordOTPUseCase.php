@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Authentication\Application\UseCases;
 
 use App\Modules\V1\Authentication\Domain\Services\OtpService;
+use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
@@ -23,12 +24,20 @@ class VerifyResetPasswordOTPUseCase
 
     public function execute(array $data, PortalTypeEnum $type)
     {
-        $user = $this->userRepository->findWhere(['email' => $data['email']]);
+        $user = $this->userRepository->findWhere([
+            'email' => $data['email'],
+            'type' => $type,
+        ]);
 
         if(!$user)
             throw new BadRequestHttpException(__('auth.user_not_found'));
 
-        $isOTPValid = $this->otpService->validate($data['email'], $data['otp']);
+        $isOTPValid = $this->otpService->validate(
+            $data['email'],
+            $data['otp'],
+            OtpPurposeEnum::PASSWORD_RESET,
+            $type
+        );
 
         if (! $isOTPValid)
             throw new BadRequestHttpException(__('auth.invalid_otp'));

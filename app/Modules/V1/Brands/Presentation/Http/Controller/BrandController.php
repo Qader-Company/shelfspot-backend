@@ -52,7 +52,7 @@ class BrandController extends Controller
     public function store(StoreBrandRequest $request)
     {
         $data = $request->validated();
-        $this->brandRepository->create($data, $data['logo']);
+        $this->brandRepository->create($data, $data['logo'] ?? null);
         return ApiResponse::message(__('api.created'));
     }
 

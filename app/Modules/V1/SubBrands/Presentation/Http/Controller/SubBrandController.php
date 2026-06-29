@@ -66,7 +66,6 @@ class SubBrandController extends Controller
         return ApiResponse::deleted();
     }
 
-
     public function excelTemplate(): BinaryFileResponse
     {
         return $this->subBrandExcelService->template();

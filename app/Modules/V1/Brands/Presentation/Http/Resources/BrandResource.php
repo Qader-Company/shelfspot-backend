@@ -21,7 +21,7 @@ class BrandResource extends JsonResource
             'name' => $this->name,
             'logo' => $this->whenLoaded(
                 'media',
-                $this->getMedia('logo')->first()?->getUrl(),
+                $this->getMedia('logo')->first()?->getUrl() ?? '',
                 ''
             ),
             'active' => (bool) $this->is_active

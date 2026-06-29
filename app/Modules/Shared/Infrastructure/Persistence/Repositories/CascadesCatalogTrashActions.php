@@ -127,8 +127,9 @@ trait CascadesCatalogTrashActions
         foreach ($this->trashCascadeRelations() as $relation) {
             $model->{$relation}()
                 ->withTrashed()
-                ->get()
-                ->each(fn (Model $child) => $child->forceDelete());
+                ->chunkById(100, fn ($children) => $children->each(
+                    fn (Model $child) => $child->forceDelete()
+                ));
         }
     }
 

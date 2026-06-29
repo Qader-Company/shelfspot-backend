@@ -88,11 +88,11 @@ This keeps the company catalog behavior aligned with the product delete decision
 
 ## Issues / gaps found
 
-### P1 - Excel import still needs a broader performance/UX pass
+### P1 - Excel import test coverage still pending
 
-Product Excel import can create or update many records and is high risk for partial data and memory issues.
+Product Excel import now reports explicit partial-success metadata (`status`, `import_mode`, `has_errors`, row counts, and row/column errors), and catalog force-delete cascades use chunking to reduce memory pressure.
 
-**Suggested fix:** review chunking and import transaction behavior in a dedicated pass.
+**Suggested fix:** add automated tests for SKU-based updates, hierarchy mismatch, row limit, duplicate SKU behavior, and marker-aware restore.
 
 ## Proposed implementation plan
 
@@ -103,9 +103,9 @@ Product Excel import can create or update many records and is high risk for part
 
 ### Step 2 - Product Excel review
 
-1. Review import chunk strategy.
-2. Confirm transaction behavior for mixed valid/invalid rows.
-3. Add Excel import tests for SKU-based updates, hierarchy mismatch, row limit, and duplicate SKU behavior.
+1. Add Excel import tests for SKU-based updates, hierarchy mismatch, row limit, and duplicate SKU behavior.
+2. Add response-shape tests for partial-success metadata.
+3. Add marker-aware restore tests for catalog parent cascades.
 
 ### Step 3 - Product tests needed
 

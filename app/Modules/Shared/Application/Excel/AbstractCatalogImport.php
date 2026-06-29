@@ -21,6 +21,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
     private int $skipped = 0;
     private array $errors = [];
     private array $parentCaches = [];
+    private int $totalRows = 0;
 
     public function __construct(private readonly array $config)
     {
@@ -28,7 +29,9 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function collection(Collection $rows): void
     {
-        if ($rows->count() > self::MAX_ROWS) {
+        $this->totalRows = $rows->count();
+
+        if ($this->totalRows > self::MAX_ROWS) {
             $this->addError(0, ['The uploaded file exceeds the maximum allowed rows.'], 'file');
             return;
         }
@@ -71,7 +74,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function result(): CatalogExcelResult
     {
-        return new CatalogExcelResult($this->created, $this->updated, $this->skipped, $this->errors);
+        return new CatalogExcelResult($this->created, $this->updated, $this->skipped, $this->errors, $this->totalRows);
     }
 
     private function normalizeRow(array $row): array

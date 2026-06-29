@@ -26,7 +26,12 @@ trait ManagesTrash
     {
         $count = $this->trashRepository()->bulkDelete($request->ids());
 
-        return ApiResponse::message(__('api.bulk_deleted', ['count' => $count]));
+        return ApiResponse::message(
+            $this->usesQueuedDelete()
+                ? __('api.bulk_delete_queued', ['count' => $count])
+                : __('api.bulk_deleted', ['count' => $count]),
+            $this->usesQueuedDelete() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
+        );
     }
 
     public function restore(string $id)
@@ -63,6 +68,12 @@ trait ManagesTrash
                 : __('api.bulk_force_deleted', ['count' => $count]),
             $this->usesQueuedForceDelete() ? Response::HTTP_ACCEPTED : Response::HTTP_OK
         );
+    }
+
+    private function usesQueuedDelete(): bool
+    {
+        return method_exists($this->trashRepository(), 'usesQueuedDelete')
+            && $this->trashRepository()->usesQueuedDelete();
     }
 
     private function usesQueuedForceDelete(): bool

@@ -17,6 +17,8 @@ return [
     'restore_blocked_by_purge' => 'لا يمكن استعادة هذا العنصر أثناء جدولة الحذف النهائي.',
     'bulk_force_deleted' => 'تم حذف :count عنصر نهائياً بنجاح',
     'deleted' => 'تم الحذف بنجاح',
+    'delete_queued' => 'تمت جدولة الحذف.',
+    'bulk_delete_queued' => 'تمت جدولة حذف :count عنصر.',
     'deleted_successfully' => 'تم الحذف بنجاح',
     'bulk_deleted_successfully' => 'تم حذف :count طلب بنجاح',
     'ids_required' => 'يجب إدخال معرف طلب واحد على الأقل',

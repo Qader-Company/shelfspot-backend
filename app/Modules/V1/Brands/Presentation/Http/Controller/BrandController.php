@@ -16,6 +16,7 @@ use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class BrandController extends Controller
 {
@@ -72,7 +73,7 @@ class BrandController extends Controller
     {
         $brand = $this->getBrand($id);
         $this->brandRepository->delete($brand);
-        return ApiResponse::deleted();
+        return ApiResponse::message(__('api.delete_queued'), Response::HTTP_ACCEPTED);
     }
 
 

@@ -80,8 +80,18 @@ trait ManagesTrash
 
     private function usesQueuedForceDelete(): bool
     {
-        return method_exists($this->trashRepository(), 'usesQueuedForceDelete')
-            && $this->trashRepository()->usesQueuedForceDelete();
+        $repository = $this->trashRepository();
+
+        return method_exists($repository, 'usesQueuedForceDelete')
+            && $repository->usesQueuedForceDelete();
+    }
+
+    private function usesQueuedRestore(): bool
+    {
+        $repository = $this->trashRepository();
+
+        return method_exists($repository, 'usesQueuedRestore')
+            && $repository->usesQueuedRestore();
     }
 
     private function ensureTrashActionSucceeded(bool $succeeded): void

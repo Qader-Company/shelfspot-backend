@@ -78,18 +78,6 @@ trait ManagesTrash
         );
     }
 
-    private function usesQueuedDelete(): bool
-    {
-        return method_exists($this->trashRepository(), 'usesQueuedDelete')
-            && $this->trashRepository()->usesQueuedDelete();
-    }
-
-    private function usesQueuedRestore(): bool
-    {
-        return method_exists($this->trashRepository(), 'usesQueuedRestore')
-            && $this->trashRepository()->usesQueuedRestore();
-    }
-
     private function usesQueuedForceDelete(): bool
     {
         return method_exists($this->trashRepository(), 'usesQueuedForceDelete')

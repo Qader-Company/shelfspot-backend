@@ -83,7 +83,7 @@ Catalog parent delete/restore/force-delete actions now cascade to their catalog 
 - Category actions cascade to sub-categories and products.
 - Sub-category actions cascade to products.
 - Cascade restore is marker-aware: it clears the parent delete marker only for children it restores.
-- Catalog parent force-delete is queued and returns `202 Accepted`; repeated force-delete requests while `purge_status=queued` are treated as already queued, restore is blocked until the queued purge either succeeds or fails, and trash resources expose `purge_status` so clients can disable restore/retry actions.
+- Catalog parent force-delete is queued and returns `202 Accepted`; repeated force-delete requests while `purge_status=queued` are treated as already queued, restore is blocked until the queued purge either succeeds or fails, restored records clear purge state, and trash resources expose `purge_status` so clients can disable restore/retry actions.
 
 This keeps the company catalog behavior aligned with the product delete decision: catalog records can be removed from the company catalog without preserving task snapshots, while services remain the stable task definition.
 

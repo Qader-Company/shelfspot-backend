@@ -7,6 +7,7 @@ use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreProductRequest extends FormRequest

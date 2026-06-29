@@ -5,7 +5,6 @@ namespace App\Modules\Shared\Application\Jobs;
 use App\Modules\Shared\Domain\ValueObjects\CatalogPurgeStatus;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -16,30 +15,27 @@ class ForceDeleteCatalogItemJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 1;
+
     /**
      * @param class-string<Model> $modelClass
-     * @param array<int, int> $modelIds
      * @param array<int, string> $relations
      */
     public function __construct(
         private readonly string $modelClass,
-        private readonly array $modelIds,
+        private readonly int $modelId,
         private readonly array $relations,
     ) {
     }
 
     public function handle(): void
     {
-        $this->modelQuery()
-            ->onlyTrashed()
-            ->whereKey($this->modelIds)
-            ->chunkById(100, function ($models): void {
-                $models->each(fn (Model $model): mixed => $this->forceDeleteModelWithChildren($model));
-            });
-    }
+        $model = $this->findModel();
 
-    private function forceDeleteModelWithChildren(Model $model): void
-    {
+        if (! $model) {
+            return;
+        }
+
         try {
             foreach ($this->relations as $relation) {
                 $model->{$relation}()
@@ -51,22 +47,24 @@ class ForceDeleteCatalogItemJob implements ShouldQueue
 
             $model->forceDelete();
         } catch (Throwable $exception) {
-            $this->markFailed($model, $exception);
+            $this->markFailed($exception);
 
             throw $exception;
         }
     }
 
-    private function modelQuery(): Builder
+    private function findModel(): ?Model
     {
         $modelClass = $this->modelClass;
 
-        return $modelClass::query();
+        return $modelClass::query()
+            ->onlyTrashed()
+            ->find($this->modelId);
     }
 
-    private function markFailed(Model $model, Throwable $exception): void
+    private function markFailed(Throwable $exception): void
     {
-        $model->forceFill([
+        $this->findModel()?->forceFill([
             'purge_status' => CatalogPurgeStatus::FAILED,
             'purge_failure_reason' => $exception->getMessage(),
         ])->save();

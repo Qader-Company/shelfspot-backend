@@ -72,13 +72,6 @@ class AuthController extends Controller
         return ApiResponse::success($data, __('auth.verify_account'));
     }
 
-    public function sendOTP(EmailValidationRequest $request, string $purpose, SendOtpUseCase $sendOtpUseCase)
-    {
-        $otpPurpose = OtpPurposeEnum::tryFrom($purpose);
-        $sendOtpUseCase->execute($request->email, $otpPurpose);
-        return ApiResponse::message(__('auth.code_sent'));
-    }
-
     public function sendTypedOTP(
         EmailValidationRequest $request,
         string $type,

@@ -2,10 +2,13 @@
 
 namespace App\Modules\Shared\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Application\Jobs\ForceDeleteCatalogItemJob;
+use App\Modules\Shared\Domain\ValueObjects\CatalogPurgeStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 trait CascadesCatalogTrashActions
 {
@@ -44,6 +47,8 @@ trait CascadesCatalogTrashActions
                 return false;
             }
 
+            $this->ensureRestoreAllowed($model);
+
             $model->restore();
             $this->restoreCatalogChildren($model);
 
@@ -55,6 +60,7 @@ trait CascadesCatalogTrashActions
     {
         return DB::transaction(function () use ($ids): int {
             $models = $this->trashCascadeQuery()->onlyTrashed()->whereKey($ids)->get();
+            $models->each(fn (Model $model) => $this->ensureRestoreAllowed($model));
             $models->each(function (Model $model): void {
                 $model->restore();
                 $this->restoreCatalogChildren($model);
@@ -73,9 +79,9 @@ trait CascadesCatalogTrashActions
                 return false;
             }
 
-            $this->forceDeleteCatalogChildren($model);
+            $this->queueForceDelete($model);
 
-            return (bool) $model->forceDelete();
+            return true;
         });
     }
 
@@ -83,10 +89,7 @@ trait CascadesCatalogTrashActions
     {
         return DB::transaction(function () use ($ids): int {
             $models = $this->trashCascadeQuery()->onlyTrashed()->whereKey($ids)->get();
-            $models->each(function (Model $model): void {
-                $this->forceDeleteCatalogChildren($model);
-                $model->forceDelete();
-            });
+            $models->each(fn (Model $model) => $this->queueForceDelete($model));
 
             return $models->count();
         });
@@ -122,15 +125,43 @@ trait CascadesCatalogTrashActions
         }
     }
 
-    private function forceDeleteCatalogChildren(Model $model): void
+    public function usesQueuedForceDelete(): bool
     {
+        return true;
+    }
+
+    private function ensureRestoreAllowed(Model $model): void
+    {
+        if (CatalogPurgeStatus::blocksRestore($model->getAttribute('purge_status'))) {
+            throw new ConflictHttpException(__('api.restore_blocked_by_purge'));
+        }
+    }
+
+    private function queueForceDelete(Model $model): void
+    {
+        if (! CatalogPurgeStatus::canQueue($model->getAttribute('purge_status'))) {
+            return;
+        }
+
+        $model->forceFill([
+            'purge_status' => CatalogPurgeStatus::QUEUED,
+            'purge_failure_reason' => null,
+        ])->save();
+
         foreach ($this->trashCascadeRelations() as $relation) {
             $model->{$relation}()
                 ->withTrashed()
-                ->chunkById(100, fn ($children) => $children->each(
-                    fn (Model $child) => $child->forceDelete()
-                ));
+                ->update([
+                    'purge_status' => CatalogPurgeStatus::QUEUED,
+                    'purge_failure_reason' => null,
+                ]);
         }
+
+        ForceDeleteCatalogItemJob::dispatch(
+            $model::class,
+            $model->getKey(),
+            $this->trashCascadeRelations(),
+        )->afterCommit();
     }
 
     /**

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 trait HandlesTrash
 {
@@ -34,6 +35,10 @@ trait HandlesTrash
     {
         $model = $this->findTrashed($id);
 
+        if ($model && $model->getAttribute('purge_status') === 'queued') {
+            throw new ConflictHttpException(__('api.restore_blocked_by_purge'));
+        }
+
         return $model?->restore() ?? false;
     }
 
@@ -41,6 +46,11 @@ trait HandlesTrash
     {
         return DB::transaction(function () use ($ids): int {
             $models = $this->trashQuery()->onlyTrashed()->whereKey($ids)->get();
+
+            if ($models->contains(fn (Model $model): bool => $model->getAttribute('purge_status') === 'queued')) {
+                throw new ConflictHttpException(__('api.restore_blocked_by_purge'));
+            }
+
             $models->each->restore();
 
             return $models->count();

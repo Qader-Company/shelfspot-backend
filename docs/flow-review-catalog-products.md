@@ -83,6 +83,7 @@ Catalog parent delete/restore/force-delete actions now cascade to their catalog 
 - Category actions cascade to sub-categories and products.
 - Sub-category actions cascade to products.
 - Cascade restore is marker-aware: it clears the parent delete marker only for children it restores.
+- Catalog parent force-delete is queued and returns `202 Accepted`; repeated force-delete requests while `purge_status=queued` are treated as already queued, restore is blocked until the queued purge either succeeds or fails, and trash resources expose `purge_status` so clients can disable restore/retry actions.
 
 This keeps the company catalog behavior aligned with the product delete decision: catalog records can be removed from the company catalog without preserving task snapshots, while services remain the stable task definition.
 
@@ -90,7 +91,7 @@ This keeps the company catalog behavior aligned with the product delete decision
 
 ### P1 - Excel import test coverage still pending
 
-Product Excel import now reports explicit partial-success metadata (`status`, `import_mode`, `has_errors`, row counts, and row/column errors), and catalog force-delete cascades use chunking to reduce memory pressure.
+Product Excel import now reports explicit partial-success metadata (`status`, `import_mode`, `has_errors`, row counts, and row/column errors), and catalog force-delete cascades run in queued jobs with chunking to reduce request latency and memory pressure.
 
 **Suggested fix:** add automated tests for SKU-based updates, hierarchy mismatch, row limit, duplicate SKU behavior, and marker-aware restore.
 

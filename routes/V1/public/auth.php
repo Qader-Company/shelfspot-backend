@@ -32,10 +32,6 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
         ->where('purpose', implode('|', OtpPurposeEnum::values()))
         ->middleware('throttle:auth-otp-send');
 
-    Route::post('{purpose}/send-otp', [AuthController::class, 'sendOTP'])
-        ->where('purpose', implode('|', OtpPurposeEnum::values()))
-        ->middleware('throttle:auth-otp-send');
-
     //////////////// verify email \\\\\\\\\\\\\\\\
     Route::patch('{type}/email-verification', [EmailVerificationController::class, 'verifyEmail'])
         ->where('type', PortalTypeEnum::COMPANY->value .'|'. PortalTypeEnum::WORKER->value)

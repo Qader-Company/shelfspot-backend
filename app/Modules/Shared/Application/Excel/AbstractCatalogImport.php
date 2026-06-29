@@ -8,11 +8,13 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Concerns\SkipsUnknownSheets;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas
+abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas, WithMultipleSheets, SkipsUnknownSheets
 {
     private const MAX_ROWS = 1000;
 
@@ -25,6 +27,16 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function __construct(private readonly array $config)
     {
+    }
+
+    public function sheets(): array
+    {
+        return [0 => $this];
+    }
+
+    public function onUnknownSheet($sheetName): void
+    {
+        // Ignore helper sheets such as the hidden Options sheet generated for dropdown values.
     }
 
     public function collection(Collection $rows): void

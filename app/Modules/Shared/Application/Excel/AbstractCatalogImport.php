@@ -63,7 +63,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
                     continue;
                 }
 
-                if (! $this->validateUniqueSku($attributes, $rowNumber)) {
+                if (! $this->validateUniqueFields($attributes, $rowNumber)) {
                     continue;
                 }
 
@@ -149,6 +149,10 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
         if (in_array('sku', $this->config['fillable'], true)) {
             $rules['sku'] = ['nullable', 'string', 'max:255'];
+        }
+
+        if (in_array('barcode', $this->config['fillable'], true)) {
+            $rules['barcode'] = ['nullable', 'string', 'max:255'];
         }
 
         if (in_array('description', $this->config['fillable'], true)) {
@@ -242,7 +246,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         return $modelClass::query()->find($id);
     }
 
-    private function validateUniqueSku(array $attributes, int $rowNumber): bool
+    private function validateUniqueFields(array $attributes, int $rowNumber): bool
     {
         if (! array_key_exists('sku', $attributes) || ! filled($attributes['sku'])) {
             return true;

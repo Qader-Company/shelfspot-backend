@@ -19,10 +19,12 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('sub_category_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
+            $table->string('barcode')->nullable();
             $table->string('slug');
             $table->text('description')->nullable();
             $table->string('sku')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->unique(['company_id', 'barcode']);
             $table->unique(['company_id', 'slug']);
             $table->unique(['company_id', 'sku']);
             $table->timestamps();

@@ -35,7 +35,6 @@ class AdminReopenTaskUseCase
                 'reopened_at' => now(),
                 'reopen_reason' => $reason,
                 'auto_accept_at' => null,
-                'auto_accepted_at' => null,
             ])->save();
 
             $lockedTask->services()->update(['status' => TaskServiceStatusEnum::PENDING->value]);

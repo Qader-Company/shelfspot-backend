@@ -78,4 +78,18 @@ class AuthController extends Controller
         $sendOtpUseCase->execute($request->email, $otpPurpose);
         return ApiResponse::message(__('auth.code_sent'));
     }
+
+    public function sendTypedOTP(
+        EmailValidationRequest $request,
+        string $type,
+        string $purpose,
+        SendOtpUseCase $sendOtpUseCase
+    ) {
+        $portalType = PortalTypeEnum::tryFrom($type);
+        $otpPurpose = OtpPurposeEnum::tryFrom($purpose);
+
+        $sendOtpUseCase->execute($request->email, $otpPurpose, $portalType);
+
+        return ApiResponse::message(__('auth.code_sent'));
+    }
 }

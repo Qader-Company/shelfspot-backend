@@ -150,6 +150,11 @@ trait CascadesCatalogTrashActions
         return true;
     }
 
+    public function usesQueuedDelete(): bool
+    {
+        return true;
+    }
+
     public function usesQueuedForceDelete(): bool
     {
         return true;

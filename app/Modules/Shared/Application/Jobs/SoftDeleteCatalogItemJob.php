@@ -2,7 +2,6 @@
 
 namespace App\Modules\Shared\Application\Jobs;
 
-use App\Modules\Shared\Domain\ValueObjects\CatalogPurgeStatus;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,9 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Throwable;
 
-class ForceDeleteCatalogItemJob implements ShouldQueue
+class SoftDeleteCatalogItemJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -31,30 +29,25 @@ class ForceDeleteCatalogItemJob implements ShouldQueue
     public function handle(): void
     {
         $this->modelQuery()
-            ->onlyTrashed()
             ->whereKey($this->modelIds)
             ->chunkById(100, function ($models): void {
-                $models->each(fn (Model $model): mixed => $this->forceDeleteModelWithChildren($model));
+                $models->each(fn (Model $model): mixed => $this->softDeleteModelWithChildren($model));
             });
     }
 
-    private function forceDeleteModelWithChildren(Model $model): void
+    private function softDeleteModelWithChildren(Model $model): void
     {
-        try {
-            foreach ($this->relations as $relation) {
-                $model->{$relation}()
-                    ->withTrashed()
-                    ->chunkById(100, fn ($children) => $children->each(
-                        fn (Model $child) => $child->forceDelete()
-                    ));
-            }
-
-            $model->forceDelete();
-        } catch (Throwable $exception) {
-            $this->markFailed($model, $exception);
-
-            throw $exception;
+        foreach ($this->relations as $relation) {
+            $model->{$relation}()
+                ->chunkById(100, function ($children) use ($model): void {
+                    $children->each(function (Model $child) use ($model): void {
+                        $child->forceFill($this->catalogParentDeleteMarker($model))->save();
+                        $child->delete();
+                    });
+                });
         }
+
+        $model->delete();
     }
 
     private function modelQuery(): Builder
@@ -64,11 +57,14 @@ class ForceDeleteCatalogItemJob implements ShouldQueue
         return $modelClass::query();
     }
 
-    private function markFailed(Model $model, Throwable $exception): void
+    /**
+     * @return array<string, int|string>
+     */
+    private function catalogParentDeleteMarker(Model $model): array
     {
-        $model->forceFill([
-            'purge_status' => CatalogPurgeStatus::FAILED,
-            'purge_failure_reason' => $exception->getMessage(),
-        ])->save();
+        return [
+            'deleted_by_catalog_parent_type' => $model->getMorphClass(),
+            'deleted_by_catalog_parent_id' => $model->getKey(),
+        ];
     }
 }

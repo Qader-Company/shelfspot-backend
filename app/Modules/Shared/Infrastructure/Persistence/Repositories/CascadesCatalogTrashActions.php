@@ -3,10 +3,13 @@
 namespace App\Modules\Shared\Infrastructure\Persistence\Repositories;
 
 use App\Modules\Shared\Application\Jobs\ForceDeleteCatalogItemJob;
+use App\Modules\Shared\Application\Jobs\RestoreCatalogItemJob;
+use App\Modules\Shared\Application\Jobs\SoftDeleteCatalogItemJob;
 use App\Modules\Shared\Domain\ValueObjects\CatalogPurgeStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -31,10 +34,10 @@ trait CascadesCatalogTrashActions
     public function bulkDelete(array $ids): int
     {
         return DB::transaction(function () use ($ids): int {
-            $models = $this->trashCascadeQuery()->whereKey($ids)->get();
-            $models->each(fn (Model $model) => $this->deleteWithCatalogChildren($model));
+            $modelIds = $this->trashCascadeQuery()->whereKey($ids)->pluck($this->trashKeyName())->all();
+            $this->queueDeleteWithCatalogChildren($modelIds);
 
-            return $models->count();
+            return count($modelIds);
         });
     }
 
@@ -48,9 +51,7 @@ trait CascadesCatalogTrashActions
             }
 
             $this->ensureRestoreAllowed($model);
-
-            $model->restore();
-            $this->restoreCatalogChildren($model);
+            $this->queueRestoreWithCatalogChildren([$model->getKey()]);
 
             return true;
         });
@@ -61,12 +62,11 @@ trait CascadesCatalogTrashActions
         return DB::transaction(function () use ($ids): int {
             $models = $this->trashCascadeQuery()->onlyTrashed()->whereKey($ids)->get();
             $models->each(fn (Model $model) => $this->ensureRestoreAllowed($model));
-            $models->each(function (Model $model): void {
-                $model->restore();
-                $this->restoreCatalogChildren($model);
-            });
 
-            return $models->count();
+            $modelIds = $models->modelKeys();
+            $this->queueRestoreWithCatalogChildren($modelIds);
+
+            return count($modelIds);
         });
     }
 
@@ -79,7 +79,7 @@ trait CascadesCatalogTrashActions
                 return false;
             }
 
-            $this->queueForceDelete($model);
+            $this->queueForceDelete(collect([$model]));
 
             return true;
         });
@@ -89,7 +89,7 @@ trait CascadesCatalogTrashActions
     {
         return DB::transaction(function () use ($ids): int {
             $models = $this->trashCascadeQuery()->onlyTrashed()->whereKey($ids)->get();
-            $models->each(fn (Model $model) => $this->queueForceDelete($model));
+            $this->queueForceDelete($models);
 
             return $models->count();
         });
@@ -97,32 +97,57 @@ trait CascadesCatalogTrashActions
 
     protected function deleteWithCatalogChildren(Model $model): void
     {
-        DB::transaction(function () use ($model): void {
-            foreach ($this->trashCascadeRelations() as $relation) {
-                $query = $model->{$relation}();
-
-                $children = $query->get();
-                $query->update($this->catalogParentDeleteMarker($model));
-                $children->each(fn (Model $child) => $child->delete());
-            }
-
-            $model->delete();
-        });
+        $this->queueDeleteWithCatalogChildren([$model->getKey()]);
     }
 
-    private function restoreCatalogChildren(Model $model): void
+    /**
+     * @param array<int, int> $modelIds
+     */
+    private function queueDeleteWithCatalogChildren(array $modelIds): void
     {
-        foreach ($this->trashCascadeRelations() as $relation) {
-            $model->{$relation}()
-                ->withTrashed()
-                ->onlyTrashed()
-                ->where($this->catalogParentDeleteMarker($model))
-                ->get()
-                ->each(function (Model $child): void {
-                    $child->restore();
-                    $child->forceFill($this->emptyCatalogParentDeleteMarker())->save();
-                });
+        if ($modelIds === []) {
+            return;
         }
+
+        SoftDeleteCatalogItemJob::dispatch(
+            $this->trashableModel(),
+            $modelIds,
+            $this->trashCascadeRelations(),
+        )->afterCommit();
+    }
+
+    /**
+     * @param array<int, int> $modelIds
+     */
+    private function queueRestoreWithCatalogChildren(array $modelIds): void
+    {
+        if ($modelIds === []) {
+            return;
+        }
+
+        RestoreCatalogItemJob::dispatch(
+            $this->trashableModel(),
+            $modelIds,
+            $this->trashCascadeRelations(),
+        )->afterCommit();
+    }
+
+    private function trashKeyName(): string
+    {
+        /** @var class-string<Model> $model */
+        $model = $this->trashableModel();
+
+        return (new $model())->getKeyName();
+    }
+
+    public function usesQueuedDelete(): bool
+    {
+        return true;
+    }
+
+    public function usesQueuedRestore(): bool
+    {
+        return true;
     }
 
     public function usesQueuedForceDelete(): bool
@@ -137,53 +162,40 @@ trait CascadesCatalogTrashActions
         }
     }
 
-    private function queueForceDelete(Model $model): void
+    /**
+     * @param Collection<int, Model> $models
+     */
+    private function queueForceDelete(Collection $models): void
     {
-        if (! CatalogPurgeStatus::canQueue($model->getAttribute('purge_status'))) {
+        $queueableModels = $models->filter(
+            fn (Model $model): bool => CatalogPurgeStatus::canQueue($model->getAttribute('purge_status'))
+        );
+
+        if ($queueableModels->isEmpty()) {
             return;
         }
 
-        $model->forceFill([
-            'purge_status' => CatalogPurgeStatus::QUEUED,
-            'purge_failure_reason' => null,
-        ])->save();
+        $queueableModels->each(function (Model $model): void {
+            $model->forceFill([
+                'purge_status' => CatalogPurgeStatus::QUEUED,
+                'purge_failure_reason' => null,
+            ])->save();
 
-        foreach ($this->trashCascadeRelations() as $relation) {
-            $model->{$relation}()
-                ->withTrashed()
-                ->update([
-                    'purge_status' => CatalogPurgeStatus::QUEUED,
-                    'purge_failure_reason' => null,
-                ]);
-        }
+            foreach ($this->trashCascadeRelations() as $relation) {
+                $model->{$relation}()
+                    ->withTrashed()
+                    ->update([
+                        'purge_status' => CatalogPurgeStatus::QUEUED,
+                        'purge_failure_reason' => null,
+                    ]);
+            }
+        });
 
         ForceDeleteCatalogItemJob::dispatch(
-            $model::class,
-            $model->getKey(),
+            $this->trashableModel(),
+            $queueableModels->map(fn (Model $model) => $model->getKey())->values()->all(),
             $this->trashCascadeRelations(),
         )->afterCommit();
-    }
-
-    /**
-     * @return array<string, int|string>
-     */
-    private function catalogParentDeleteMarker(Model $model): array
-    {
-        return [
-            'deleted_by_catalog_parent_type' => $model->getMorphClass(),
-            'deleted_by_catalog_parent_id' => $model->getKey(),
-        ];
-    }
-
-    /**
-     * @return array<string, null>
-     */
-    private function emptyCatalogParentDeleteMarker(): array
-    {
-        return [
-            'deleted_by_catalog_parent_type' => null,
-            'deleted_by_catalog_parent_id' => null,
-        ];
     }
 
     private function findTrashCascadeModel(int $id): ?Model

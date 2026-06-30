@@ -2,7 +2,7 @@
 
 namespace App\Modules\V1\SubCategories\Infrastructure\Persistence\Repositories;
 
-use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use App\Modules\V1\SubCategories\Domain\Repositories\SubCategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -11,11 +11,16 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
 {
-    use HandlesTrash;
+    use CascadesCatalogTrashActions;
 
     protected function trashableModel(): string
     {
         return SubCategory::class;
+    }
+
+    protected function trashCascadeRelations(): array
+    {
+        return ['products'];
     }
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
@@ -52,7 +57,7 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
 
     public function delete(SubCategory $subCategory): void
     {
-        $subCategory->delete();
+        $this->deleteWithCatalogChildren($subCategory);
     }
 
     private function query(array $relations, array $relationsCount, array $filters = [])

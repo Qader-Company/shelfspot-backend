@@ -15,6 +15,7 @@ return new class extends Migration
             $table->decimal('amount', 10, 2);
             $table->decimal('balance_after', 10, 2);
             $table->nullableMorphs('reference');
+            $table->index(['worker_id', 'id'], 'worker_wallet_worker_id_id_idx');
             $table->timestamps();
         });
     }

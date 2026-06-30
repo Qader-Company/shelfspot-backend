@@ -18,7 +18,7 @@
 تم تنفيذ النسخة الأولى من الـ backend lifecycle، وتشمل:
 
 - تنظيف `TaskStatusEnum`: تم اعتماد `COMPLETED = completed` بدل `IN_REVIEW`، وإضافة `REOPENED = reopened`.
-- إضافة حقول مراجعة التسليم على جدول `tasks`: `rejected_at`, `rejection_reason`, `company_accepted_at`, `auto_accept_at`, `auto_accepted_at`, `reopened_at`, و `reopen_reason`.
+- إضافة حقول مراجعة التسليم على جدول `tasks`: `rejected_at`, `rejection_reason`, `company_accepted_at`, `auto_accept_at`, `reopened_at`, و `reopen_reason`.
 - تحديث `Task` model بالـ fillable/casts والعلاقة الجديدة `reviewMessages`.
 - تحديث `CompleteTaskUseCase` ليحوّل التاسك إلى `completed` ويحسب `auto_accept_at` عند إكمال العامل للتاسك.
 - إضافة use cases لـ company accept/reject، admin reopen، والـ auto-accept.
@@ -273,7 +273,6 @@ rejected_at
 rejection_reason
 company_accepted_at
 auto_accept_at
-auto_accepted_at
 reopened_at
 reopen_reason
 ```
@@ -286,7 +285,6 @@ reopen_reason
 | `rejection_reason` | سبب رفض الشركة، إجباري عند الرفض. |
 | `company_accepted_at` | وقت قبول الشركة للتسليم، سواء يدويًا أو تلقائيًا. |
 | `auto_accept_at` | وقت انتهاء فترة المراجعة وبعده لا يمكن الرفض. |
-| `auto_accepted_at` | وقت قبول السيستم للتاسك تلقائيًا. |
 | `reopened_at` | وقت إعادة فتح التاسك بواسطة الأدمن. |
 | `reopen_reason` | سبب إعادة الفتح من الأدمن، اختياري أو إجباري حسب القرار النهائي. |
 
@@ -383,7 +381,6 @@ rejected -> reopened
   - `reopened_at = now()`
   - `reopen_reason = reason`
   - `auto_accept_at = null`
-  - `auto_accepted_at = null`
   - تسجيل status history.
 - يتم إبقاء `assigned_worker_id` كما هو مبدئيًا.
 - يتم reset حالة خدمات التاسك لتسمح بإعادة التسليم.
@@ -412,7 +409,6 @@ completed -> accepted
 ```text
 status = accepted
 company_accepted_at = now()
-auto_accepted_at = now()
 ```
 
 #### ملاحظات
@@ -586,7 +582,6 @@ rejected_at
 rejection_reason
 company_accepted_at
 auto_accept_at
-auto_accepted_at
 reopened_at
 reopen_reason
 progress
@@ -636,7 +631,6 @@ progress
   - `rejection_reason`
   - `company_accepted_at`
   - `auto_accept_at`
-  - `auto_accepted_at`
   - `reopened_at`
   - `reopen_reason`
 - تحديث casts و fillable في `Task`.

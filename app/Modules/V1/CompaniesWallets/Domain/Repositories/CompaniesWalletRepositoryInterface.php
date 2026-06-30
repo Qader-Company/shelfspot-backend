@@ -16,6 +16,14 @@ interface CompaniesWalletRepositoryInterface
 
     public function currentBalance(?int $companyId = null): float;
 
+    public function findTransactionByReference(
+        int $companyId,
+        CompanyWalletTransactionTypeEnum $type,
+        string $referenceType,
+        int $referenceId,
+        bool $lockForUpdate = false
+    ): ?CompanyWalletTransaction;
+
     public function create(array $attributes): CompanyWalletTransaction;
 
     public function createTransaction(array $attributes, CompanyWalletTransactionTypeEnum $type): CompanyWalletTransaction;

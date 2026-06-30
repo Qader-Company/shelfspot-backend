@@ -4,6 +4,7 @@ return [
     'validation' => [
         'accept_pending_only' => 'لا يمكن قبول المهمة إلا وهي في حالة انتظار.',
         'accept_charged_only' => 'يجب خصم/حجز قيمة المهمة قبل قبولها.',
+        'pay_draft_only' => 'لا يمكن دفع قيمة المهمة إلا وهي مسودة.',
         'update_started_task' => 'يمكن تعديل المهمة فقط طالما حالتها مسودة أو قيد الانتظار.',
         'accept_deleted_task' => 'لا يمكن قبول مهمة محذوفة.',
         'accept_unassigned_only' => 'هذه المهمة مخصصة بالفعل لعامل آخر.',

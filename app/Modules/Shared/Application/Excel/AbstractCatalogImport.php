@@ -41,20 +41,14 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function collection(Collection $rows): void
     {
-        $this->totalRows = $rows->count();
-
-        if ($this->totalRows > self::MAX_ROWS) {
-            $this->addError(0, ['The uploaded file exceeds the maximum allowed rows.'], 'file');
-            return;
-        }
-
-        DB::transaction(function () use ($rows): void {
-            foreach ($rows as $index => $row) {
-                $rowNumber = $index + 2;
-                $data = $this->normalizeRow($row->toArray());
+        $normalizedRows = $rows->map(fn ($row, int $index): array => [
+            'index' => $index,
+            'data' => $this->normalizeRow($row->toArray()),
+        ]);
 
         $importRows = $normalizedRows
-            ->reject(fn (array $row): bool => $this->isEmptyRow($row['data']));
+            ->reject(fn (array $row): bool => $this->isEmptyRow($row['data']))
+            ->values();
 
         $this->skipped = $normalizedRows->count() - $importRows->count();
         $this->totalRows = $importRows->count();

@@ -41,6 +41,21 @@ class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInte
         return (float) ($this->latestTransaction($companyId)?->balance_after ?? 0);
     }
 
+    public function findTransactionByReference(
+        int $companyId,
+        CompanyWalletTransactionTypeEnum $type,
+        string $referenceType,
+        int $referenceId,
+        bool $lockForUpdate = false
+    ): ?CompanyWalletTransaction {
+        return $this->queryForCompany($companyId)
+            ->where('type', $type->value)
+            ->where('reference_type', $referenceType)
+            ->where('reference_id', $referenceId)
+            ->when($lockForUpdate, fn (Builder $query) => $query->lockForUpdate())
+            ->first();
+    }
+
     public function create(array $attributes): CompanyWalletTransaction
     {
         return DB::transaction(fn () => CompanyWalletTransaction::create($attributes));

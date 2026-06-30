@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Authentication\Application\UseCases;
 
 use App\Modules\V1\Authentication\Domain\Services\OtpService;
+use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
@@ -23,7 +24,7 @@ class VerifyEmailUseCase
         if ($user->email_verified_at)
             throw new BadRequestHttpException(__('auth.already_verified'));
 
-        if (! $this->otpService->validate($user->email, $data['otp']))
+        if (! $this->otpService->validate($user->email, $data['otp'], OtpPurposeEnum::EMAIL_VERIFICATION, $type))
             throw new BadRequestHttpException(__('auth.invalid_otp'));
 
 

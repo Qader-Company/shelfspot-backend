@@ -10,6 +10,7 @@ use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CreateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\PayDraftTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\UpdateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
@@ -42,13 +43,13 @@ class CompanyTaskController extends Controller
 
     public function store(StoreCompanyTaskRequest $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
-        $createCompanyTaskUseCase->execute(
+        $task = $createCompanyTaskUseCase->execute(
             $request->validated(),
             $request->user(),
             $request->allFiles()
         );
 
-        return ApiResponse::message(__('api.created'));
+        return ApiResponse::created(new TaskResource($task));
     }
 
     public function update(int $id, StoreCompanyTaskRequest $request, UpdateCompanyTaskUseCase $updateCompanyTaskUseCase)
@@ -69,6 +70,16 @@ class CompanyTaskController extends Controller
             $this->taskRepository->detailRelations()
         );
         return ApiResponse::success(new TaskResource($task));
+    }
+
+    public function pay(int $id, Request $request, PayDraftTaskUseCase $payDraftTaskUseCase)
+    {
+        $task = $payDraftTaskUseCase->execute(
+            $this->getCompanyTask($id),
+            $request->user()
+        );
+
+        return ApiResponse::updated(new TaskResource($task));
     }
 
     public function accept(int $id, Request $request, CompanyAcceptTaskUseCase $companyAcceptTaskUseCase)

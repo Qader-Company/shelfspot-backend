@@ -24,6 +24,26 @@ class ChargeTaskWalletUseCase
         return DB::transaction(function () use ($task, $performedBy) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
 
+            $referenceType = $lockedTask->getMorphClass();
+            $referenceId = (int) $lockedTask->id;
+
+            $existingTransaction = $this->walletRepository->findTransactionByReference(
+                companyId: (int) $lockedTask->company_id,
+                type: CompanyWalletTransactionTypeEnum::TASK_PAYMENT,
+                referenceType: $referenceType,
+                referenceId: $referenceId,
+                lockForUpdate: true
+            );
+
+            if ($existingTransaction !== null) {
+                $lockedTask->forceFill([
+                    'payment_status' => TaskPaymentStatusEnum::CHARGED,
+                    'charged_at' => $lockedTask->charged_at ?? $existingTransaction->created_at ?? now(),
+                ])->save();
+
+                return $existingTransaction;
+            }
+
             CanChargeTaskWalletRule::validate($lockedTask);
 
             $transaction = $this->walletRepository->createTransaction([
@@ -31,8 +51,8 @@ class ChargeTaskWalletUseCase
                 'amount' => $lockedTask->total_price,
                 'description' => __('company.wallet.tasks.payment_description', ['task' => $lockedTask->id]),
                 'performed_by' => $performedBy,
-                'reference_type' => $lockedTask->getMorphClass(),
-                'reference_id' => $lockedTask->id,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
             ], CompanyWalletTransactionTypeEnum::TASK_PAYMENT);
 
             $lockedTask->forceFill([

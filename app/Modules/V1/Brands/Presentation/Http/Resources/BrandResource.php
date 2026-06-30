@@ -17,6 +17,7 @@ class BrandResource extends JsonResource
         return [
             'id' => $this->id,
             'deleted_at' => $this->when($this->deleted_at, $this->deleted_at?->toISOString()),
+            'purge_status' => $this->when($this->purge_status, $this->purge_status),
             'name' => $this->name,
             'logo' => $this->getMedia('logo')->first()?->getUrl(),
             'active' => (bool) $this->is_active

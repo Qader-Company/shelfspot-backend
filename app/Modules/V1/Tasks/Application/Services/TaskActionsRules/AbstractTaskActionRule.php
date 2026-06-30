@@ -9,9 +9,9 @@ use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 
-Abstract class AbstractTaskActionRule
+abstract class AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null)
+    public static function validate(Task $task, Worker $worker = null): void
     {
         if (!$task) {
             throw new ModelNotFoundException(__('api.not_found'));

@@ -17,7 +17,6 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas, WithMultipleSheets, SkipsUnknownSheets
 {
     private const MAX_ROWS = 1000;
-
     private int $created = 0;
     private int $updated = 0;
     private int $skipped = 0;
@@ -173,7 +172,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         }
 
         if (in_array('barcode', $this->config['fillable'], true)) {
-            $rules['barcode'] = ['nullable', 'string', 'max:255'];
+            $rules['barcode'] = ['nullable', 'max:255'];
         }
 
         if (in_array('description', $this->config['fillable'], true)) {

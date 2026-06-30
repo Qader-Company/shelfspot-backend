@@ -7,6 +7,7 @@ return [
         'update_started_task' => 'Task can only be updated while it is draft or pending.',
         'accept_deleted_task' => 'Deleted tasks cannot be accepted.',
         'accept_unassigned_only' => 'This task is already assigned to another worker.',
+        'accept_worker_busy' => 'You already have an active task. Complete or cancel it before accepting another task.',
         'accept_execution_date_only' => 'Tasks can only be accepted on their execution date.',
         'start_accepted_only' => 'Only accepted tasks can be started.',
         'worker_not_assigned' => 'This task is not assigned to the current worker.',

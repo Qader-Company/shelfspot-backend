@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas, WithMultipleSheets, SkipsUnknownSheets
 {
     private const MAX_ROWS = 1000;
+
     private int $created = 0;
     private int $updated = 0;
     private int $skipped = 0;
@@ -40,10 +41,17 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function collection(Collection $rows): void
     {
-        $normalizedRows = $rows->map(fn ($row, int $index): array => [
-            'index' => $index,
-            'data' => $this->normalizeRow($row->toArray()),
-        ]);
+        $this->totalRows = $rows->count();
+
+        if ($this->totalRows > self::MAX_ROWS) {
+            $this->addError(0, ['The uploaded file exceeds the maximum allowed rows.'], 'file');
+            return;
+        }
+
+        DB::transaction(function () use ($rows): void {
+            foreach ($rows as $index => $row) {
+                $rowNumber = $index + 2;
+                $data = $this->normalizeRow($row->toArray());
 
         $importRows = $normalizedRows
             ->reject(fn (array $row): bool => $this->isEmptyRow($row['data']))

@@ -26,7 +26,7 @@ class SubmitTaskServiceUseCase
     {
         return DB::transaction(function () use ($task, $taskService, $worker, $formData, $filesByField) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
-            CanSubmitTaskRule::validate($lockedTask, $worker->id);
+            CanSubmitTaskRule::validate($lockedTask, $worker);
 
             $lockedTaskService = TaskService::query()
                 ->with(['service', 'products'])

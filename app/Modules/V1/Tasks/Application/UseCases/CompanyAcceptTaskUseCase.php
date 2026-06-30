@@ -25,7 +25,7 @@ class CompanyAcceptTaskUseCase
             AbstractTaskActionRule::insureTaskStatusIsOneOf(
                 task: $lockedTask,
                 statuses: [TaskStatusEnum::COMPLETED, TaskStatusEnum::REJECTED],
-                message: ('tasks.validation.accept_completed_or_rejected_only')
+                message: __('tasks.validation.accept_completed_or_rejected_only')
             );
 
             $lockedTask->forceFill([

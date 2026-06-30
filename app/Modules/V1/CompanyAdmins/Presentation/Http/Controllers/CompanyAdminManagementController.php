@@ -106,6 +106,16 @@ class CompanyAdminManagementController extends AccessControlController
         );
     }
 
+    public function destroyAdmin(User $user)
+    {
+        $this->managedAdminRepository->deleteCompanyAdmin(
+            $this->companyId(),
+            $user
+        );
+
+        return ApiResponse::deleted();
+    }
+
     private function companyId(): int
     {
         return $this->tenantContext->getCompanyId();

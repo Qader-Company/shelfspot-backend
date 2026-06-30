@@ -10,9 +10,13 @@ use Illuminate\Validation\ValidationException;
 
 class CanStartTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null): void
+    public static function validate(Task $task, Worker $worker = null, bool $workerHasActiveTask = false): void
     {
-        parent::validate($task, $worker->id);
+        parent::validate($task);
+
+        if ($workerHasActiveTask) {
+            throw ValidationException::withMessages(['worker' => __('tasks.validation.accept_worker_busy')]);
+        }
 
         parent::insureTaskIsCharged($task);
         parent::insureTaskIsNotDeleted($task);

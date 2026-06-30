@@ -57,6 +57,51 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         $task->delete();
     }
 
+
+    public function getCompanyTrash(int $companyId, array $relations = [], array $filters = []): LengthAwarePaginator
+    {
+        return $this->companyDeletedQuery($relations, $filters)
+            ->where('company_id', $companyId)
+            ->paginate();
+    }
+
+    public function getCompanyDeletedForAdmin(array $relations = [], array $filters = []): LengthAwarePaginator
+    {
+        return $this->companyDeletedQuery($relations, $filters, includePurged: true)
+            ->paginate();
+    }
+
+    public function getCompanyDeletedById(int $id, array $relations = [], bool $includePurged = false): ?Task
+    {
+        return $this->companyDeletedQuery($relations, includePurged: $includePurged)
+            ->whereKey($id)
+            ->first();
+    }
+
+    public function restoreCompanyDeleted(Task $task): Task
+    {
+        $task->forceFill([
+            'company_deleted_at' => null,
+            'company_purged_at' => null,
+        ])->save();
+
+        return $task->refresh();
+    }
+
+    public function purgeForCompany(Task $task): Task
+    {
+        $task->forceFill([
+            'company_purged_at' => now(),
+        ])->save();
+
+        return $task->refresh();
+    }
+
+    public function forceDeleteCompanyDeleted(Task $task): void
+    {
+        $task->delete();
+    }
+
     public function tasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator
     {
         $distanceSql = $this->haversineSql();
@@ -87,6 +132,14 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             'cursor' => $query->cursorPaginate(),
             'paginate' => $query->paginate()
         };
+    }
+
+    public function assignedTaskForWorker(int $taskId, int $workerId, array $relations = []): ?Task
+    {
+        return $this->query($relations)
+            ->whereKey($taskId)
+            ->where('assigned_worker_id', $workerId)
+            ->first();
     }
 
 
@@ -161,9 +214,19 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return Task::query()
             ->whereNull('company_deleted_at')
+            ->whereNull('company_purged_at')
             ->when($filters, fn (Builder $query) => $query->filter($filters))
             ->when($relations, fn (Builder $query) => $query->with($relations))
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
+    }
+
+    private function companyDeletedQuery(array $relations = [], array $filters = [], bool $includePurged = false): Builder
+    {
+        return Task::query()
+            ->whereNotNull('company_deleted_at')
+            ->when(! $includePurged, fn (Builder $query) => $query->whereNull('company_purged_at'))
+            ->when($filters, fn (Builder $query) => $query->filter($filters))
+            ->when($relations, fn (Builder $query) => $query->with($relations));
     }
 
     public function listRelations(): array

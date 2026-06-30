@@ -17,6 +17,10 @@ class CategoryResource extends JsonResource
             'purge_status' => $this->when($this->purge_status, $this->purge_status),
             'name' => $this->name,
             'active' => (bool) $this->is_active,
+            'image' => $this->whenLoaded(
+                'media',
+                $this->getMedia('image')->first()?->getUrl() ?? ''
+            ),
             'brand' => $this->whenLoaded(
                 relationship: 'brand',
                 value:fn() =>new BrandResource($this->brand)

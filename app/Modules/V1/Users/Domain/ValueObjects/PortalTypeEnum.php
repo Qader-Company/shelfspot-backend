@@ -14,4 +14,13 @@ enum PortalTypeEnum: string
             self::cases()
         );
     }
+
+    public static function getTypes() : array
+    {
+        return array_map(
+            fn(self $item) => [
+                'value' => $item->value,
+            ], self::cases()
+        );
+    }
 }

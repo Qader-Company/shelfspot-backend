@@ -18,6 +18,7 @@ class UpdateCategoryRequest extends FormRequest
             'brand_id' => ['nullable', new ExistsInCurrentCompany('brands')],
             'sub_brand_id' => ['nullable', new ExistsInCurrentCompany('sub_brands')],
             'is_active' => 'sometimes|boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }
 

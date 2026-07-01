@@ -11,7 +11,7 @@ class CanReassignTaskRule extends AbstractTaskActionRule
 {
     public static function validate(Task $task, Worker $worker = null, bool $workerHasInProgressTask = false): void
     {
-        parent::validate($task, $worker->id);
+        parent::validate($task);
         parent::insureTaskStatusIsOneOf(
             task: $task,
             statuses: [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::STARTED],

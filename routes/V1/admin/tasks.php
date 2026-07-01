@@ -19,6 +19,9 @@ Route::controller(AdminTaskController::class)->group(function () {
         Route::post('/{id}/reopen', 'reopen')
             ->middleware('permission:'.AdminPermissionEnum::REASSIGN_TASK->value);
 
+        Route::post('/{id}/refund', 'refund')
+            ->middleware('permission:'.AdminPermissionEnum::REASSIGN_TASK->value);
+
         Route::get('/{id}', 'show')
             ->middleware('permission:'.AdminPermissionEnum::VIEW_TASK->value);
 

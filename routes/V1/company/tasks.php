@@ -17,6 +17,12 @@ Route::controller(CompanyTaskController::class)
         Route::match(['put', 'patch'], '/{id}', 'update')
             ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
 
+        Route::post('/{id}/pay', 'pay')
+            ->middleware('permission:'.CompanyPermissionEnum::CREATE_TASK->value);
+
+        Route::post('/{id}/request-refund', 'requestRefund')
+            ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
+
         Route::patch('/{id}/accept', 'accept')
             ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
 

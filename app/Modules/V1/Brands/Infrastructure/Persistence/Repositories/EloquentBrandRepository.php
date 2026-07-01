@@ -2,7 +2,7 @@
 
 namespace App\Modules\V1\Brands\Infrastructure\Persistence\Repositories;
 
-use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Brands\Domain\Repositories\{BrandRepositoryInterface};
 use App\Modules\V1\Companies\Domain\Models\Scopes\CompanyScope;
@@ -12,11 +12,16 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentBrandRepository implements BrandRepositoryInterface
 {
-    use HandlesTrash;
+    use CascadesCatalogTrashActions;
 
     protected function trashableModel(): string
     {
         return Brand::class;
+    }
+
+    protected function trashCascadeRelations(): array
+    {
+        return ['subBrands', 'categories', 'subCategories', 'products'];
     }
     public function getAll(
         array $relations = [],
@@ -83,7 +88,7 @@ class EloquentBrandRepository implements BrandRepositoryInterface
 
     public function delete(Brand $brand): void
     {
-        $brand->delete();
+        $this->deleteWithCatalogChildren($brand);
     }
 
     private function query(array $relations, array $relationsCount, array $filters = [], $global = false)

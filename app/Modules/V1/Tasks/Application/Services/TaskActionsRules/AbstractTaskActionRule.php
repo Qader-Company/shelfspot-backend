@@ -9,19 +9,19 @@ use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 
-Abstract class AbstractTaskActionRule
+abstract class AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null)
+    public static function validate(Task $task, Worker $worker = null): void
     {
         if (!$task) {
             throw new ModelNotFoundException(__('api.not_found'));
         }
     }
 
-    public static function insureTaskIsCharged(Task $task): void
+    public static function insureTaskIsCharged(Task $task, ?string $message = null): void
     {
         if ($task->payment_status !== TaskPaymentStatusEnum::CHARGED) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.accept_charged_only')]);
+            throw ValidationException::withMessages(['task' => $message ?? __('tasks.validation.accept_charged_only')]);
         }
     }
 

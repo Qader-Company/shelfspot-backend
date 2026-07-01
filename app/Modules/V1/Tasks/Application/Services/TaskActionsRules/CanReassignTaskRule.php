@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 
 class CanReassignTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null, bool $workerHasInProgressTask = false): void
+    public static function validate(Task $task, Worker $worker = null, bool $workerHasActiveTask = false): void
     {
         parent::validate($task);
         parent::insureTaskStatusIsOneOf(
@@ -22,7 +22,7 @@ class CanReassignTaskRule extends AbstractTaskActionRule
             throw ValidationException::withMessages(['worker' => __('tasks.validation.reassign_active_worker_only')]);
         }
 
-        if ($workerHasInProgressTask) {
+        if ($workerHasActiveTask) {
             throw ValidationException::withMessages(['worker' => __('tasks.validation.reassign_worker_busy')]);
         }
     }

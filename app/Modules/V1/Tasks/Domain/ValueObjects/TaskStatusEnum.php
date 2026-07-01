@@ -15,4 +15,21 @@ enum TaskStatusEnum: string
     case ACCEPTED = 'accepted';
     case REOPENED = 'reopened';
     case FAILED = 'failed';
+
+    public static function workerActiveStatuses(): array
+    {
+        return [
+            self::STARTED,
+            self::IN_PROGRESS,
+            self::REOPENED,
+        ];
+    }
+
+    public static function values(array $statuses): array
+    {
+        return array_map(
+            static fn (self $status): string => $status->value,
+            $statuses
+        );
+    }
 }

@@ -63,7 +63,7 @@ class StartTaskUseCase
 
     private function workerHasActiveTask(Worker $worker): bool
     {
-        foreach (self::ACTIVE_WORKER_TASK_STATUSES as $status) {
+        foreach (TaskStatusEnum::workerActiveStatuses() as $status) {
             if ($this->taskRepository->countAssignedToWorkerByStatus($worker->id, $status) > 0) {
                 return true;
             }

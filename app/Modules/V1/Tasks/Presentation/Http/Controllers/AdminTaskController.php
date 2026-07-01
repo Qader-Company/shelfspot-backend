@@ -6,6 +6,7 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReassignTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReopenTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\RefundTaskWalletUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminReassignTaskRequest;
@@ -75,6 +76,16 @@ class AdminTaskController extends Controller
         );
 
         return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+    }
+
+    public function refund(int $id, RefundTaskWalletUseCase $refundTaskWalletUseCase)
+    {
+        $refundTaskWalletUseCase->execute(
+            task: $this->task($id),
+            performedBy: request()->user()?->id
+        );
+
+        return ApiResponse::message(__('api.updated'));
     }
 
     public function reassign(int $id, AdminReassignTaskRequest $request, AdminReassignTaskUseCase $adminReassignTaskUseCase)

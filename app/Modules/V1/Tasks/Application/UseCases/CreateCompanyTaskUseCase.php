@@ -16,7 +16,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 class CreateCompanyTaskUseCase
@@ -71,12 +70,10 @@ class CreateCompanyTaskUseCase
             try {
                 $this->chargeTaskWalletUseCase->execute($task, $actor->id);
                 $task->refresh();
-            } catch (InvalidArgumentException $exception) {
+            } catch (InvalidArgumentException) {
                 $task->forceFill(['payment_status' => TaskPaymentStatusEnum::FAILED])->save();
 
-                throw ValidationException::withMessages([
-                    'wallet' => $exception->getMessage(),
-                ]);
+                return $task->load($this->taskRepository->relations());
             }
 
             $task->forceFill(['status' => TaskStatusEnum::PENDING])->save();

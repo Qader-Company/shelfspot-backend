@@ -12,7 +12,7 @@ class CanSubmitTaskRule extends AbstractTaskActionRule
 {
     public static function validate(Task $task, Worker $worker = null): void
     {
-        parent::validate($task, $worker->id);
+        parent::validate($task);
         parent::insureTaskAssignmentToWorker(
             task: $task,
             workerId: $worker->id,

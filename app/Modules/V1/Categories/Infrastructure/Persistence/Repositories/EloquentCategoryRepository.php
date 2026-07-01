@@ -6,6 +6,8 @@ use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTr
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentCategoryRepository implements CategoryRepositoryInterface
 {
@@ -31,15 +33,27 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
         return $this->query($relations, $relationsCount)->find($id);
     }
 
-    public function create(array $attributes): Category
+    public function create(array $attributes, UploadedFile $image = null): Category
     {
-        return Category::create($attributes);
+        return DB::transaction(function () use ($attributes, $image) {
+            $category = Category::create($attributes);
+            if ($image) {
+                $category->addMedia($image)->toMediaCollection('image');
+            }
+            return $category;
+        });
     }
 
-    public function update(Category $category, array $attributes): Category
+    public function update(Category $category, array $attributes, UploadedFile $image = null): Category
     {
-        $category->update($attributes);
-        return $category;
+        return DB::transaction(function () use ($category, $attributes, $image) {
+            $category->update($attributes);
+            if ($image) {
+                $category->clearMediaCollection('image');
+                $category->addMedia($image)->toMediaCollection('image');
+            }
+            return $category;
+        });
     }
 
     public function delete(Category $category): void

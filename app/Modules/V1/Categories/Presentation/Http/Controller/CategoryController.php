@@ -16,6 +16,7 @@ use App\Modules\V1\Categories\Presentation\Http\Resources\CategoryResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class CategoryController extends Controller
 {
@@ -30,10 +31,18 @@ class CategoryController extends Controller
 
     public function index()
     {
-        $filters = $this->acceptedFilters(request(), ['name', 'active', 'brand_id', 'sub_brand_id']);
-        $categories = $this->categoryRepository->getAll(filters: $filters);
-
-        return ApiResponse::success(CategoryResource::collection($categories)->response()->getData(true));
+        $filters = $this->acceptedFilters(
+            request(), ['name', 'active', 'brand_id', 'sub_brand_id']
+        );
+        $categories = $this->categoryRepository->getAll(
+            relations: ['media', 'brand', 'subBrand'],
+            filters: $filters,
+        );
+        return ApiResponse::success(
+            CategoryResource::collection($categories)
+                ->response()
+                ->getData(true)
+        );
     }
 
     public function show(string $id)
@@ -43,20 +52,22 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request)
     {
-        $this->categoryRepository->create($request->validated());
+        $data = $request->validated();
+        $this->categoryRepository->create($data, $data['image'] ?? null);
         return ApiResponse::message(__('api.created'));
     }
 
     public function update(UpdateCategoryRequest $request, string $id)
     {
-        $this->categoryRepository->update($this->getCategory($id), $request->validated());
+        $data = $request->validated();
+        $this->categoryRepository->update($this->getCategory($id), $data, $data['image'] ?? null);
         return ApiResponse::message(__('api.updated'));
     }
 
     public function destroy(string $id)
     {
         $this->categoryRepository->delete($this->getCategory($id));
-        return ApiResponse::deleted();
+        return ApiResponse::message(__('api.delete_queued'), Response::HTTP_ACCEPTED);
     }
 
 
@@ -92,7 +103,7 @@ class CategoryController extends Controller
 
     private function getCategory(string $id)
     {
-        $category = $this->categoryRepository->getById($id);
+        $category = $this->categoryRepository->getById($id, ['media']);
         if (is_null($category)) {
             throw new ModelNotFoundException(__('categories.not_found'));
         }

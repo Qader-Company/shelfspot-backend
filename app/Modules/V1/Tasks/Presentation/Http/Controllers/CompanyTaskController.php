@@ -39,7 +39,37 @@ class CompanyTaskController extends Controller
             filters: $filters
         );
 
+        return ApiResponse::success(
+            TaskResource::collection($tasks)
+            ->response()->getData(true)
+        );
+    }
+
+
+    public function trash(Request $request)
+    {
+        $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
+        $tasks = $this->taskRepository->getCompanyTrash(
+            companyId: $this->tenantContext->getCompanyId(),
+            relations: $this->taskRepository->listRelations(),
+            filters: $filters
+        );
+
         return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));
+    }
+
+    public function restore(int $id, RestoreCompanyTaskUseCase $restoreCompanyTaskUseCase)
+    {
+        $task = $restoreCompanyTaskUseCase->execute($this->getCompanyDeletedTask($id));
+
+        return ApiResponse::updated(new TaskResource($task));
+    }
+
+    public function purge(int $id, PurgeCompanyTaskUseCase $purgeCompanyTaskUseCase)
+    {
+        $purgeCompanyTaskUseCase->execute($this->getCompanyDeletedTask($id));
+
+        return ApiResponse::deleted();
     }
 
     public function store(StoreCompanyTaskRequest $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
@@ -122,6 +152,18 @@ class CompanyTaskController extends Controller
         );
 
         return ApiResponse::deleted();
+    }
+
+
+    private function getCompanyDeletedTask(int $id, array $relations = []): Task
+    {
+        $task = $this->taskRepository->getCompanyDeletedById($id, $relations);
+
+        if (! $task || $task->company_id !== $this->tenantContext->getCompanyId()) {
+            throw new ModelNotFoundException(__('api.not_found'));
+        }
+
+        return $task;
     }
 
     private function getCompanyTask(int $id, array $relations = []): Task

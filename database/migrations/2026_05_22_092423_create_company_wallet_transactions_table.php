@@ -17,6 +17,7 @@ return new class extends Migration
             $table->nullableMorphs('reference');
             $table->foreignId('performed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('description')->nullable();
+            $table->index(['company_id', 'id'], 'company_wallet_company_id_id_idx');
             $table->timestamps();
         });
     }

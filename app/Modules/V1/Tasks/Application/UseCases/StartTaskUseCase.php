@@ -14,6 +14,12 @@ class StartTaskUseCase
 {
     public const START_DEADLINE_MINUTES = 15;
 
+    private const ACTIVE_WORKER_TASK_STATUSES = [
+        TaskStatusEnum::STARTED,
+        TaskStatusEnum::IN_PROGRESS,
+        TaskStatusEnum::REOPENED,
+    ];
+
     public function __construct(private readonly TaskRepositoryInterface $taskRepository,)
     {
     }

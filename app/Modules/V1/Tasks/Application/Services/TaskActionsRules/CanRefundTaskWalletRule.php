@@ -13,12 +13,17 @@ class CanRefundTaskWalletRule extends AbstractTaskActionRule
     {
         parent::validate($task);
 
-        if ($task->company_id === null) {
-            throw ValidationException::withMessages([
-                'task' => __('company.wallet.tasks.company_required'),
-            ]);
-        }
+        parent::insureTaskStatusIsOneOf(
+            $task->status,
+            [TaskStatusEnum::REFUND_REQUESTED, TaskStatusEnum::REJECTED],
+            __('tasks.validation.refund_refund_requested_or_rejected_only'),
+        );
 
+<<<<<<< codex/refactor-project-into-modules-and-flows-1p8mz2
+=======
+        parent::insureTaskIsCharged($task);
+
+>>>>>>> main
         parent::insureTaskStatusIsOneOf(
             task: $task,
             statuses: [TaskStatusEnum::REFUND_REQUESTED, TaskStatusEnum::REJECTED],

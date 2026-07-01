@@ -29,6 +29,15 @@ Route::controller(CompanyTaskController::class)
         Route::post('/{id}/reject', 'reject')
             ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
 
+        Route::get('/trash', 'trash')
+            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+
+        Route::post('/trash/{id}/restore', 'restore')
+            ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
+
+        Route::delete('/trash/{id}', 'purge')
+            ->middleware('permission:'.CompanyPermissionEnum::DELETE_TASK->value);
+
         Route::get('/{id}', 'show')
             ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
 

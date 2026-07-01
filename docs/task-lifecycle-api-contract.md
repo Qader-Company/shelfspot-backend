@@ -40,7 +40,6 @@ Authorization: Bearer {company_access_token}
     "rejection_reason": null,
     "company_accepted_at": null,
     "auto_accept_at": "2026-06-12 01:00:00",
-    "auto_accepted_at": null,
     "reopened_at": null,
     "reopen_reason": null,
     "progress": {
@@ -151,8 +150,7 @@ rejected -> reopened
     "status": "reopened",
     "reopened_at": "2026-06-10 09:00:00",
     "reopen_reason": "Company rejection is valid.",
-    "auto_accept_at": null,
-    "auto_accepted_at": null
+    "auto_accept_at": null
   }
 }
 ```

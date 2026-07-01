@@ -20,6 +20,9 @@ return new class extends Migration
             $table->decimal('last_latitude', 10, 7)->nullable();
             $table->decimal('last_longitude', 10, 7)->nullable();
             $table->timestamp('location_updated_at')->nullable();
+            $table->softDeletes();
+            $table->unique('user_id', 'workers_user_id_unique');
+            $table->index(['is_active', 'last_latitude', 'last_longitude'], 'workers_active_location_idx');
             $table->timestamps();
         });
     }

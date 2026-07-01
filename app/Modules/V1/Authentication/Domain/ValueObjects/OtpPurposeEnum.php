@@ -7,6 +7,15 @@ enum OtpPurposeEnum: string
     case EMAIL_VERIFICATION = 'email-verification';
     case PASSWORD_RESET = 'password-reset';
 
+    public static function getTypes() : array
+    {
+        return array_map(
+            fn(self $item) => [
+                'value' => $item->value,
+            ], self::cases()
+        );
+    }
+
     public function subjectKey(): string
     {
         return match ($this) {

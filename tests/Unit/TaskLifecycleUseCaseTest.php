@@ -7,6 +7,7 @@ use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
+use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
@@ -20,6 +21,9 @@ use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ForceDeleteCompanyDeletedTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\PurgeCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\RestoreCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
@@ -46,6 +50,14 @@ class TaskLifecycleUseCaseTest extends TestCase
         Carbon::setTestNow();
 
         parent::tearDown();
+    }
+
+    public function test_task_expiry_is_midnight_after_execution_date(): void
+    {
+        $this->assertSame(
+            '2026-06-29 00:00:00',
+            TaskExpiryDate::fromExecutionDate('2026-06-28')->toDateTimeString()
+        );
     }
 
     public function test_worker_accepts_pending_charged_task_on_execution_date(): void
@@ -165,6 +177,65 @@ class TaskLifecycleUseCaseTest extends TestCase
 //            'to_status' => TaskStatusEnum::COMPANY_DELETED->value,
             'changed_by' => $worker->user_id,
         ]);
+    }
+
+
+    public function test_company_trash_restore_and_purge_are_company_scoped_visibility_changes(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $deletedTask = app(DeleteCompanyTaskUseCase::class)->execute($task, $worker->user);
+
+        $repository = app(EloquentTaskRepository::class);
+
+        $this->assertNull($repository->getById($task->id));
+        $this->assertSame([$task->id], $repository->getCompanyTrash($task->company_id)->pluck('id')->all());
+
+        $restoredTask = app(RestoreCompanyTaskUseCase::class)->execute($deletedTask);
+
+        $this->assertNull($restoredTask->company_deleted_at);
+        $this->assertNotNull($repository->getById($task->id));
+        $this->assertSame([], $repository->getCompanyTrash($task->company_id)->pluck('id')->all());
+
+        $deletedAgain = app(DeleteCompanyTaskUseCase::class)->execute($restoredTask, $worker->user);
+        $purgedTask = app(PurgeCompanyTaskUseCase::class)->execute($deletedAgain);
+
+        $this->assertTrue($purgedTask->company_purged_at->equalTo(now()));
+        $this->assertNull($repository->getById($task->id));
+        $this->assertSame([], $repository->getCompanyTrash($task->company_id)->pluck('id')->all());
+        $this->assertSame([$task->id], $repository->getCompanyDeletedForAdmin()->pluck('id')->all());
+        $this->assertDatabaseHas('tasks', ['id' => $task->id]);
+    }
+
+    public function test_admin_can_force_delete_company_deleted_task_only(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $deletedTask = app(DeleteCompanyTaskUseCase::class)->execute($task, $worker->user);
+
+        $repository = app(EloquentTaskRepository::class);
+
+        $this->assertSame([$task->id], $repository->getCompanyDeletedForAdmin()->pluck('id')->all());
+
+        app(ForceDeleteCompanyDeletedTaskUseCase::class)->execute($deletedTask);
+
+        $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
+    }
+
+    public function test_company_cannot_delete_in_progress_task(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker();
+        $startedTask = app(StartExecuteTaskUseCase::class)->execute(
+            app(StartTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            30.0444,
+            31.2357
+        );
+
+        $this->expectException(ValidationException::class);
+
+        app(DeleteCompanyTaskUseCase::class)->execute($startedTask, $worker->user);
     }
 
     public function test_repository_returns_tasks_assigned_to_worker_only(): void
@@ -305,7 +376,6 @@ class TaskLifecycleUseCaseTest extends TestCase
         $this->assertSame(1, $accepted);
         $this->assertSame(TaskStatusEnum::ACCEPTED, $task->refresh()->status);
         $this->assertTrue($task->company_accepted_at->equalTo(now()));
-        $this->assertTrue($task->auto_accepted_at->equalTo(now()));
     }
 
     public function test_admin_reopens_rejected_task_and_worker_executes_again(): void
@@ -410,10 +480,20 @@ class TaskLifecycleUseCaseTest extends TestCase
         app(AdminReassignTaskUseCase::class)->execute($cancelledTask, $busyWorker, null);
     }
 
-    public function test_expired_pending_tasks_are_failed_and_expired_accepted_tasks_return_to_pending(): void
+    public function test_expired_pending_and_cancelled_tasks_are_failed_and_expired_accepted_tasks_return_to_pending(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
-        [$pendingTask] = $this->pendingTaskAndWorker(['date' => '2026-06-09']);
+        [$pendingTask] = $this->pendingTaskAndWorker([
+            'date' => '2026-06-09',
+            'expires_at' => '2026-06-10 00:00:00',
+        ]);
+        [$cancelledTask] = $this->pendingTaskAndWorker([
+            'date' => '2026-06-09',
+            'expires_at' => '2026-06-10 00:00:00',
+            'status' => TaskStatusEnum::WORKER_CANCELLED,
+            'worker_cancelled_at' => '2026-06-09 14:00:00',
+            'worker_cancel_reason' => 'Vehicle issue',
+        ]);
         [$acceptedTask, $worker] = $this->pendingTaskAndWorker(['date' => '2026-06-10']);
         $acceptedTask->forceFill([
             'status' => TaskStatusEnum::STARTED,
@@ -424,8 +504,9 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $failed = app(FailExpiredTaskUseCase::class)->execute();
 
-        $this->assertSame(2, $failed);
+        $this->assertSame(3, $failed);
         $this->assertSame(TaskStatusEnum::FAILED, $pendingTask->refresh()->status);
+        $this->assertSame(TaskStatusEnum::FAILED, $cancelledTask->refresh()->status);
         $acceptedTask->refresh();
         $this->assertSame(TaskStatusEnum::PENDING, $acceptedTask->status);
         $this->assertNull($acceptedTask->assigned_worker_id);
@@ -486,7 +567,6 @@ class TaskLifecycleUseCaseTest extends TestCase
             'estimated_duration_minutes',
             'latitude',
             'longitude',
-            'subtotal',
             'total_price',
             'payment_status',
             'charged_at',
@@ -540,7 +620,6 @@ class TaskLifecycleUseCaseTest extends TestCase
             'estimated_duration_minutes' => 60,
             'latitude' => 30.0444,
             'longitude' => 31.2357,
-            'subtotal' => 100,
             'total_price' => 100,
             'status' => TaskStatusEnum::PENDING,
             'payment_status' => TaskPaymentStatusEnum::CHARGED,

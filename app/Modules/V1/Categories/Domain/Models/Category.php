@@ -15,12 +15,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[Fillable(['name', 'company_id', 'brand_id', 'sub_brand_id', 'slug', 'is_active'])]
-class Category extends Model
+class Category extends Model implements HasMedia
 {
-    use BelongsToCompany, Filterable, SoftDeletes;
+    use BelongsToCompany, InteractsWithMedia, Filterable, SoftDeletes;
 
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('image')->singleFile();
+    }
 
     public function brand(): BelongsTo
     {

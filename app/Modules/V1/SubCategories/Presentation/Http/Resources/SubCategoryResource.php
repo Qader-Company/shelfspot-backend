@@ -17,7 +17,10 @@ class SubCategoryResource extends JsonResource
             'deleted_at' => $this->when($this->deleted_at, $this->deleted_at?->toISOString()),
             'purge_status' => $this->when($this->purge_status, $this->purge_status),
             'name' => $this->name,
-            'image' => $this->getMedia('image')->first()?->getUrl(),
+            'image' => $this->whenLoaded(
+                'media',
+                $this->getMedia('image')->first()?->getUrl() ?? ''
+            ),
             'active' => (bool) $this->is_active,
             'brand' => $this->whenLoaded(
                 relationship: 'brand',

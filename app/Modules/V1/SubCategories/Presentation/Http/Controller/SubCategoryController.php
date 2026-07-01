@@ -16,6 +16,7 @@ use App\Modules\V1\SubCategories\Presentation\Http\Resources\SubCategoryResource
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class SubCategoryController extends Controller
 {
@@ -58,7 +59,7 @@ class SubCategoryController extends Controller
     public function destroy(string $id)
     {
         $this->subCategoryRepository->delete($this->getSubCategory($id));
-        return ApiResponse::deleted();
+        return ApiResponse::message(__('api.delete_queued'), Response::HTTP_ACCEPTED);
     }
 
 

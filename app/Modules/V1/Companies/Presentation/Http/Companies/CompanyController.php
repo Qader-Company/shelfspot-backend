@@ -45,15 +45,17 @@ class CompanyController extends Controller
     }
     public function create(RegisterCompanyRequest $request, CreateCompanyWithOwnerUseCase $createCompanyWithOwnerUseCase)
     {
-        $createCompanyWithOwnerUseCase->execute($request->validated());
-        return ApiResponse::message(__('api.created'));
+        $company = $createCompanyWithOwnerUseCase->execute($request->validated());
+
+        return ApiResponse::created(new CompanyResource($company));
     }
     public function update(UpdateCompanyRequest $request, string $id)
     {
         $data = $request->validated();
         $company = $this->getCompany($id);
-        $this->companyRepository->update($company, $data);
-        return ApiResponse::message(__('api.updated'));
+        $company = $this->companyRepository->update($company, $data);
+
+        return ApiResponse::updated(new CompanyResource($company->refresh()));
     }
     public function destroy(string $id)
     {

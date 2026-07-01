@@ -11,7 +11,25 @@ enum TaskStatusEnum: string
     case WORKER_CANCELLED = 'worker_cancelled';
     case COMPLETED = 'completed';
     case REJECTED = 'rejected';
+    case REFUND_REQUESTED = 'refund_requested';
     case ACCEPTED = 'accepted';
     case REOPENED = 'reopened';
     case FAILED = 'failed';
+
+    public static function workerActiveStatuses(): array
+    {
+        return [
+            self::STARTED,
+            self::IN_PROGRESS,
+            self::REOPENED,
+        ];
+    }
+
+    public static function values(array $statuses): array
+    {
+        return array_map(
+            static fn (self $status): string => $status->value,
+            $statuses
+        );
+    }
 }

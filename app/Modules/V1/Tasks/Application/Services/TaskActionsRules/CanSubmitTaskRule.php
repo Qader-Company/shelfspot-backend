@@ -3,16 +3,14 @@
 namespace App\Modules\V1\Tasks\Application\Services\TaskActionsRules;
 
 use App\Modules\V1\Tasks\Domain\Models\Task;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
-use Illuminate\Validation\ValidationException;
 
 class CanSubmitTaskRule extends AbstractTaskActionRule
 {
     public static function validate(Task $task, Worker $worker = null): void
     {
-        parent::validate($task, $worker->id);
+        parent::validate($task);
         parent::insureTaskAssignmentToWorker(
             task: $task,
             workerId: $worker->id,

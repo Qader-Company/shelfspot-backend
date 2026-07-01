@@ -46,12 +46,15 @@ class WorkerTaskController extends Controller
 
         $radius = $request->radiusKilometers();
 
+        $filters = Arr::only($request->validated(), ['execution_date']);
+        $filters['execution_date'] ??= now()->toDateString();
+
         $tasks = $this->taskRepository->tasksByCoordinates(
             latitude: $latitude,
             longitude: $longitude,
             radiusKilometers: $radius,
             boundingBox: $geoDistanceCalculator->boundingBox($latitude, $longitude, $radius),
-            filters: Arr::only($request->validated(), ['execution_date'])
+            filters: $filters
         );
 
         return ApiResponse::success(

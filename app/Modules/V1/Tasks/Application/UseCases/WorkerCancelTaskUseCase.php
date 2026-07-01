@@ -25,7 +25,7 @@ class WorkerCancelTaskUseCase
 
             $fromStatus = $lockedTask->status;
 
-            CanCancelTaskRule::validate($lockedTask, $worker->id);
+            CanCancelTaskRule::validate($lockedTask, $worker);
 
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::WORKER_CANCELLED,

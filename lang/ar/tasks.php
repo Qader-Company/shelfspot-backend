@@ -4,9 +4,13 @@ return [
     'validation' => [
         'accept_pending_only' => 'لا يمكن قبول المهمة إلا وهي في حالة انتظار.',
         'accept_charged_only' => 'يجب خصم/حجز قيمة المهمة قبل قبولها.',
+        'pay_draft_only' => 'لا يمكن دفع قيمة المهمة إلا وهي مسودة.',
+        'refund_request_pending_or_failed_only' => 'لا يمكن طلب استرداد قيمة المهمة إلا إذا كانت قيد الانتظار أو فشلت.',
+        'refund_refund_requested_or_rejected_only' => 'لا يمكن تنفيذ الاسترداد إلا للمهام المطلوب استردادها أو المرفوضة.',
         'update_started_task' => 'يمكن تعديل المهمة فقط طالما حالتها مسودة أو قيد الانتظار.',
         'accept_deleted_task' => 'لا يمكن قبول مهمة محذوفة.',
         'accept_unassigned_only' => 'هذه المهمة مخصصة بالفعل لعامل آخر.',
+        'accept_worker_busy' => 'لديك مهمة نشطة بالفعل. أكملها أو ألغها قبل قبول مهمة أخرى.',
         'accept_execution_date_only' => 'لا يمكن قبول المهمة إلا في يوم تنفيذها.',
         'start_accepted_only' => 'لا يمكن بدء المهمة إلا بعد قبولها.',
         'worker_not_assigned' => 'هذه المهمة غير مخصصة للعامل الحالي.',

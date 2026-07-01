@@ -49,4 +49,9 @@ class TaskFilter extends ModelFilter
         return $this->whereDate('date', '<=', $date_to);
     }
 
+    public function executionDate($executionDate)
+    {
+        return $this->whereDate('date', $executionDate);
+    }
+
 }

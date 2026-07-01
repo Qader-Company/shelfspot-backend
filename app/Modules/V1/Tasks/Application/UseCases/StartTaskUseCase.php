@@ -4,14 +4,11 @@ namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanStartTaskRule;
-use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class StartTaskUseCase
 {
@@ -28,7 +25,12 @@ class StartTaskUseCase
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
             $fromStatus = $lockedTask->status;
 
-            CanStartTaskRule::validate($lockedTask);
+            Worker::query()->whereKey($worker->id)->lockForUpdate()->firstOrFail();
+
+            CanStartTaskRule::validate(
+                task: $lockedTask,
+                workerHasActiveTask: $this->workerHasActiveTask($worker)
+            );
 
             $now = now();
             $lockedTask->forceFill([
@@ -51,5 +53,16 @@ class StartTaskUseCase
 
             return $lockedTask->refresh();
         });
+    }
+
+    private function workerHasActiveTask(Worker $worker): bool
+    {
+        foreach (TaskStatusEnum::workerActiveStatuses() as $status) {
+            if ($this->taskRepository->countAssignedToWorkerByStatus($worker->id, $status) > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

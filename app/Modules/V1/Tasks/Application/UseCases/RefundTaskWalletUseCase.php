@@ -24,6 +24,26 @@ class RefundTaskWalletUseCase
         return DB::transaction(function () use ($task, $performedBy) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
 
+            $referenceType = $lockedTask->getMorphClass();
+            $referenceId = (int) $lockedTask->id;
+
+            $existingTransaction = $this->walletRepository->findTransactionByReference(
+                companyId: (int) $lockedTask->company_id,
+                type: CompanyWalletTransactionTypeEnum::TASK_REFUND,
+                referenceType: $referenceType,
+                referenceId: $referenceId,
+                lockForUpdate: true
+            );
+
+            if ($existingTransaction !== null) {
+                $lockedTask->forceFill([
+                    'payment_status' => TaskPaymentStatusEnum::REFUNDED,
+                    'company_deleted_at' => $lockedTask->company_deleted_at ?? now(),
+                ])->save();
+
+                return $existingTransaction;
+            }
+
             CanRefundTaskWalletRule::validate($lockedTask);
 
             $transaction = $this->walletRepository->createTransaction([
@@ -31,12 +51,13 @@ class RefundTaskWalletUseCase
                 'amount' => $lockedTask->total_price,
                 'description' => __('company.wallet.tasks.refund_description', ['task' => $lockedTask->id]),
                 'performed_by' => $performedBy,
-                'reference_type' => $lockedTask->getMorphClass(),
-                'reference_id' => $lockedTask->id,
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
             ], CompanyWalletTransactionTypeEnum::TASK_REFUND);
 
             $lockedTask->forceFill([
                 'payment_status' => TaskPaymentStatusEnum::REFUNDED,
+                'company_deleted_at' => now(),
             ])->save();
 
             return $transaction;

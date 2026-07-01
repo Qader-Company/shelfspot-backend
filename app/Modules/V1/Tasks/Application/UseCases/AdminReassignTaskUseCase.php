@@ -25,12 +25,14 @@ class AdminReassignTaskUseCase
 
             $fromStatus = $lockedTask->status;
 
-            $workerHasInProgressTask = $this->taskRepository->query()
+            Worker::query()->whereKey($worker->id)->lockForUpdate()->firstOrFail();
+
+            $workerHasActiveTask = $this->taskRepository->query()
                 ->where('assigned_worker_id', $worker->id)
-                ->where('status', TaskStatusEnum::IN_PROGRESS->value)
+                ->whereIn('status', TaskStatusEnum::values(TaskStatusEnum::workerActiveStatuses()))
                 ->exists();
 
-            CanReassignTaskRule::validate($lockedTask, $worker, $workerHasInProgressTask);
+            CanReassignTaskRule::validate($lockedTask, $worker, $workerHasActiveTask);
 
             $now = now();
             $lockedTask->forceFill([

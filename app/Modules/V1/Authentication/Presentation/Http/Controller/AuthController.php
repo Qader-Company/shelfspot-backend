@@ -85,5 +85,4 @@ class AuthController extends Controller
 
         return ApiResponse::message(__('auth.code_sent'));
     }
-
 }

@@ -72,7 +72,13 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
             ->whereNotNull('last_longitude')
             ->whereBetween('last_latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
             ->whereBetween('last_longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
-            ->whereDoesntHave('assignedTasks', fn (Builder $query) => $query->where('status', TaskStatusEnum::IN_PROGRESS->value))
+            ->whereDoesntHave(
+                'assignedTasks',
+                fn (Builder $query) => $query->whereIn(
+                    'status',
+                    TaskStatusEnum::values(TaskStatusEnum::workerActiveStatuses())
+                )
+            )
             ->select('workers.*')
             ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
             ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])

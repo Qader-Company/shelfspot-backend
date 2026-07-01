@@ -26,7 +26,7 @@ class TaskResource extends JsonResource
                 'phone' => $this->company?->phone,
             ]),
             'date' => $this->date?->toDateString(),
-            'execution_time' => $this->execution_time?->format('H:i:s'),
+//            'execution_time' => $this->execution_time?->format('H:i:s'),
             'estimated_duration_minutes' => $this->estimated_duration_minutes,
             'location' => [
                 'latitude' => $this->latitude,
@@ -34,7 +34,7 @@ class TaskResource extends JsonResource
                 'location_name' => $this->location_name,
                 'address' => $this->address,
             ],
-            'total_price' => $this->total_price,
+            'total_price' => (int) $this->total_price,
             'notes' => $this->notes,
             'status' => $isCompany ? $this->companyFacingStatus() : $this->status->value,
             'payment_status' => $this->payment_status->value,

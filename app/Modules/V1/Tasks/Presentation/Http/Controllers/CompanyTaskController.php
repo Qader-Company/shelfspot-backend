@@ -11,6 +11,7 @@ use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CreateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\PayDraftTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\RequestTaskRefundUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\UpdateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
@@ -105,6 +106,16 @@ class CompanyTaskController extends Controller
     public function pay(int $id, Request $request, PayDraftTaskUseCase $payDraftTaskUseCase)
     {
         $task = $payDraftTaskUseCase->execute(
+            $this->getCompanyTask($id),
+            $request->user()
+        );
+
+        return ApiResponse::updated(new TaskResource($task));
+    }
+
+    public function requestRefund(int $id, Request $request, RequestTaskRefundUseCase $requestTaskRefundUseCase)
+    {
+        $task = $requestTaskRefundUseCase->execute(
             $this->getCompanyTask($id),
             $request->user()
         );

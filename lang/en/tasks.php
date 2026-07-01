@@ -5,6 +5,8 @@ return [
         'accept_pending_only' => 'Only pending tasks can be accepted.',
         'accept_charged_only' => 'Task payment must be charged before acceptance.',
         'pay_draft_only' => 'Only draft tasks can be paid.',
+        'refund_request_pending_or_failed_only' => 'Refund can only be requested for pending or failed tasks.',
+        'refund_refund_requested_or_rejected_only' => 'Refunds can only be issued for refund-requested or rejected tasks.',
         'update_started_task' => 'Task can only be updated while it is draft or pending.',
         'accept_deleted_task' => 'Deleted tasks cannot be accepted.',
         'accept_unassigned_only' => 'This task is already assigned to another worker.',

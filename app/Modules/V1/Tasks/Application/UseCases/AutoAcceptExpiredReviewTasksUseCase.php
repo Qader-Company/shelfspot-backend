@@ -46,7 +46,6 @@ class AutoAcceptExpiredReviewTasksUseCase
                 $lockedTask->forceFill([
                     'status' => TaskStatusEnum::ACCEPTED,
                     'company_accepted_at' => $now,
-                    'auto_accepted_at' => $now,
                 ])->save();
 
                 $this->statusHistoryRecorder->record(

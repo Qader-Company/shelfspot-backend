@@ -1,7 +1,6 @@
 <?php
 
 use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
-use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Controllers\AdminTaskController;
 use App\Modules\V1\Tasks\Presentation\Http\Controllers\TaskReviewMessageController;
 use Illuminate\Support\Facades\Route;
@@ -9,6 +8,15 @@ use Illuminate\Support\Facades\Route;
 Route::controller(AdminTaskController::class)->group(function () {
         Route::get('/', 'index')
             ->middleware('permission:'.AdminPermissionEnum::VIEW_TASK->value);
+
+        Route::get('/company-deleted', 'companyDeleted')
+            ->middleware('permission:'.AdminPermissionEnum::VIEW_TASK->value);
+
+        Route::get('/company-deleted/{id}', 'showCompanyDeleted')
+            ->middleware('permission:'.AdminPermissionEnum::VIEW_TASK->value);
+
+        Route::delete('/company-deleted/{id}', 'forceDeleteCompanyDeleted')
+            ->middleware('permission:'.AdminPermissionEnum::DELETE_TASK->value);
 
         Route::get('/{id}/available-workers', 'availableWorkers')
             ->middleware('permission:'.AdminPermissionEnum::REASSIGN_TASK->value);

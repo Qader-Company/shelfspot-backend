@@ -12,6 +12,7 @@ use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
+use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -34,20 +35,20 @@ class CreateCompanyTaskUseCase
     {
         return DB::transaction(function () use ($data, $actor, $files) {
             $taskServices = $data['services'];
-            $subtotal = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
+            $totalPrice = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
             $estimatedDuration = collect($taskServices)->sum(fn (array $service) => (int) $service['execution_time_minutes']);
 
             $task = $this->taskRepository->create([
                 'company_id' => $this->tenantContext->getCompanyId(),
                 'date' => $data['date'],
                 'execution_time' => self::FIXED_EXECUTION_TIME,
+                'expires_at' => TaskExpiryDate::fromExecutionDate($data['date']),
                 'estimated_duration_minutes' => $estimatedDuration,
                 'latitude' => $data['location']['latitude'],
                 'longitude' => $data['location']['longitude'],
                 'location_name' => $data['location']['location_name'] ?? null,
                 'address' => $data['location']['address'] ?? null,
-                'subtotal' => $subtotal,
-                'total_price' => $subtotal,
+                'total_price' => $totalPrice,
                 'notes' => $data['notes'] ?? null,
                 'status' => TaskStatusEnum::DRAFT,
                 'payment_status' => TaskPaymentStatusEnum::PENDING,

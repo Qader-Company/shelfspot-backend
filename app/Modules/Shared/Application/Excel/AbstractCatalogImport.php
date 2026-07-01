@@ -8,11 +8,13 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Concerns\SkipsUnknownSheets;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas
+abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas, WithMultipleSheets, SkipsUnknownSheets
 {
     private const MAX_ROWS = 1000;
 
@@ -25,6 +27,16 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function __construct(private readonly array $config)
     {
+    }
+
+    public function sheets(): array
+    {
+        return [0 => $this];
+    }
+
+    public function onUnknownSheet($sheetName): void
+    {
+        // Ignore helper sheets such as the hidden Options sheet generated for dropdown values.
     }
 
     public function collection(Collection $rows): void
@@ -41,11 +53,22 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
                 $rowNumber = $index + 2;
                 $data = $this->normalizeRow($row->toArray());
 
-                if ($this->isEmptyRow($data)) {
-                    $this->skipped++;
-                    continue;
-                }
+        $importRows = $normalizedRows
+            ->reject(fn (array $row): bool => $this->isEmptyRow($row['data']))
+            ->values();
 
+        $this->skipped = $normalizedRows->count() - $importRows->count();
+        $this->totalRows = $importRows->count();
+
+        if ($this->totalRows > self::MAX_ROWS) {
+            $this->addError(0, ['The uploaded file exceeds the maximum allowed rows.'], 'file');
+            return;
+        }
+
+        DB::transaction(function () use ($importRows): void {
+            foreach ($importRows as $row) {
+                $rowNumber = $row['index'] + 2;
+                $data = $row['data'];
                 $attributes = $this->attributesFromRow($data, $rowNumber);
 
                 if ($attributes === null) {
@@ -63,7 +86,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
                     continue;
                 }
 
-                if (! $this->validateUniqueSku($attributes, $rowNumber)) {
+                if (! $this->validateUniqueFields($attributes, $rowNumber)) {
                     continue;
                 }
 
@@ -90,13 +113,18 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     private function isEmptyRow(array $row): bool
     {
-        foreach ($this->config['headings'] as $heading) {
+        foreach ($this->contentHeadings() as $heading) {
             if (filled($row[$heading] ?? null)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    private function contentHeadings(): array
+    {
+        return array_values(array_diff($this->config['headings'], ['id', 'is_active']));
     }
 
     private function attributesFromRow(array $row, int $rowNumber): ?array
@@ -149,6 +177,10 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
         if (in_array('sku', $this->config['fillable'], true)) {
             $rules['sku'] = ['nullable', 'string', 'max:255'];
+        }
+
+        if (in_array('barcode', $this->config['fillable'], true)) {
+            $rules['barcode'] = ['nullable', 'max:255'];
         }
 
         if (in_array('description', $this->config['fillable'], true)) {
@@ -242,7 +274,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         return $modelClass::query()->find($id);
     }
 
-    private function validateUniqueSku(array $attributes, int $rowNumber): bool
+    private function validateUniqueFields(array $attributes, int $rowNumber): bool
     {
         if (! array_key_exists('sku', $attributes) || ! filled($attributes['sku'])) {
             return true;

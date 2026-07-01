@@ -6,9 +6,9 @@ use App\Events\TaskStatusUpdated;
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanCompleteTaskRule;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskAutoAcceptDate;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CompleteTaskUseCase
@@ -30,7 +30,8 @@ class CompleteTaskUseCase
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::COMPLETED,
                 'completed_at' => now(),
-                'auto_accept_at' => $this->autoAcceptAt($lockedTask),
+                'auto_accept_at' => TaskAutoAcceptDate::fromTask($lockedTask),
+                'auto_accepted_at' => null,
             ])->save();
 
             TaskStatusUpdated::dispatch(
@@ -43,17 +44,6 @@ class CompleteTaskUseCase
 
             return $lockedTask->refresh();
         });
-    }
-
-    private function autoAcceptAt(Task $task): Carbon
-    {
-        $executionTime = $task->execution_time instanceof Carbon
-            ? $task->execution_time->format('H:i:s')
-            : (string) $task->execution_time;
-
-        return Carbon::parse($task->date->toDateString().' '.$executionTime)
-            ->addMinutes((int) $task->estimated_duration_minutes)
-            ->addDays(2);
     }
 
 }

@@ -18,10 +18,10 @@ abstract class AbstractTaskActionRule
         }
     }
 
-    public static function insureTaskIsCharged(Task $task): void
+    public static function insureTaskIsCharged(Task $task, ?string $message = null): void
     {
         if ($task->payment_status !== TaskPaymentStatusEnum::CHARGED) {
-            throw ValidationException::withMessages(['task' => __('tasks.validation.accept_charged_only')]);
+            throw ValidationException::withMessages(['task' => $message ?? __('tasks.validation.accept_charged_only')]);
         }
     }
 

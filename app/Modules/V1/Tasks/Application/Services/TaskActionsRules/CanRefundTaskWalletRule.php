@@ -3,7 +3,6 @@
 namespace App\Modules\V1\Tasks\Application\Services\TaskActionsRules;
 
 use App\Modules\V1\Tasks\Domain\Models\Task;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Validation\ValidationException;
@@ -22,5 +21,11 @@ class CanRefundTaskWalletRule extends AbstractTaskActionRule
 
         parent::insureTaskIsCharged($task);
 
+        parent::insureTaskStatusIsOneOf(
+            task: $task,
+            statuses: [TaskStatusEnum::REFUND_REQUESTED, TaskStatusEnum::REJECTED],
+            message: __('tasks.validation.refund_refund_requested_or_rejected_only')
+        );
+        parent::insureTaskIsCharged($task, __('company.wallet.tasks.not_charged'));
     }
 }

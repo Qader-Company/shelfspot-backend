@@ -7,12 +7,12 @@ Company Brand Management documents how company users list, create, view, update,
 Allow a company to maintain its own brand catalog so products, categories, sub-brands, and tasks can reference clean company-scoped catalog data.
 
 ## Module Overview
-This flow belongs to the company portal Brands module. Endpoints are under `/api/v1/company/brands`, require a company Bearer token, resolve tenant data through `X-Company-Slug`, and enforce brand permissions per action.
+This flow belongs to the company portal Brands module. Endpoints are under `/api/v1/company/brands`, require a company Bearer token, resolve tenant data through `X-Company-id`, and enforce brand permissions per action.
 
 ## Prerequisites
 - Client has a valid company access token with company portal access ability.
 - Client sends `X-Authorization` with the platform API key.
-- Client sends `X-Company-Slug` for tenant context.
+- Client sends `X-Company-id` for tenant context.
 - The acting company user has the required permission: `view_brand`, `create_brand`, `edit_brand`, or `delete_brand`.
 - Logo uploads, when sent, must be image files with one of: `jpeg`, `png`, `jpg`, `gif`, `svg`, max `2048 KB`.
 
@@ -34,7 +34,7 @@ This flow belongs to the company portal Brands module. Endpoints are under `/api
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -115,7 +115,7 @@ Accept: application/json
 Content-Type: multipart/form-data
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -188,7 +188,7 @@ Brand creation automatically attaches the current tenant company ID. When `logo`
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -259,7 +259,7 @@ Accept: application/json
 Content-Type: multipart/form-data
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -335,7 +335,7 @@ The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. S
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -396,7 +396,7 @@ Accept: application/json
 Content-Type: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -480,7 +480,7 @@ This flow belongs to the company portal Brands Excel support. Endpoints are unde
 
 ## Prerequisites
 - Client has a valid company Bearer token.
-- Client sends `X-Authorization` and `X-Company-Slug`.
+- Client sends `X-Authorization` and `X-Company-id`.
 - The acting company user has `view_brand` for template/export and `create_brand` for import.
 - Import files must be `xlsx`, `xls`, or `csv`, max `10240 KB`.
 
@@ -502,7 +502,7 @@ This flow belongs to the company portal Brands Excel support. Endpoints are unde
 Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -555,7 +555,7 @@ This endpoint returns a binary file response rather than the normal JSON API for
 Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -609,7 +609,7 @@ Accept: application/json
 Content-Type: multipart/form-data
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -704,7 +704,7 @@ This flow belongs to the shared catalog trash behavior used by company brands. E
 
 ## Prerequisites
 - Client has a valid company Bearer token.
-- Client sends `X-Authorization` and `X-Company-Slug`.
+- Client sends `X-Authorization` and `X-Company-id`.
 - The acting company user has `view_brand` for trash list, `edit_brand` for restore, and `delete_brand` for force-delete.
 - Bulk actions require an `ids` array with 1 to 100 distinct integer IDs.
 
@@ -726,7 +726,7 @@ This flow belongs to the shared catalog trash behavior used by company brands. E
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -802,7 +802,7 @@ This endpoint requires `view_brand` and returns deleted records only.
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -863,7 +863,7 @@ Accept: application/json
 Content-Type: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -932,7 +932,7 @@ This endpoint requires `edit_brand`.
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -993,7 +993,7 @@ Accept: application/json
 Content-Type: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body

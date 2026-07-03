@@ -36,9 +36,9 @@
 
 ### 2. Tenant resolution
 
-- Company portal tenant context is read from `X-Company-Slug`.
+- Company portal tenant context is read from `X-Company-id`.
 - Admin-managed tenant context is read from route parameter `{company}`.
-- `TenantContext` stores the selected `Company`, slug, and company id in request-scoped singleton state and `config('tenant.*')`.
+- `TenantContext` stores the selected `Company`, company id in request-scoped singleton state and `config('tenant.*')`.
 
 ### 3. Tenant user protection
 
@@ -88,7 +88,7 @@ This was an actual runtime bug affecting company-admin create/update/delete flow
 
 ### P1 - Tenant resolution from header does not itself enforce active company
 
-`SetTenantFromHeader` resolves companies without global scopes and accepts any company found by slug. `EnsureTenantUser` later checks active company for protected company routes, so current protected routes are covered. The risk is future routes using only `tenant` without `tenant.user`.
+`SetTenantFromHeader` resolves companies without global scopes and accepts any company found by id. `EnsureTenantUser` later checks active company for protected company routes, so current protected routes are covered. The risk is future routes using only `tenant` without `tenant.user`.
 
 **Suggested fix:** either move active-company validation into `SetTenantFromHeader`, or document that `tenant` must never be used alone on company portal protected routes unless inactive tenants are intentionally allowed.
 

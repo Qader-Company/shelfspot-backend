@@ -26,7 +26,7 @@
 ### 1. Tenant isolation
 
 - `Product` uses `BelongsToCompany`, which applies the company global scope and automatically fills `company_id` from `TenantContext` on create.
-- Company portal routes get tenant context from `X-Company-Slug`.
+- Company portal routes get tenant context from `X-Company-id`.
 - Admin-managed product routes get tenant context from `{company}` through `tenant.route-company`.
 - Relationship validation uses `ExistsInCurrentCompany` to ensure selected brand/sub-brand/category/sub-category exists in the current tenant company.
 

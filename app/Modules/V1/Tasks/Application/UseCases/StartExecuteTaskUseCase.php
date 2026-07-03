@@ -42,9 +42,13 @@ class StartExecuteTaskUseCase
                 throw ValidationException::withMessages(['task' => __('tasks.validation.start_outside_geofence')]);
             }
 
+            $now = now();
+
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::IN_PROGRESS,
-                'started_at' => now(),
+                'started_at' => $now,
+                'expected_completion_at' => $now->copy()->addMinutes((int) $lockedTask->estimated_duration_minutes),
+                'in_progress_overdue_at' => null,
             ])->save();
 
             TaskStatusUpdated::dispatch(

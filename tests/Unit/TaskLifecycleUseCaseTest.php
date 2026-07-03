@@ -26,6 +26,8 @@ use App\Modules\V1\Tasks\Application\UseCases\PurgeCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\RestoreCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ReleaseExpiredStartedTasksUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\MarkOverdueInProgressTasksUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
@@ -129,6 +131,8 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $this->assertSame(TaskStatusEnum::IN_PROGRESS, $startedTask->status);
         $this->assertTrue($startedTask->started_at->equalTo(now()));
+        $this->assertTrue($startedTask->expected_completion_at->equalTo(now()->addMinutes($startedTask->estimated_duration_minutes)));
+        $this->assertNull($startedTask->in_progress_overdue_at);
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
             'from_status' => TaskStatusEnum::STARTED->value,
@@ -480,7 +484,7 @@ class TaskLifecycleUseCaseTest extends TestCase
         app(AdminReassignTaskUseCase::class)->execute($cancelledTask, $busyWorker, null);
     }
 
-    public function test_expired_pending_and_cancelled_tasks_are_failed_and_expired_accepted_tasks_return_to_pending(): void
+    public function test_expired_pending_and_cancelled_tasks_are_failed_without_releasing_started_tasks(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$pendingTask] = $this->pendingTaskAndWorker([
@@ -504,15 +508,64 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         $failed = app(FailExpiredTaskUseCase::class)->execute();
 
-        $this->assertSame(3, $failed);
+        $this->assertSame(2, $failed);
         $this->assertSame(TaskStatusEnum::FAILED, $pendingTask->refresh()->status);
         $this->assertSame(TaskStatusEnum::FAILED, $cancelledTask->refresh()->status);
+        $acceptedTask->refresh();
+        $this->assertSame(TaskStatusEnum::STARTED, $acceptedTask->status);
+        $this->assertSame($worker->id, $acceptedTask->assigned_worker_id);
+        $this->assertNotNull($acceptedTask->accepted_at);
+        $this->assertNotNull($acceptedTask->start_deadline_at);
+    }
+
+    public function test_expired_started_tasks_return_to_pending_independently(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$acceptedTask, $worker] = $this->pendingTaskAndWorker(['date' => '2026-06-10']);
+        $acceptedTask->forceFill([
+            'status' => TaskStatusEnum::STARTED,
+            'assigned_worker_id' => $worker->id,
+            'accepted_at' => now()->subMinutes(20),
+            'start_deadline_at' => now()->subMinutes(5),
+        ])->save();
+
+        $released = app(ReleaseExpiredStartedTasksUseCase::class)->execute();
+
+        $this->assertSame(1, $released);
         $acceptedTask->refresh();
         $this->assertSame(TaskStatusEnum::PENDING, $acceptedTask->status);
         $this->assertNull($acceptedTask->assigned_worker_id);
         $this->assertNull($acceptedTask->accepted_at);
         $this->assertNull($acceptedTask->start_deadline_at);
     }
+
+
+    public function test_overdue_in_progress_tasks_are_marked_after_expected_completion(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        [$task, $worker] = $this->pendingTaskAndWorker(['estimated_duration_minutes' => 30]);
+        $startedTask = app(StartExecuteTaskUseCase::class)->execute(
+            app(StartTaskUseCase::class)->execute($task, $worker),
+            $worker,
+            30.0444,
+            31.2357
+        );
+
+        Carbon::setTestNow($startedTask->expected_completion_at->copy()->addMinute());
+
+        $marked = app(MarkOverdueInProgressTasksUseCase::class)->execute();
+
+        $this->assertSame(1, $marked);
+        $startedTask->refresh();
+        $this->assertSame(TaskStatusEnum::IN_PROGRESS, $startedTask->status);
+        $this->assertTrue($startedTask->in_progress_overdue_at->equalTo(now()));
+        $this->assertDatabaseHas('task_status_histories', [
+            'task_id' => $task->id,
+            'from_status' => TaskStatusEnum::IN_PROGRESS->value,
+            'to_status' => TaskStatusEnum::IN_PROGRESS->value,
+        ]);
+    }
+
 
     public function test_worker_cannot_submit_task_service_before_task_started(): void
     {

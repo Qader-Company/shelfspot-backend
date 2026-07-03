@@ -20,7 +20,7 @@ class WorkerResource extends JsonResource
         [$worker, $user] = $this->resolveWorkerAndUser();
 
         return [
-            'id' => $worker?->id,
+            'id' => $user?->id,
             'name' => $user?->name,
             'email' => $user?->email,
             'phone' => $worker?->phone,

@@ -5,7 +5,7 @@ use App\Http\Middleware\CheckApiKey;
 use App\Http\Middleware\CheckScopedPermission;
 use App\Http\Middleware\CheckScopedRole;
 use App\Http\Middleware\SetLocale;
-use App\Http\Middleware\SetTenantFromHeader;
+use App\Http\Middleware\SetTenant;
 use App\Http\Middleware\SetTenantFromRouteCompany;
 use App\Http\Middleware\EnsureTenantUser;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -36,8 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ability' => CheckForAnyAbility::class,
             'locale' => SetLocale::class,
             'role' => CheckScopedRole::class,
-            'tenant' => SetTenantFromHeader::class,
-            'tenant.route-company' => SetTenantFromRouteCompany::class,
+            'tenant' => SetTenant::class,
             'tenant.user' => EnsureTenantUser::class,
             'api.key' => CheckApiKey::class,
             'permission' => CheckScopedPermission::class,

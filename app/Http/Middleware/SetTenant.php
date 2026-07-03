@@ -3,11 +3,13 @@
 namespace App\Http\Middleware;
 
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
+use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Symfony\Component\HttpFoundation\Response;
 
-class SetTenantFromHeader
+class SetTenant
 {
     public function __construct(private TenantContextInterface $tenantContext)
     {
@@ -15,9 +17,8 @@ class SetTenantFromHeader
 
     public function handle(Request $request, Closure $next): Response
     {
-        $tenantSlug = $request->header('X-Company-Slug');
-
-        if (!filled($tenantSlug)  || ! $this->tenantContext->setSlug($tenantSlug)) {
+        $tenantID = $request->header('X-Company-id') ?? $request->route('company');
+        if (!filled($tenantID)  || ! $this->tenantContext->setCompany($tenantID)) {
             abort(404, 'Company not found.');
         }
 

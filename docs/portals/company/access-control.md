@@ -7,11 +7,11 @@ Company Role Management documents how a company user with role-management permis
 Allow each company to define internal access levels for its own admins without mixing roles or permissions with other companies or other portals.
 
 ## Module Overview
-This flow belongs to the company portal Access Control module. All endpoints are under `/api/v1/company/access-control`, require an authenticated company Bearer token, require company tenant resolution through `X-Company-Slug`, and apply permission middleware for each action.
+This flow belongs to the company portal Access Control module. All endpoints are under `/api/v1/company/access-control`, require an authenticated company Bearer token, require company tenant resolution through `X-Company-id`, and apply permission middleware for each action.
 
 ## Prerequisites
 - Client has a valid company access token with company portal access ability.
-- Client sends `X-Company-Slug` for the company tenant context.
+- Client sends `X-Company-id` for the company tenant context.
 - Client sends `X-Authorization` with the platform API key.
 - The acting company user has the required permission for the action, such as `view_role`, `create_role`, `edit_role`, or `delete_role`.
 - Role permissions must be valid company portal permission names.
@@ -34,7 +34,7 @@ This flow belongs to the company portal Access Control module. All endpoints are
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -105,7 +105,7 @@ This endpoint requires the acting user to have `view_role`. Use the returned `na
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -182,7 +182,7 @@ Accept: application/json
 Content-Type: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -275,7 +275,7 @@ Accept: application/json
 Content-Type: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -372,7 +372,7 @@ The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. T
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -442,11 +442,11 @@ Company Admin Management documents how a company user with admin-management perm
 Allow a company owner or authorized company admin to manage internal users who can operate the company portal while keeping those users scoped to the current company tenant.
 
 ## Module Overview
-This flow belongs to the company portal Company Admins and Access Control modules. The endpoints are under `/api/v1/company/access-control/admins`, use the current tenant company from `X-Company-Slug`, and assign roles by company-scoped role names.
+This flow belongs to the company portal Company Admins and Access Control modules. The endpoints are under `/api/v1/company/access-control/admins`, use the current tenant company from `X-Company-id`, and assign roles by company-scoped role names.
 
 ## Prerequisites
 - Client has a valid company Bearer access token.
-- Client sends `X-Company-Slug` for tenant context.
+- Client sends `X-Company-id` for tenant context.
 - Client sends `X-Authorization` with the platform API key.
 - The acting company user has the required permission: `view_admin`, `create_admin`, `edit_admin`, or `delete_admin`.
 - Roles assigned to admins already exist for the current company.
@@ -468,7 +468,7 @@ This flow belongs to the company portal Company Admins and Access Control module
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -550,7 +550,7 @@ Accept: application/json
 Content-Type: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -645,7 +645,7 @@ Accept: application/json
 Content-Type: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body
@@ -740,7 +740,7 @@ The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. T
 Accept: application/json
 X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
+X-Company-id: {{company_id}}
 ```
 
 ### Request Body

@@ -20,7 +20,6 @@ class CompanyResource extends JsonResource
             'id' => $this->id,
             'deleted_at' => $this->when($this->deleted_at, $this->deleted_at?->toISOString()),
             'name' => $this->name ,
-            'slug' => $this->slug ,
             'email' => $this->email ,
             'phone' => $this->phone ,
             'cr_number' => $this->cr_number ,

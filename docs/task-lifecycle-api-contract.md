@@ -24,7 +24,7 @@ GET /api/v1/company/tasks/{task}
 #### Required headers
 
 ```http
-X-Company-Slug: {company_slug}
+X-Company-id: {company_id}
 Authorization: Bearer {company_access_token}
 ```
 

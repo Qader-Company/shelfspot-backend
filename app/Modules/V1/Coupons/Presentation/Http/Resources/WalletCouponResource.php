@@ -22,7 +22,6 @@ class WalletCouponResource extends JsonResource
             'assigned_company' => $this->whenLoaded('assignedCompany', fn () => $this->assignedCompany ? [
                 'id' => $this->assignedCompany->id,
                 'name' => $this->assignedCompany->name,
-                'slug' => $this->assignedCompany->slug,
             ] : null),
             'created_by' => $this->whenLoaded('creator', fn () => $this->creator ? [
                 'id' => $this->creator->id,

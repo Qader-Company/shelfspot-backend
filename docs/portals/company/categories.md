@@ -1,33 +1,34 @@
-# Flow: Company Brand Management
+# Flow: Company Category Management
 
 ## Description
-Company Brand Management documents how company users list, create, view, update, delete, and bulk-delete brands inside the current company tenant.
+Company Category Management documents how company users list, create, view, update, delete, and bulk-delete categories inside the current company tenant.
 
 ## Business Goal
-Allow a company to maintain its own brand catalog so products, categories, sub-brands, and tasks can reference clean company-scoped catalog data.
+Allow a company to maintain its own category catalog so products, sub-categories, and tasks can reference clean company-scoped category data.
 
 ## Module Overview
-This flow belongs to the company portal Brands module. Endpoints are under `/api/v1/company/brands`, require a company Bearer token, resolve tenant data through `X-Company-Slug`, and enforce brand permissions per action.
+This flow belongs to the company portal Categories module. Endpoints are under `/api/v1/company/categories`, require a company Bearer token, resolve tenant data through `X-Company-Slug`, and enforce category permissions per action.
 
 ## Prerequisites
 - Client has a valid company access token with company portal access ability.
 - Client sends `X-Authorization` with the platform API key.
 - Client sends `X-Company-Slug` for tenant context.
-- The acting company user has the required permission: `view_brand`, `create_brand`, `edit_brand`, or `delete_brand`.
-- Logo uploads, when sent, must be image files with one of: `jpeg`, `png`, `jpg`, `gif`, `svg`, max `2048 KB`.
+- The acting company user has the required permission: `view_category`, `create_category`, `edit_category`, or `delete_category`.
+- `brand_id` and `sub_brand_id` are optional, but when sent they must reference records in the current company.
+- Image uploads, when sent, must be image files with one of: `jpeg`, `png`, `jpg`, `gif`, `svg`, max `2048 KB`.
 
 ## Walkthrough
-1. Call `List Brands` to show paginated company brands and optional filters.
-2. Call `Create Brand` with a brand name, optional logo, and optional active flag.
-3. Call `Show Brand` to open one brand by ID.
-4. Call `Update Brand` to edit name, logo, or active state.
-5. Call `Delete Brand` for a single soft-delete, or `Bulk Delete Brands` for multiple IDs.
+1. Call `List Categories` to show paginated company categories and optional filters.
+2. Call `Create Category` with category name, required active flag, optional `brand_id`, optional `sub_brand_id`, and optional image.
+3. Call `Show Category` to open one category by ID.
+4. Call `Update Category` to edit name, image, or active state.
+5. Call `Delete Category` for a single soft-delete, or `Bulk Delete Categories` for multiple IDs.
 
-## Endpoint: List Brands
+## Endpoint: List Categories
 - **Method:** GET
-- **URL:** /api/v1/company/brands
+- **URL:** /api/v1/company/categories
 - **Auth:** Bearer
-- **Purpose:** Return paginated brands scoped to the current company.
+- **Purpose:** Return paginated categories scoped to the current company.
 
 ### Headers
 ```
@@ -50,14 +51,14 @@ X-Company-Slug: {{company_slug}}
     "data": [
       {
         "id": 1,
-        "name": "Acme",
-        "logo": "https://cdn.example.com/brands/acme.png",
+        "name": "Beverages",
+        "image": "https://cdn.example.com/categories/beverages.png",
         "active": true
       }
     ],
     "links": {
-      "first": "http://localhost/api/v1/company/brands?page=1",
-      "last": "http://localhost/api/v1/company/brands?page=1",
+      "first": "http://localhost/api/v1/company/categories?page=1",
+      "last": "http://localhost/api/v1/company/categories?page=1",
       "prev": null,
       "next": null
     },
@@ -82,7 +83,7 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: List active brands by name
+#### Example: List active categories by name
 Request:
 ```json
 {}
@@ -93,7 +94,7 @@ Response:
   "success": true,
   "data": {
     "data": [
-      { "id": 1, "name": "Acme", "logo": "https://cdn.example.com/brands/acme.png", "active": true }
+      { "id": 1, "name": "Beverages", "image": "https://cdn.example.com/categories/beverages.png", "active": true }
     ],
     "meta": { "current_page": 1, "per_page": 15, "total": 1 }
   }
@@ -101,13 +102,13 @@ Response:
 ```
 
 ### Notes
-The controller accepts `name` and `active` filters from the query string. Results are tenant-scoped by the current company.
+The controller accepts `name`, `active`, `brand_id`, and `sub_brand_id` filters from the query string. Results are tenant-scoped by the current company.
 
-## Endpoint: Create Brand
+## Endpoint: Create Category
 - **Method:** POST
-- **URL:** /api/v1/company/brands
+- **URL:** /api/v1/company/categories
 - **Auth:** Bearer
-- **Purpose:** Create a new brand for the current company.
+- **Purpose:** Create a new category for the current company.
 
 ### Headers
 ```
@@ -122,8 +123,10 @@ X-Company-Slug: {{company_slug}}
 ```json
 {
   "name": "string (required, max:255)",
-  "logo": "file (optional, image, mimes:jpeg,png,jpg,gif,svg, max:2048KB)",
-  "is_active": "boolean (optional)"
+  "brand_id": "integer (optional, must exist in current company brands)",
+  "sub_brand_id": "integer (optional, must exist in current company sub-brands)",
+  "is_active": "boolean (required)",
+  "image": "file (optional, image, mimes:jpeg,png,jpg,gif,svg, max:2048KB)"
 }
 ```
 
@@ -152,17 +155,21 @@ X-Company-Slug: {{company_slug}}
   "message": "The name field is required.",
   "errors": {
     "name": ["The name field is required."],
-    "logo": ["The logo field must be an image."]
+    "is_active": ["The is active field is required."],
+    "brand_id": ["The selected brand is invalid."],
+    "sub_brand_id": ["The selected sub brand is invalid."]
   }
 }
 ```
 
 ### Examples
-#### Example: Create active brand
+#### Example: Create active category
 Request:
 ```json
 {
-  "name": "Acme",
+  "name": "Beverages",
+  "brand_id": 1,
+  "sub_brand_id": 2,
   "is_active": true
 }
 ```
@@ -175,13 +182,13 @@ Response:
 ```
 
 ### Notes
-Brand creation automatically attaches the current tenant company ID. When `logo` is provided, it is stored in the single-file `logo` media collection.
+Category creation automatically attaches the current tenant company ID, validates optional `brand_id` and `sub_brand_id` against the current company, and stores the optional image in the single-file `image` media collection.
 
-## Endpoint: Show Brand
+## Endpoint: Show Category
 - **Method:** GET
-- **URL:** /api/v1/company/brands/{id}
+- **URL:** /api/v1/company/categories/{id}
 - **Auth:** Bearer
-- **Purpose:** Return one company brand by ID.
+- **Purpose:** Return one company category by ID.
 
 ### Headers
 ```
@@ -202,8 +209,8 @@ X-Company-Slug: {{company_slug}}
   "success": true,
   "data": {
     "id": 1,
-    "name": "Acme",
-    "logo": "https://cdn.example.com/brands/acme.png",
+    "name": "Beverages",
+    "image": "https://cdn.example.com/categories/beverages.png",
     "active": true
   }
 }
@@ -220,13 +227,13 @@ X-Company-Slug: {{company_slug}}
 { "success": false, "message": "Forbidden." }
 ```
 
-- **404 — brand not found**
+- **404 — category not found**
 ```json
-{ "success": false, "message": "Brand not found." }
+{ "success": false, "message": "Category not found." }
 ```
 
 ### Examples
-#### Example: Open brand details
+#### Example: Open category details
 Request:
 ```json
 {}
@@ -237,21 +244,21 @@ Response:
   "success": true,
   "data": {
     "id": 1,
-    "name": "Acme",
-    "logo": "https://cdn.example.com/brands/acme.png",
+    "name": "Beverages",
+    "image": "https://cdn.example.com/categories/beverages.png",
     "active": true
   }
 }
 ```
 
 ### Notes
-The `{id}` must belong to the current company because brands use company tenant scoping.
+The `{id}` must belong to the current company because categories use company tenant scoping. The index response loads optional `brand` and `sub_brand` relations.
 
-## Endpoint: Update Brand
+## Endpoint: Update Category
 - **Method:** PATCH
-- **URL:** /api/v1/company/brands/{id}
+- **URL:** /api/v1/company/categories/{id}
 - **Auth:** Bearer
-- **Purpose:** Update a brand name, logo, or active state.
+- **Purpose:** Update a category name, image, or active state.
 
 ### Headers
 ```
@@ -266,8 +273,10 @@ X-Company-Slug: {{company_slug}}
 ```json
 {
   "name": "string (optional, max:255)",
-  "logo": "file (optional, image, mimes:jpeg,png,jpg,gif,svg, max:2048KB)",
-  "is_active": "boolean (optional)"
+  "brand_id": "integer (optional nullable, must exist in current company brands when present)",
+  "sub_brand_id": "integer (optional nullable, must exist in current company sub-brands when present)",
+  "is_active": "boolean (optional)",
+  "image": "file (optional nullable, image, mimes:jpeg,png,jpg,gif,svg, max:2048KB)"
 }
 ```
 
@@ -290,23 +299,23 @@ X-Company-Slug: {{company_slug}}
 { "success": false, "message": "Forbidden." }
 ```
 
-- **404 — brand not found**
+- **404 — category not found**
 ```json
-{ "success": false, "message": "Brand not found." }
+{ "success": false, "message": "Category not found." }
 ```
 
 - **422 — validation error**
 ```json
 {
-  "message": "The logo field must be a file of type: jpeg, png, jpg, gif, svg.",
+  "message": "The image field must be a file of type: jpeg, png, jpg, gif, svg.",
   "errors": {
-    "logo": ["The logo field must be a file of type: jpeg, png, jpg, gif, svg."]
+    "image": ["The image field must be a file of type: jpeg, png, jpg, gif, svg."]
   }
 }
 ```
 
 ### Examples
-#### Example: Deactivate brand
+#### Example: Deactivate category
 Request:
 ```json
 {
@@ -322,13 +331,13 @@ Response:
 ```
 
 ### Notes
-The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. Sending a new logo replaces the current logo file.
+The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. Sending a new image replaces the current image file.
 
-## Endpoint: Delete Brand
+## Endpoint: Delete Category
 - **Method:** DELETE
-- **URL:** /api/v1/company/brands/{id}
+- **URL:** /api/v1/company/categories/{id}
 - **Auth:** Bearer
-- **Purpose:** Soft-delete a brand and queue cascading catalog delete behavior for its children.
+- **Purpose:** Soft-delete a category and queue cascading catalog delete behavior for its children.
 
 ### Headers
 ```
@@ -362,13 +371,13 @@ X-Company-Slug: {{company_slug}}
 { "success": false, "message": "Forbidden." }
 ```
 
-- **404 — brand not found**
+- **404 — category not found**
 ```json
-{ "success": false, "message": "Brand not found." }
+{ "success": false, "message": "Category not found." }
 ```
 
 ### Examples
-#### Example: Delete one brand
+#### Example: Delete one category
 Request:
 ```json
 {}
@@ -382,13 +391,13 @@ Response:
 ```
 
 ### Notes
-The delete endpoint returns an accepted queued-delete message in the controller. Related catalog children are handled through cascade trash actions.
+The delete endpoint returns an accepted queued-delete message in the controller. Related sub-categories and products are handled through cascade trash actions.
 
-## Endpoint: Bulk Delete Brands
+## Endpoint: Bulk Delete Categories
 - **Method:** POST
-- **URL:** /api/v1/company/brands/bulk-delete
+- **URL:** /api/v1/company/categories/bulk-delete
 - **Auth:** Bearer
-- **Purpose:** Soft-delete multiple brands by ID.
+- **Purpose:** Soft-delete multiple categories by ID.
 
 ### Headers
 ```
@@ -437,7 +446,7 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: Bulk delete selected brands
+#### Example: Bulk delete selected categories
 Request:
 ```json
 {
@@ -453,49 +462,49 @@ Response:
 ```
 
 ### Notes
-This endpoint accepts up to 100 distinct IDs per request and requires `delete_brand`.
+This endpoint accepts up to 100 distinct IDs per request and requires `delete_category`.
 
-## Branch: Brand logo replacement
-**Condition:** A company updates a brand and sends a new `logo` file.
+## Branch: Category image replacement
+**Condition:** A company updates a category and sends a new `image` file.
 
-### Case: Replace single-file logo collection
-**When:** The brand already has a logo and the update request includes a new valid image file.
-**Explanation:** The backend clears the old `logo` media collection and stores the new file as the brand logo.
+### Case: Replace single-file image collection
+**When:** The category already has an image and the update request includes a new valid image file.
+**Explanation:** The backend clears the old `image` media collection and stores the new file as the category image.
 
-#### Endpoint: Update Brand
+#### Endpoint: Update Category
 - **Method:** PATCH
-- **URL:** /api/v1/company/brands/{id}
+- **URL:** /api/v1/company/categories/{id}
 
 ---
-# Flow: Company Brand Excel Operations
+# Flow: Company Category Excel Operations
 
 ## Description
-Company Brand Excel Operations documents how company users download an import template, export current brands, and import brands from an Excel or CSV file.
+Company Category Excel Operations documents how company users download an import template, export current categories, and import categories from an Excel or CSV file.
 
 ## Business Goal
-Allow companies to manage brand catalog data in bulk instead of manually creating or updating each brand one by one.
+Allow companies to manage category catalog data in bulk instead of manually creating or updating each category one by one.
 
 ## Module Overview
-This flow belongs to the company portal Brands Excel support. Endpoints are under `/api/v1/company/brands/excel` and reuse company auth, tenant scoping, and brand permissions.
+This flow belongs to the company portal Categories Excel support. Endpoints are under `/api/v1/company/categories/excel` and reuse company auth, tenant scoping, and category permissions.
 
 ## Prerequisites
 - Client has a valid company Bearer token.
 - Client sends `X-Authorization` and `X-Company-Slug`.
-- The acting company user has `view_brand` for template/export and `create_brand` for import.
+- The acting company user has `view_category` for template/export and `create_category` for import.
 - Import files must be `xlsx`, `xls`, or `csv`, max `10240 KB`.
 
 ## Walkthrough
-1. Call `Download Brand Template` to get the expected spreadsheet structure.
-2. Fill brand rows in the template outside the API.
-3. Call `Import Brands` with the completed spreadsheet.
+1. Call `Download Category Template` to get the expected spreadsheet structure.
+2. Fill category rows in the template outside the API.
+3. Call `Import Categories` with the completed spreadsheet.
 4. Review row-level errors returned by the import response, if any.
-5. Call `Export Brands` whenever the company needs a spreadsheet snapshot of current brand data.
+5. Call `Export Categories` whenever the company needs a spreadsheet snapshot of current category data.
 
-## Endpoint: Download Brand Template
+## Endpoint: Download Category Template
 - **Method:** GET
-- **URL:** /api/v1/company/brands/excel/template
+- **URL:** /api/v1/company/categories/excel/template
 - **Auth:** Bearer
-- **Purpose:** Download an Excel template for brand import.
+- **Purpose:** Download an Excel template for category import.
 
 ### Headers
 ```
@@ -529,7 +538,7 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: Download brand import template
+#### Example: Download category import template
 Request:
 ```json
 {}
@@ -537,18 +546,18 @@ Request:
 Response:
 ```json
 {
-  "file": "brands-template.xlsx"
+  "file": "categories-template.xlsx"
 }
 ```
 
 ### Notes
 This endpoint returns a binary file response rather than the normal JSON API format.
 
-## Endpoint: Export Brands
+## Endpoint: Export Categories
 - **Method:** GET
-- **URL:** /api/v1/company/brands/excel/export
+- **URL:** /api/v1/company/categories/excel/export
 - **Auth:** Bearer
-- **Purpose:** Download current company brand data as a spreadsheet.
+- **Purpose:** Download current company category data as a spreadsheet.
 
 ### Headers
 ```
@@ -582,7 +591,7 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: Export brand catalog
+#### Example: Export category catalog
 Request:
 ```json
 {}
@@ -590,18 +599,18 @@ Request:
 Response:
 ```json
 {
-  "file": "brands-export.xlsx"
+  "file": "categories-export.xlsx"
 }
 ```
 
 ### Notes
-This endpoint returns a binary file response and requires `view_brand`.
+This endpoint returns a binary file response and requires `view_category`.
 
-## Endpoint: Import Brands
+## Endpoint: Import Categories
 - **Method:** POST
-- **URL:** /api/v1/company/brands/excel/import
+- **URL:** /api/v1/company/categories/excel/import
 - **Auth:** Bearer
-- **Purpose:** Import brand rows from an uploaded spreadsheet.
+- **Purpose:** Import category rows from an uploaded spreadsheet.
 
 ### Headers
 ```
@@ -654,11 +663,11 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: Import brand spreadsheet
+#### Example: Import category spreadsheet
 Request:
 ```json
 {
-  "file": "brands.xlsx"
+  "file": "categories.xlsx"
 }
 ```
 Response:
@@ -686,40 +695,40 @@ A successful HTTP response can still include row-level import errors. The client
 **When:** The response message says the import completed with validation errors.
 **Explanation:** Keep successfully imported rows, display each row error to the user, and let the user fix and re-upload failed rows.
 
-#### Endpoint: Import Brands
+#### Endpoint: Import Categories
 - **Method:** POST
-- **URL:** /api/v1/company/brands/excel/import
+- **URL:** /api/v1/company/categories/excel/import
 
 ---
-# Flow: Company Brand Trash Management
+# Flow: Company Category Trash Management
 
 ## Description
-Company Brand Trash Management documents how company users list deleted brands, restore deleted brands, bulk-restore deleted brands, force-delete one brand, and bulk-force-delete deleted brands.
+Company Category Trash Management documents how company users list deleted categories, restore deleted categories, bulk-restore deleted categories, force-delete one category, and bulk-force-delete deleted categories.
 
 ## Business Goal
-Allow companies to recover mistakenly deleted brand catalog data or permanently purge deleted brands when they are no longer needed.
+Allow companies to recover mistakenly deleted category catalog data or permanently purge deleted categories when they are no longer needed.
 
 ## Module Overview
-This flow belongs to the shared catalog trash behavior used by company brands. Endpoints are under `/api/v1/company/brands/trash` and operate only on trashed brand records in the current company tenant.
+This flow belongs to the shared catalog trash behavior used by company categories. Endpoints are under `/api/v1/company/categories/trash` and operate only on trashed category records in the current company tenant.
 
 ## Prerequisites
 - Client has a valid company Bearer token.
 - Client sends `X-Authorization` and `X-Company-Slug`.
-- The acting company user has `view_brand` for trash list, `edit_brand` for restore, and `delete_brand` for force-delete.
+- The acting company user has `view_category` for trash list, `edit_category` for restore, and `delete_category` for force-delete.
 - Bulk actions require an `ids` array with 1 to 100 distinct integer IDs.
 
 ## Walkthrough
-1. Call `List Trashed Brands` to show deleted brands.
-2. Call `Restore Brand` to recover one deleted brand.
-3. Call `Bulk Restore Brands` to recover multiple deleted brands.
-4. Call `Force Delete Brand` to permanently delete one trashed brand.
-5. Call `Bulk Force Delete Brands` to permanently delete multiple trashed brands.
+1. Call `List Trashed Categories` to show deleted categories.
+2. Call `Restore Category` to recover one deleted category.
+3. Call `Bulk Restore Categories` to recover multiple deleted categories.
+4. Call `Force Delete Category` to permanently delete one trashed category.
+5. Call `Bulk Force Delete Categories` to permanently delete multiple trashed categories.
 
-## Endpoint: List Trashed Brands
+## Endpoint: List Trashed Categories
 - **Method:** GET
-- **URL:** /api/v1/company/brands/trash
+- **URL:** /api/v1/company/categories/trash
 - **Auth:** Bearer
-- **Purpose:** Return paginated soft-deleted brands for the current company.
+- **Purpose:** Return paginated soft-deleted categories for the current company.
 
 ### Headers
 ```
@@ -744,8 +753,8 @@ X-Company-Slug: {{company_slug}}
         "id": 1,
         "deleted_at": "2026-07-02T12:00:00.000000Z",
         "purge_status": "pending",
-        "name": "Acme",
-        "logo": "https://cdn.example.com/brands/acme.png",
+        "name": "Beverages",
+        "image": "https://cdn.example.com/categories/beverages.png",
         "active": false
       }
     ],
@@ -770,7 +779,7 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: List deleted brands
+#### Example: List deleted categories
 Request:
 ```json
 {}
@@ -781,7 +790,7 @@ Response:
   "success": true,
   "data": {
     "data": [
-      { "id": 1, "deleted_at": "2026-07-02T12:00:00.000000Z", "purge_status": "pending", "name": "Acme", "logo": "", "active": false }
+      { "id": 1, "deleted_at": "2026-07-02T12:00:00.000000Z", "purge_status": "pending", "name": "Beverages", "image": "", "active": false }
     ],
     "meta": { "current_page": 1, "per_page": 15, "total": 1 }
   }
@@ -789,13 +798,13 @@ Response:
 ```
 
 ### Notes
-This endpoint requires `view_brand` and returns deleted records only.
+This endpoint requires `view_category` and returns deleted records only.
 
-## Endpoint: Restore Brand
+## Endpoint: Restore Category
 - **Method:** POST
-- **URL:** /api/v1/company/brands/trash/{id}/restore
+- **URL:** /api/v1/company/categories/trash/{id}/restore
 - **Auth:** Bearer
-- **Purpose:** Restore one soft-deleted brand by ID.
+- **Purpose:** Restore one soft-deleted category by ID.
 
 ### Headers
 ```
@@ -829,13 +838,13 @@ X-Company-Slug: {{company_slug}}
 { "success": false, "message": "Forbidden." }
 ```
 
-- **404 — trashed brand not found**
+- **404 — trashed category not found**
 ```json
 { "success": false, "message": "Not found." }
 ```
 
 ### Examples
-#### Example: Restore one brand
+#### Example: Restore one category
 Request:
 ```json
 {}
@@ -849,13 +858,13 @@ Response:
 ```
 
 ### Notes
-This endpoint requires `edit_brand`.
+This endpoint requires `edit_category`.
 
-## Endpoint: Bulk Restore Brands
+## Endpoint: Bulk Restore Categories
 - **Method:** POST
-- **URL:** /api/v1/company/brands/trash/bulk-restore
+- **URL:** /api/v1/company/categories/trash/bulk-restore
 - **Auth:** Bearer
-- **Purpose:** Restore multiple soft-deleted brands by ID.
+- **Purpose:** Restore multiple soft-deleted categories by ID.
 
 ### Headers
 ```
@@ -903,7 +912,7 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: Restore selected brands
+#### Example: Restore selected categories
 Request:
 ```json
 {
@@ -919,13 +928,13 @@ Response:
 ```
 
 ### Notes
-This endpoint requires `edit_brand`.
+This endpoint requires `edit_category`.
 
-## Endpoint: Force Delete Brand
+## Endpoint: Force Delete Category
 - **Method:** DELETE
-- **URL:** /api/v1/company/brands/trash/{id}
+- **URL:** /api/v1/company/categories/trash/{id}
 - **Auth:** Bearer
-- **Purpose:** Permanently delete one trashed brand by ID.
+- **Purpose:** Permanently delete one trashed category by ID.
 
 ### Headers
 ```
@@ -959,13 +968,13 @@ X-Company-Slug: {{company_slug}}
 { "success": false, "message": "Forbidden." }
 ```
 
-- **404 — trashed brand not found**
+- **404 — trashed category not found**
 ```json
 { "success": false, "message": "Not found." }
 ```
 
 ### Examples
-#### Example: Permanently delete brand
+#### Example: Permanently delete category
 Request:
 ```json
 {}
@@ -979,13 +988,13 @@ Response:
 ```
 
 ### Notes
-This endpoint requires `delete_brand`. Force delete removes the brand permanently and deletes associated media on force delete.
+This endpoint requires `delete_category`. Force delete removes the category permanently and deletes associated media on force delete.
 
-## Endpoint: Bulk Force Delete Brands
+## Endpoint: Bulk Force Delete Categories
 - **Method:** DELETE
-- **URL:** /api/v1/company/brands/trash/bulk-force-delete
+- **URL:** /api/v1/company/categories/trash/bulk-force-delete
 - **Auth:** Bearer
-- **Purpose:** Permanently delete multiple trashed brands by ID.
+- **Purpose:** Permanently delete multiple trashed categories by ID.
 
 ### Headers
 ```
@@ -1033,7 +1042,7 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: Permanently delete selected trashed brands
+#### Example: Permanently delete selected trashed categories
 Request:
 ```json
 {
@@ -1049,15 +1058,15 @@ Response:
 ```
 
 ### Notes
-This endpoint requires `delete_brand` and should be treated as irreversible.
+This endpoint requires `delete_category` and should be treated as irreversible.
 
-## Branch: Deleted brand should be recovered
-**Condition:** A company user deleted a brand by mistake.
+## Branch: Deleted category should be recovered
+**Condition:** A company user deleted a category by mistake.
 
 ### Case: Restore from trash
-**When:** The brand appears in `List Trashed Brands` and should return to the active catalog.
-**Explanation:** Use `Restore Brand` for one ID or `Bulk Restore Brands` for multiple IDs, then reload `List Brands` to confirm it is back in the catalog.
+**When:** The category appears in `List Trashed Categories` and should return to the active catalog.
+**Explanation:** Use `Restore Category` for one ID or `Bulk Restore Categories` for multiple IDs, then reload `List Categories` to confirm it is back in the catalog.
 
-#### Endpoint: Restore Brand
+#### Endpoint: Restore Category
 - **Method:** POST
-- **URL:** /api/v1/company/brands/trash/{id}/restore
+- **URL:** /api/v1/company/categories/trash/{id}/restore

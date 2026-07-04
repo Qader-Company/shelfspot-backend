@@ -540,6 +540,7 @@ class TaskLifecycleUseCaseTest extends TestCase
     }
 
 
+<<<<<<< codex/analyze-expiration-and-scheduling-issue
     public function test_overdue_in_progress_tasks_are_marked_after_expected_completion(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
@@ -567,6 +568,8 @@ class TaskLifecycleUseCaseTest extends TestCase
     }
 
 
+=======
+>>>>>>> main
     public function test_worker_cannot_submit_task_service_before_task_started(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');

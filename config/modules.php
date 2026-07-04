@@ -44,6 +44,7 @@ return [
             [ 'prefix' => 'company/products',       'file' => 'products.php',       'middlewares' => $companyMiddlewares ],
             [ 'prefix' => 'company/wallets',        'file' => 'wallets.php',        'middlewares' => $companyMiddlewares ],
             [ 'prefix' => 'company/tasks',          'file' => 'tasks.php',          'middlewares' => $companyMiddlewares ],
+            [ 'prefix' => 'company/reports',        'file' => 'reports.php',        'middlewares' => $companyMiddlewares ],
             [ 'prefix' => 'company/access-control', 'file' => 'access-control.php', 'middlewares' => $companyMiddlewares ],
         ]
     ],

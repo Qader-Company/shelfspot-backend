@@ -10,4 +10,8 @@ Artisan::command('inspire', function () {
 
 Schedule::command('tasks:fail-expired')->dailyAt('00:00')->withoutOverlapping();
 Schedule::command('tasks:release-expired-started --limit=100')->everyMinute()->withoutOverlapping();
+<<<<<<< codex/analyze-expiration-and-scheduling-issue
+Schedule::command('tasks:mark-overdue-in-progress --limit=100')->everyFiveMinutes()->withoutOverlapping();
+=======
+>>>>>>> main
 Schedule::command('tasks:auto-accept-expired-review')->everyMinute();

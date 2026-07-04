@@ -7,36 +7,20 @@ use App\Modules\V1\Companies\Domain\Models\Company;
 
 class TenantContext implements TenantContextInterface
 {
-    private ?string $slug = null;
     private ?Company $company = null;
 
-    public function getSlug(): ?string
+    public function setCompany(string $id): bool
     {
-        return $this->slug;
-    }
-
-    public function setSlug(string $slug): bool
-    {
-        $company = Company::withoutGlobalScopes()
-            ->where('slug', $slug)
-            ->first();
+        $company = Company::withoutGlobalScopes()->find($id);
 
         if (is_null($company)) {
             return false;
         }
-
-        $this->setCompany($company);
-
-        return true;
-    }
-
-    public function setCompany(Company $company): void
-    {
         $this->company = $company;
-        $this->slug = $company->slug;
 
-        config(['tenant.slug' => $this->slug]);
         config(['tenant.company_id' => $company->id]);
+        return true;
+
     }
 
     public function getCompany(): ?Company

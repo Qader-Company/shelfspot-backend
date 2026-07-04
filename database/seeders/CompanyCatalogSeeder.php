@@ -6,7 +6,6 @@ use App\Modules\V1\Companies\Domain\Models\Company;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class CompanyCatalogSeeder extends Seeder
 {
@@ -47,30 +46,26 @@ class CompanyCatalogSeeder extends Seeder
             ],
         ];
         foreach ($catalog as $data) {
-            $brandSlug = Str::slug($data['brand']);
             DB::table('brands')->updateOrInsert(
-                ['company_id' => $companyId, 'slug' => $brandSlug],
+                ['company_id' => $companyId, 'name' => $data['brand']],
                 ['name' => $data['brand'], 'is_active' => true, 'updated_at' => $now, 'created_at' => $now]
             );
-            $brandId = (int) DB::table('brands')->where('company_id', $companyId)->where('slug', $brandSlug)->value('id');
+            $brandId = (int) DB::table('brands')->where('company_id', $companyId)->where('name', $data['brand'])->value('id');
 
-            $subBrandSlug = Str::slug($data['sub_brand']);
             DB::table('sub_brands')->updateOrInsert(
-                ['company_id' => $companyId, 'slug' => $subBrandSlug],
+                ['company_id' => $companyId, 'name' => $data['sub_brand']],
                 ['brand_id' => $brandId, 'name' => $data['sub_brand'], 'is_active' => true, 'updated_at' => $now, 'created_at' => $now]
             );
-            $subBrandId = (int) DB::table('sub_brands')->where('company_id', $companyId)->where('slug', $subBrandSlug)->value('id');
+            $subBrandId = (int) DB::table('sub_brands')->where('company_id', $companyId)->where('name', $data['sub_brand'])->value('id');
 
-            $categorySlug = Str::slug($data['category']);
             DB::table('categories')->updateOrInsert(
-                ['company_id' => $companyId, 'slug' => $categorySlug],
+                ['company_id' => $companyId, 'name' => $data['category']],
                 ['brand_id' => $brandId, 'sub_brand_id' => $subBrandId, 'name' => $data['category'], 'is_active' => true, 'updated_at' => $now, 'created_at' => $now]
             );
-            $categoryId = (int) DB::table('categories')->where('company_id', $companyId)->where('slug', $categorySlug)->value('id');
+            $categoryId = (int) DB::table('categories')->where('company_id', $companyId)->where('name', $data['category'])->value('id');
 
-            $subCategorySlug = Str::slug($data['sub_category']);
             DB::table('sub_categories')->updateOrInsert(
-                ['company_id' => $companyId, 'slug' => $subCategorySlug],
+                ['company_id' => $companyId, 'name' => $data['sub_category']],
                 [
                     'brand_id' => $brandId,
                     'sub_brand_id' => $subBrandId,
@@ -81,11 +76,11 @@ class CompanyCatalogSeeder extends Seeder
                     'created_at' => $now,
                 ]
             );
-            $subCategoryId = (int) DB::table('sub_categories')->where('company_id', $companyId)->where('slug', $subCategorySlug)->value('id');
+            $subCategoryId = (int) DB::table('sub_categories')->where('company_id', $companyId)->where('name', $data['sub_category'])->value('id');
 
             foreach ($data['products'] as $product) {
                 DB::table('products')->updateOrInsert(
-                    ['company_id' => $companyId, 'slug' => Str::slug($product['name'])],
+                    ['company_id' => $companyId, 'name' => $product['name']],
                     [
                         'brand_id' => $brandId,
                         'sub_brand_id' => $subBrandId,

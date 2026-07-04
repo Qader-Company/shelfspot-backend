@@ -91,11 +91,11 @@ Registration requires stronger password rules, while admin update uses only `min
 
 **Suggested fix:** use the same `Password::min(8)->mixedCase()` rule unless product requires simpler admin-created temporary passwords.
 
-### P2 - Company slug is generated only on create
+### P2 - Company tenant id is used for tenant selection
 
-Company slug includes name, industry, CR number, and random suffix. Updating name/industry/CR does not update slug. This is safer for stable tenant identifiers, but should be explicit.
+Company tenant selection now uses the company id as the stable tenant identifier.
 
-**Suggested fix:** document slug immutability as intended, or add controlled slug regeneration if product wants it.
+**Suggested fix:** document that company id is the tenant identifier.
 
 ## Proposed implementation plan
 

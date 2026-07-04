@@ -1,58 +1,19 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Project: ShelfSpot
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Description
+A Laravel API platform for managing retail service tasks, company catalogs, workers, wallets, and portal-specific access control.
 
-## About Laravel
+## Business Idea
+ShelfSpot connects companies that need retail execution services with workers who can discover, accept, and complete nearby tasks. Companies manage product catalogs, service requests, wallet activity, and internal admins from a tenant-scoped portal. ShelfSpot admins oversee companies, workers, services, permissions, catalog data, coupons, and task lifecycle operations across the platform.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech Stack
+- **Backend:** PHP 8.3, Laravel 13, Laravel Sanctum, Spatie Permission, Spatie Media Library, Laravel Translatable, Laravel OTP, Laravel API Key, Maatwebsite Excel
+- **Frontend:** Vite, Tailwind CSS, Laravel Blade
+- **Database:** SQLite by default, configurable through Laravel database connections
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Links
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Architecture
+ShelfSpot is organized as a versioned Laravel API with most domain code under `app/Modules/V1`. Modules commonly follow layered boundaries for Presentation controllers, requests, and resources; Application use cases, services, validation, and Excel handling; Domain models, repositories, enums, and value objects; and Infrastructure repositories and service providers. API entry points are split by portal rather than kept directly in `routes/api.php`, with `routes/V1/public`, `routes/V1/admin`, `routes/V1/company`, and `routes/V1/worker` loaded through module configuration.
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
-```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The platform exposes separate public, admin, company, and worker portals. Public routes handle authentication, OTP, password reset, and enums; admin routes manage platform-level entities such as companies, workers, services, catalog records, coupons, tasks, and ShelfSpot admins; company routes manage tenant-scoped catalog data, wallets, tasks, services, admins, roles, and permissions; worker routes support account updates, location, task discovery, and task execution. Laravel Sanctum token abilities, scoped permissions, API keys, tenant middleware, queues, soft deletes, media handling, Excel import/export, and database-backed cache/session/job tables support the core workflows.

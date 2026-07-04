@@ -13,23 +13,14 @@ use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
-#[fillable(['name','slug','email','phone','cr_number','industry', 'is_active'])]
+#[fillable(['name','email','phone','cr_number','industry', 'is_active'])]
 class Company extends Model
 {
     use Filterable, SoftDeletes;
     protected $casts = [
         'industry' => CompanyIndustryEnum::class,
     ];
-
-    public static function boot()
-    {
-        parent::boot();
-        static::creating(function ($model) {
-            $model->slug = str($model->name.'-'.$model->industry->name.'-'.$model->cr_number.'-'.Str::random(6))->slug();
-        });
-    }
 
     public function users()
     {

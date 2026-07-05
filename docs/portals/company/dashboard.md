@@ -1,34 +1,34 @@
-# Flow: Company Dashboard
+# Flow: Company Dashboard Statistics
 
 ## Description
-Company Dashboard documents the current backend status for the requested `/dashboard` company route and the available company endpoints that can be used to assemble dashboard data today. A code search of the current repository does not show an implemented `/api/v1/company/dashboard` route, controller, or dashboard module.
+Company Dashboard Statistics documents the `/dashboard` route used by the company portal to load the main statistics screen. This route is intended to return aggregated company metrics in one response instead of forcing the frontend to call tasks, wallets, catalog, and service endpoints separately.
 
 ## Business Goal
-Give the company portal a clear dashboard integration note so frontend and integrator teams know whether to call a single dashboard endpoint or compose dashboard widgets from existing company APIs.
+Give the company dashboard a single API contract for high-level business indicators such as task counts, task lifecycle status totals, wallet balance, catalog totals, and recent activity summaries.
 
 ## Module Overview
-In the current implementation, company dashboard data is distributed across existing company modules: tasks, wallets, products, services, and catalog endpoints. The requested `/dashboard` route is not registered in the current company route files, so this document does not invent a standalone dashboard endpoint contract.
+This flow belongs to the company portal Dashboard area. The endpoint is company-scoped, requires the normal company authentication and tenant headers, and should only return statistics for the company resolved by `X-Company-Slug`.
 
 ## Prerequisites
 - Client has a valid company access token with company portal access ability.
 - Client sends `X-Authorization` with the platform API key.
 - Client sends `X-Company-Slug` for tenant context.
-- Client has the permissions required by each source endpoint, such as `view_task`, `view_wallet`, `view_product`, or `view_service`.
-- Backend must add a real `/api/v1/company/dashboard` route before clients can call it as a single endpoint.
+- The acting company user has permission to view dashboard/statistics data according to backend policy.
+- Dashboard numbers must be calculated for the current tenant company only.
 
 ## Walkthrough
-1. Check whether `/api/v1/company/dashboard` exists in the active backend build.
-2. If the route is not implemented, compose dashboard widgets from existing company endpoints.
-3. Use `List Tasks for Dashboard` for task status, dates, payment status, and progress widgets.
-4. Use `Wallet Summary for Dashboard` for current wallet balance and recent wallet transactions.
-5. Use `Products for Dashboard` for product catalog list/count widgets.
-6. Replace this composed approach with a single dashboard endpoint only after the backend route is implemented.
+1. Company user opens the dashboard screen.
+2. Client calls `Get Company Dashboard Statistics` once after authentication and tenant selection.
+3. Backend resolves the current company from `X-Company-Slug`.
+4. Backend returns grouped statistics for tasks, wallet, catalog, and recent activity.
+5. Frontend renders statistic cards, charts, and recent activity widgets from the response.
+6. Frontend refreshes the same endpoint after actions that change statistics, such as task payment, task acceptance, wallet recharge, or catalog updates.
 
-## Endpoint: List Tasks for Dashboard
+## Endpoint: Get Company Dashboard Statistics
 - **Method:** GET
-- **URL:** /api/v1/company/tasks
+- **URL:** /api/v1/company/dashboard
 - **Auth:** Bearer
-- **Purpose:** Provide task list data that can be summarized into dashboard widgets such as active tasks, completed tasks, payment status, and progress.
+- **Purpose:** Return aggregated dashboard statistics for the current company tenant.
 
 ### Headers
 ```
@@ -48,7 +48,48 @@ X-Company-Slug: {{company_slug}}
 {
   "success": true,
   "data": {
-    "data": [
+    "tasks": {
+      "total": 128,
+      "draft": 6,
+      "pending": 18,
+      "started": 4,
+      "in_progress": 12,
+      "completed": 9,
+      "accepted": 74,
+      "rejected": 3,
+      "reopened": 1,
+      "failed": 1,
+      "refund_requested": 0
+    },
+    "payments": {
+      "pending": 6,
+      "charged": 119,
+      "refunded": 2,
+      "failed": 1
+    },
+    "wallet": {
+      "balance": 1250.75,
+      "last_transaction": {
+        "id": 101,
+        "type": "coupon_redemption",
+        "amount": "250.00",
+        "balance_after": "1250.75",
+        "created_at": "2026-07-05"
+      }
+    },
+    "catalog": {
+      "brands": 12,
+      "sub_brands": 24,
+      "categories": 18,
+      "sub_categories": 42,
+      "products": 320,
+      "active_products": 300,
+      "inactive_products": 20
+    },
+    "services": {
+      "available": 5
+    },
+    "recent_tasks": [
       {
         "id": 501,
         "date": "2026-07-05",
@@ -62,12 +103,7 @@ X-Company-Slug: {{company_slug}}
           "percentage": 50
         }
       }
-    ],
-    "meta": {
-      "current_page": 1,
-      "per_page": 15,
-      "total": 1
-    }
+    ]
   }
 }
 ```
@@ -83,8 +119,13 @@ X-Company-Slug: {{company_slug}}
 { "success": false, "message": "Forbidden." }
 ```
 
+- **404 — company tenant not found**
+```json
+{ "success": false, "message": "Not found." }
+```
+
 ### Examples
-#### Example: Load recent tasks widget
+#### Example: Load dashboard statistics
 Request:
 ```json
 {}
@@ -94,175 +135,43 @@ Response:
 {
   "success": true,
   "data": {
-    "data": [
-      { "id": 501, "status": "pending", "payment_status": "charged", "total_price": 300 }
-    ],
-    "meta": { "current_page": 1, "per_page": 15, "total": 1 }
-  }
-}
-```
-
-### Notes
-This is not a dashboard-specific endpoint. It is the existing task list endpoint and accepts task filters such as `status`, `payment_status`, `date_from`, and `date_to`.
-
-## Endpoint: Wallet Summary for Dashboard
-- **Method:** GET
-- **URL:** /api/v1/company/wallets
-- **Auth:** Bearer
-- **Purpose:** Provide current wallet balance and recent transactions for dashboard wallet cards.
-
-### Headers
-```
-Accept: application/json
-X-Authorization: {{api_key}}
-Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
-```
-
-### Request Body
-```json
-{}
-```
-
-### Success (200)
-```json
-{
-  "success": true,
-  "data": {
-    "balance": 1250.75,
-    "transactions": {
-      "data": [
-        {
-          "id": 101,
-          "type": "coupon_redemption",
-          "amount": "250.00",
-          "balance_after": "1250.75",
-          "created_at": "2026-07-05"
-        }
-      ],
-      "meta": {
-        "current_page": 1,
-        "per_page": 15,
-        "total": 1
-      }
-    }
-  }
-}
-```
-
-### Failures
-- **401 — invalid token**
-```json
-{ "success": false, "message": "Unauthenticated." }
-```
-
-- **403 — missing permission**
-```json
-{ "success": false, "message": "Forbidden." }
-```
-
-### Examples
-#### Example: Load wallet dashboard card
-Request:
-```json
-{}
-```
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "balance": 1250.75,
-    "transactions": {
-      "data": [{ "id": 101, "type": "coupon_redemption", "amount": "250.00" }],
-      "meta": { "current_page": 1, "per_page": 15, "total": 1 }
-    }
-  }
-}
-```
-
-### Notes
-This is the existing wallet endpoint. It accepts a `type` query filter for transaction type.
-
-## Endpoint: Products for Dashboard
-- **Method:** GET
-- **URL:** /api/v1/company/products
-- **Auth:** Bearer
-- **Purpose:** Provide product catalog data that can be summarized into dashboard product widgets.
-
-### Headers
-```
-Accept: application/json
-X-Authorization: {{api_key}}
-Authorization: Bearer {{token}}
-X-Company-Slug: {{company_slug}}
-```
-
-### Request Body
-```json
-{}
-```
-
-### Success (200)
-```json
-{
-  "success": true,
-  "data": {
-    "data": [
+    "tasks": {
+      "total": 128,
+      "pending": 18,
+      "in_progress": 12,
+      "completed": 9,
+      "accepted": 74
+    },
+    "wallet": {
+      "balance": 1250.75
+    },
+    "catalog": {
+      "brands": 12,
+      "products": 320,
+      "active_products": 300
+    },
+    "recent_tasks": [
       {
-        "id": 10,
-        "name": "Acme Cola 330ml",
-        "sku": "ACME-COLA-330",
-        "active": true
+        "id": 501,
+        "status": "pending",
+        "payment_status": "charged",
+        "total_price": 300
       }
-    ],
-    "meta": {
-      "current_page": 1,
-      "per_page": 15,
-      "total": 1
-    }
-  }
-}
-```
-
-### Failures
-- **401 — invalid token**
-```json
-{ "success": false, "message": "Unauthenticated." }
-```
-
-- **403 — missing permission**
-```json
-{ "success": false, "message": "Forbidden." }
-```
-
-### Examples
-#### Example: Load product count source
-Request:
-```json
-{}
-```
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "data": [{ "id": 10, "name": "Acme Cola 330ml", "active": true }],
-    "meta": { "current_page": 1, "per_page": 15, "total": 1 }
+    ]
   }
 }
 ```
 
 ### Notes
-This is the existing product list endpoint. Dashboard clients can use `meta.total` for a product count when no dedicated dashboard endpoint exists.
+The dashboard response should be treated as read-only aggregated data. The frontend should not calculate tenant-wide totals by combining data from other pages when this route is available. If the backend adds or removes dashboard cards, keep the response grouped by module (`tasks`, `payments`, `wallet`, `catalog`, `services`, `recent_tasks`) so UI widgets remain easy to map.
 
-## Branch: Requested /dashboard route is missing
-**Condition:** Frontend attempts to call `/api/v1/company/dashboard`, but the backend build does not register that route.
+## Branch: Empty Company Data
+**Condition:** The company has no tasks, no products, and no wallet transactions yet.
 
-### Case: Compose dashboard from existing endpoints
-**When:** The route returns 404 or is absent from route registration.
-**Explanation:** Use the existing tasks, wallets, products, services, and catalog endpoints to build dashboard widgets until a real dashboard endpoint is implemented.
+### Case: First dashboard load for a new company
+**When:** The company account is new or has not created operational data.
+**Explanation:** Backend should return zero counts and empty arrays instead of omitting sections, so the frontend can render empty-state widgets consistently.
 
-#### Endpoint: List Tasks for Dashboard
+#### Endpoint: Get Company Dashboard Statistics
 - **Method:** GET
-- **URL:** /api/v1/company/tasks
+- **URL:** /api/v1/company/dashboard

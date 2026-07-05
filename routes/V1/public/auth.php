@@ -2,6 +2,7 @@
 
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
+use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Authentication\Presentation\Http\Controller\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,11 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
 
     Route::post('{type}/login', [AuthController::class, 'login'])
         ->where('type', implode('|', PortalTypeEnum::values()))
+        ->middleware('throttle:auth-login');
+
+    Route::post('{type}/social/{provider}/login', [AuthController::class, 'socialLogin'])
+        ->where('type', implode('|', PortalTypeEnum::values()))
+        ->where('provider', implode('|', SocialProviderEnum::values()))
         ->middleware('throttle:auth-login');
 
     Route::delete('/logout', [AuthController::class, 'logout'])

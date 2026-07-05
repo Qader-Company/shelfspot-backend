@@ -7,12 +7,15 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\V1\Authentication\Application\UseCases\RegisterUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\SendOtpUseCase;
+use App\Modules\V1\Authentication\Application\UseCases\SocialLoginUseCase;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\EmailValidationRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\RegisterRequest;
+use App\Modules\V1\Authentication\Presentation\Http\Requests\SocialLoginRequest;
 use App\Modules\V1\Users\Application\Services\UserResourceResolver;
 use App\Modules\V1\Authentication\Application\UseCases\LogInUseCase;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
+use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\LoginRequest;
 use Illuminate\Http\Request;
@@ -39,6 +42,29 @@ class AuthController extends Controller
             $data['message'],
             $data['code']
         );
+    }
+
+    public function socialLogin(
+        SocialLoginRequest $request,
+        string $type,
+        string $provider,
+        SocialLoginUseCase $socialLoginUseCase
+    ) {
+        $portalType = PortalTypeEnum::tryFrom($type);
+        $socialProvider = SocialProviderEnum::tryFrom($provider);
+
+        $data = $socialLoginUseCase->execute(
+            $socialProvider,
+            $portalType,
+            $request->validated('token')
+        );
+
+        $data['user'] = UserResourceResolver::resolve(
+            $data['user'],
+            $portalType
+        );
+
+        return ApiResponse::success($data, __('auth.login_success'));
     }
 
     public function logout(Request $request)

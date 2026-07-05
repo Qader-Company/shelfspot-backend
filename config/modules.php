@@ -50,6 +50,7 @@ return [
     ],
 
     'providers' => [
+        \App\Modules\V1\Authentication\Infrastructure\Providers\AuthenticationModuleServiceProvider::class,
         \App\Modules\V1\AccessControl\Infrastructure\Providers\AccessControlModuleServiceProvider::class,
         \App\Modules\V1\Brands\Infrastructure\Providers\BrandsModuleServiceProvider::class,
         \App\Modules\V1\Companies\Infrastructure\Providers\CompaniesModuleServiceProvider::class,

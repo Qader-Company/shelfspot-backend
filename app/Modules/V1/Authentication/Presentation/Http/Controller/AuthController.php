@@ -44,8 +44,12 @@ class AuthController extends Controller
         );
     }
 
-    public function socialLogin(SocialLoginRequest $request, string $type, string $provider, SocialLoginUseCase $socialLoginUseCase)
-    {
+    public function socialLogin(
+        SocialLoginRequest $request,
+        string $type,
+        string $provider,
+        SocialLoginUseCase $socialLoginUseCase
+    ) {
         $portalType = PortalTypeEnum::tryFrom($type);
         $socialProvider = SocialProviderEnum::tryFrom($provider);
 

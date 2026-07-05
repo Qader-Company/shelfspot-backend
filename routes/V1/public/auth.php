@@ -19,7 +19,7 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
         ->middleware('throttle:auth-login');
 
     Route::post('{type}/social/{provider}/login', [AuthController::class, 'socialLogin'])
-        ->where('type', PortalTypeEnum::WORKER->value)
+        ->where('type', implode('|', PortalTypeEnum::values()))
         ->where('provider', implode('|', SocialProviderEnum::values()))
         ->middleware('throttle:auth-login');
 

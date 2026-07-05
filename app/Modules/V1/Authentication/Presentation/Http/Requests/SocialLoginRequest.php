@@ -11,6 +11,9 @@ class SocialLoginRequest extends FormRequest
         return [
             'token' => ['required', 'string'],
             'name' => ['sometimes', 'string', 'max:255'],
+            'phone' => ['sometimes', 'string', 'max:255'],
+            'latitude' => ['sometimes', 'numeric', 'between:-90,90', 'required_with:longitude'],
+            'longitude' => ['sometimes', 'numeric', 'between:-180,180', 'required_with:latitude'],
         ];
     }
 }

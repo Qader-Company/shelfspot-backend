@@ -46,10 +46,6 @@ class AuthController extends Controller
 
     public function socialLogin(SocialLoginRequest $request, string $type, string $provider, SocialLoginUseCase $socialLoginUseCase)
     {
-//        [$header, $payload, $signature] = explode('.', $request->token);
-//
-//        dd(json_decode(base64_decode(strtr($payload, '-_', '+/')), true));
-
         $portalType = PortalTypeEnum::tryFrom($type);
         $socialProvider = SocialProviderEnum::tryFrom($provider);
 

@@ -47,6 +47,7 @@ class SocialLoginUseCase
                 'email' => $socialUser->email,
                 'type' => $portal,
             ]);
+
             if (! $user) {
                 $user = $this->registerSocialUser($portal, $socialUser->email, $attributes['name'] ?? $socialUser->name);
             }

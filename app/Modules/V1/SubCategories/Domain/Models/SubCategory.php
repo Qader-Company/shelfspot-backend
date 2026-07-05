@@ -15,11 +15,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['name', 'company_id', 'brand_id', 'sub_brand_id', 'category_id', 'slug', 'is_active'])]
+#[Fillable(['name', 'company_id', 'brand_id', 'sub_brand_id', 'category_id', 'is_active'])]
 class SubCategory extends Model implements HasMedia
 {
     use BelongsToCompany, InteractsWithMedia, DeletesMediaOnForceDelete, Filterable, SoftDeletes;
@@ -47,11 +46,5 @@ class SubCategory extends Model implements HasMedia
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
-    }
-
-    protected static function boot(): void
-    {
-        parent::boot();
-        static::creating(fn ($model) => $model->slug = str($model->name.'-'.$model->company_id.'-'.Str::random(6))->slug());
     }
 }

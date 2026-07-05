@@ -15,8 +15,6 @@ class CanFailExpiredTaskRule extends AbstractTaskActionRule
             return $task->expires_at !== null && $task->expires_at->lessThanOrEqualTo(now());
         }
 
-        return $task->status === TaskStatusEnum::STARTED
-            && $task->start_deadline_at !== null
-            && $task->start_deadline_at->isPast();
+        return false;
     }
 }

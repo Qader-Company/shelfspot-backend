@@ -22,7 +22,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->string('logo')->nullable();
             $table->decimal('cash_on_hand', 10, 2)->default(0);
-            $table->string('slug')->nullable()->unique();
             $table->softDeletes();
             $table->timestamps();
         });

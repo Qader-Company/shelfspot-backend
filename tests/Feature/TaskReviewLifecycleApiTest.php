@@ -272,6 +272,6 @@ class TaskReviewLifecycleApiTest extends TestCase
 
     private function companyHeaders(Company $company): array
     {
-        return ['X-Company-Slug' => $company->slug];
+        return ['X-Company-id' => $company->id];
     }
 }

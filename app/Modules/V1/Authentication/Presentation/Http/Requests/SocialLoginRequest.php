@@ -10,6 +10,7 @@ class SocialLoginRequest extends FormRequest
     {
         return [
             'token' => ['required', 'string'],
+            'name' => ['sometimes', 'string', 'max:255'],
         ];
     }
 }

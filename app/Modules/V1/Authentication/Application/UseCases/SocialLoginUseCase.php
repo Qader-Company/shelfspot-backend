@@ -35,11 +35,14 @@ class SocialLoginUseCase
 
         $user = DB::transaction(function () use ($provider, $portal, $socialUser, $attributes, $registrar) {
             $socialAccount = $this->socialAccounts->find($provider, $socialUser->providerUserId);
-            $user = $socialAccount?->user ?? $this->users->findWhere([
+            $user = $socialAccount?->user;
+
+            if (! $user) {
+                $user = $this->users->findWhere([
                     'email' => $socialUser->email,
                     'type' => $portal,
                 ]);
-
+            }
 
             if (! $user) {
                 $user = $registrar->register($socialUser->email, $attributes['name'] ?? $socialUser->name, $attributes);

@@ -57,10 +57,9 @@ class WorkerSocialRegistrar implements SocialPortalRegistrarInterface
 
     private function validatedProfileData(array $attributes): array
     {
-        return Validator::make($attributes, [
-            'phone' => ['required', 'string', 'max:255', 'unique:workers,phone'],
-            'latitude' => ['sometimes', 'numeric', 'between:-90,90', 'required_with:longitude'],
-            'longitude' => ['sometimes', 'numeric', 'between:-180,180', 'required_with:latitude'],
-        ])->validate();
+        return Validator::make(
+            $attributes,
+            config('social_auth.portal_profile_creation_rules.' . $this->portal()->value, [])
+        )->validate();
     }
 }

@@ -8,6 +8,7 @@ use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Brands\Domain\Repositories\{BrandRepositoryInterface};
 use App\Modules\V1\Companies\Domain\Models\Scopes\CompanyScope;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -76,6 +77,7 @@ class EloquentBrandRepository implements BrandRepositoryInterface
 
             if(!is_null($logo))
                 $brand->addMedia($logo)->toMediaCollection('logo');
+
             return $brand;
         });
     }
@@ -95,6 +97,7 @@ class EloquentBrandRepository implements BrandRepositoryInterface
                 $brand->clearMediaCollection('logo');
                 $brand->addMedia($logo)->toMediaCollection('logo');
             }
+
             return $brand;
         });
     }

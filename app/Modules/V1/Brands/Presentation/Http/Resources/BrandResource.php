@@ -28,7 +28,7 @@ class BrandResource extends JsonResource
                 $this->getMedia('logo')->first()?->getUrl() ?? '',
                 ''
             ),
-            'active' => (bool) $this->is_active
+            'active' => (bool) $this->is_active,
         ];
     }
 }

@@ -9,6 +9,7 @@ use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
+use Astrotomic\Translatable\Translatable;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -17,10 +18,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['name', 'company_id', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id', 'description', 'sku', 'barcode', 'is_active'])]
+#[Fillable(['company_id', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id', 'sku', 'barcode', 'is_active'])]
 class Product extends Model implements HasMedia
 {
-    use BelongsToCompany, InteractsWithMedia, DeletesMediaOnForceDelete, Filterable, SoftDeletes;
+    use Translatable, BelongsToCompany, InteractsWithMedia, DeletesMediaOnForceDelete, Filterable, SoftDeletes;
+
+    public $translatedAttributes = ['name', 'description'];
+
 
     public function registerMediaCollections(): void
     {

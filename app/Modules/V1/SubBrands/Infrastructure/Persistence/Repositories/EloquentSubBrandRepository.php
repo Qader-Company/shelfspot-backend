@@ -1,6 +1,7 @@
 <?php
 namespace App\Modules\V1\SubBrands\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
@@ -10,7 +11,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentSubBrandRepository implements SubBrandRepositoryInterface
 {
-    use CascadesCatalogTrashActions;
+    use CascadesCatalogTrashActions, HasTranslation;
 
     protected function trashableModel(): string
     {
@@ -34,7 +35,13 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
     public function create(array $attributes, UploadedFile $logo = null): SubBrand
     {
         return DB::transaction(function () use ($attributes, $logo) {
+            $translations = $attributes['translations'] ?? [];
+
+            unset($attributes['translations']);
+
             $subBrand = SubBrand::create($attributes);
+            $this->fillTranslations($subBrand, $translations);
+            $subBrand->save();
             if ($logo) $subBrand->addMedia($logo)->toMediaCollection('logo');
             return $subBrand;
         });
@@ -43,7 +50,13 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
     public function update(SubBrand $subBrand, array $attributes, UploadedFile $logo = null): SubBrand
     {
         return DB::transaction(function () use ($subBrand, $attributes, $logo) {
+            $translations = $attributes['translations'] ?? [];
+
+            unset($attributes['translations']);
+
             $subBrand->update($attributes);
+            $this->fillTranslations($subBrand, $translations);
+            $subBrand->save();
             if ($logo) {
                 $subBrand->clearMediaCollection('logo');
                 $subBrand->addMedia($logo)->toMediaCollection('logo');

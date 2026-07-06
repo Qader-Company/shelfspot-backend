@@ -58,7 +58,7 @@ abstract class AbstractCatalogExcelService
             $options[$heading] = $parent['model']::query()
                 ->orderBy('name')
                 ->get()
-                ->map(fn (Model $model): string => $model->getKey().' - '.$model->getAttribute('name'))
+                ->map(fn (Model $model): string => $model->getKey().' - '.$model->name)
                 ->all();
         }
 

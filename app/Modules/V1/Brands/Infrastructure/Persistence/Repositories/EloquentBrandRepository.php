@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Brands\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Brands\Domain\Repositories\{BrandRepositoryInterface};
@@ -12,7 +13,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentBrandRepository implements BrandRepositoryInterface
 {
-    use CascadesCatalogTrashActions;
+    use CascadesCatalogTrashActions, HasTranslation;
 
     protected function trashableModel(): string
     {
@@ -65,7 +66,13 @@ class EloquentBrandRepository implements BrandRepositoryInterface
     {
         return DB::transaction(function () use ($attributes, $logo) {
 
+            $translations = $attributes['translations'] ?? [];
+
+            unset($attributes['translations']);
+
             $brand = Brand::create($attributes);
+            $this->fillTranslations($brand, $translations);
+            $brand->save();
 
             if(!is_null($logo))
                 $brand->addMedia($logo)->toMediaCollection('logo');
@@ -77,7 +84,13 @@ class EloquentBrandRepository implements BrandRepositoryInterface
     {
         return DB::transaction(function () use ($brand, $attributes, $logo) {
 
+            $translations = $attributes['translations'] ?? [];
+
+            unset($attributes['translations']);
+
             $brand->update($attributes);
+            $this->fillTranslations($brand, $translations);
+            $brand->save();
             if(!is_null($logo)){
                 $brand->clearMediaCollection('logo');
                 $brand->addMedia($logo)->toMediaCollection('logo');

@@ -14,7 +14,9 @@ class UpdateCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:255',
+            'translations' => 'sometimes|array',
+            'translations.en.name' => 'sometimes|required|string|max:255',
+            'translations.ar.name' => 'sometimes|required|string|max:255',
             'brand_id' => ['nullable', new ExistsInCurrentCompany('brands')],
             'sub_brand_id' => ['nullable', new ExistsInCurrentCompany('sub_brands')],
             'is_active' => 'sometimes|boolean',

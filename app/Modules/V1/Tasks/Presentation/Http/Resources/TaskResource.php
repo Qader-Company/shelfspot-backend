@@ -37,7 +37,11 @@ class TaskResource extends JsonResource
             'total_price' => (int) $this->total_price,
             'notes' => $this->notes,
             'status' => $isCompany ? $this->companyFacingStatus() : $this->status->value,
+            'status_label' => __(
+                'enums.task_status.'.($isCompany ? $this->companyFacingStatus() : $this->status->value)
+            ),
             'payment_status' => $this->payment_status->value,
+            'payment_status_label' => $this->payment_status->label(),
             'created_by' => $this->whenLoaded('creator', $this->creator->name),
             'expires_at' => $this->expires_at?->toDateTimeString(),
             'charged_at' => $this->charged_at?->toDateTimeString(),

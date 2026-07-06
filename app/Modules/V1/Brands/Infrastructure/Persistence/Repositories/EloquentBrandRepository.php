@@ -8,6 +8,7 @@ use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Brands\Domain\Repositories\{BrandRepositoryInterface};
 use App\Modules\V1\Companies\Domain\Models\Scopes\CompanyScope;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -66,16 +67,14 @@ class EloquentBrandRepository implements BrandRepositoryInterface
     {
         return DB::transaction(function () use ($attributes, $logo) {
 
-            $translations = $attributes['translations'] ?? [];
-
-            unset($attributes['translations']);
+            $translations = Arr::pull($attributes,'translations');
 
             $brand = Brand::create($attributes);
             $this->fillTranslations($brand, $translations);
-            $brand->save();
 
             if(!is_null($logo))
                 $brand->addMedia($logo)->toMediaCollection('logo');
+
             return $brand;
         });
     }
@@ -84,17 +83,16 @@ class EloquentBrandRepository implements BrandRepositoryInterface
     {
         return DB::transaction(function () use ($brand, $attributes, $logo) {
 
-            $translations = $attributes['translations'] ?? [];
-
-            unset($attributes['translations']);
+            $translations = Arr::pull($attributes,'translations');
 
             $brand->update($attributes);
             $this->fillTranslations($brand, $translations);
-            $brand->save();
+
             if(!is_null($logo)){
                 $brand->clearMediaCollection('logo');
                 $brand->addMedia($logo)->toMediaCollection('logo');
             }
+
             return $brand;
         });
     }

@@ -32,14 +32,14 @@ class SubCategoryController extends Controller
     public function index()
     {
         $filters = $this->acceptedFilters(request(), ['name', 'active', 'brand_id', 'sub_brand_id', 'category_id']);
-        $subCategories = $this->subCategoryRepository->getAll(relations: ['media'], filters: $filters);
+        $subCategories = $this->subCategoryRepository->getAll(relations: ['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations'], filters: $filters);
 
         return ApiResponse::success(SubCategoryResource::collection($subCategories)->response()->getData(true));
     }
 
     public function show(string $id)
     {
-        return ApiResponse::success(new SubCategoryResource($this->getSubCategory($id)));
+        return ApiResponse::success(new SubCategoryResource($this->getSubCategory($id, ['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations'])));
     }
 
     public function store(StoreSubCategoryRequest $request)
@@ -93,9 +93,9 @@ class SubCategoryController extends Controller
         return SubCategoryResource::collection($items)->response()->getData(true);
     }
 
-    private function getSubCategory(string $id)
+    private function getSubCategory(string $id, array $relations = ['media'])
     {
-        $subCategory = $this->subCategoryRepository->getById($id, ['media']);
+        $subCategory = $this->subCategoryRepository->getById($id, $relations);
         if (is_null($subCategory)) {
             throw new ModelNotFoundException(__('subCategories.not_found'));
         }

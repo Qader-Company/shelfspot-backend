@@ -6,6 +6,7 @@ use App\Facades\ApiResponse;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Infrastructure\Tenant\TenantContext;
 use App\Facades\FacadesLogic\ApiResponseLogic;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Model::preventLazyLoading();
+
         $this->registerRoutes();
     }
 

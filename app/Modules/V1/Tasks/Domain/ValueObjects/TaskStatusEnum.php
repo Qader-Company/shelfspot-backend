@@ -32,4 +32,10 @@ enum TaskStatusEnum: string
             $statuses
         );
     }
+
+    public function label(): string
+    {
+        return __("enums.task_status.{$this->value}");
+    }
+
 }

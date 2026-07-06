@@ -15,6 +15,7 @@ class TaskServiceResource extends JsonResource
             'execution_instructions' => $this->execution_instructions,
             'unit_price' => $this->unit_price,
             'status' => $this->status->value,
+            'status_label' => $this->status->label(),
             'sort_order' => $this->sort_order,
             'service' => $this->whenLoaded('service', fn () => new ServiceResource($this->service)),
             'products' => TaskServiceProductResource::collection($this->whenLoaded('products')),

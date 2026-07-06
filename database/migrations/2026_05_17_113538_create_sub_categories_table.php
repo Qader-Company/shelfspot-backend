@@ -17,10 +17,17 @@ return new class extends Migration
             $table->foreignId('brand_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('sub_brand_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
-            $table->string('name');
             $table->string('image')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+        });
+
+        Schema::create('sub_category_translations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('sub_category_id')->constrained()->cascadeOnDelete();
+            $table->char('locale', 2);
+            $table->string('name');
+            $table->unique(['sub_category_id', 'locale']);
         });
     }
 
@@ -29,6 +36,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('sub_category_translations');
         Schema::dropIfExists('sub_categories');
     }
 };

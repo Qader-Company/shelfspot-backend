@@ -47,6 +47,10 @@ abstract class AbstractCatalogExport implements FromCollection, WithHeadings, Wi
             'category' => $this->optionLabel($row->category),
             'sub_category' => $this->optionLabel($row->subCategory),
             'is_active' => $row->is_active ? 'yes' : 'no',
+            'name_en' => $row->translate('en')?->name,
+            'name_ar' => $row->translate('ar')?->name,
+            'description_en' => $row->translate('en')?->description,
+            'description_ar' => $row->translate('ar')?->description,
             default => $row->{$heading},
         };
     }
@@ -57,6 +61,6 @@ abstract class AbstractCatalogExport implements FromCollection, WithHeadings, Wi
             return null;
         }
 
-        return $model->getKey().' - '.$model->getAttribute('name');
+        return $model->getKey().' - '.$model->name;
     }
 }

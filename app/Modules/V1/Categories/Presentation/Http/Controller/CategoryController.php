@@ -35,7 +35,7 @@ class CategoryController extends Controller
             request(), ['name', 'active', 'brand_id', 'sub_brand_id']
         );
         $categories = $this->categoryRepository->getAll(
-            relations: ['media', 'brand', 'subBrand'],
+            relations: ['media', 'translations', 'brand.translations', 'subBrand.translations'],
             filters: $filters,
         );
         return ApiResponse::success(
@@ -47,7 +47,7 @@ class CategoryController extends Controller
 
     public function show(string $id)
     {
-        return ApiResponse::success(new CategoryResource($this->getCategory($id)));
+        return ApiResponse::success(new CategoryResource($this->getCategory($id, ['media', 'translations', 'brand.translations', 'subBrand.translations'])));
     }
 
     public function store(StoreCategoryRequest $request)
@@ -101,9 +101,9 @@ class CategoryController extends Controller
         return CategoryResource::collection($items)->response()->getData(true);
     }
 
-    private function getCategory(string $id)
+    private function getCategory(string $id, array $relations = ['media'])
     {
-        $category = $this->categoryRepository->getById($id, ['media']);
+        $category = $this->categoryRepository->getById($id, $relations);
         if (is_null($category)) {
             throw new ModelNotFoundException(__('categories.not_found'));
         }

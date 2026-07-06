@@ -35,7 +35,7 @@ class BrandController extends Controller
             request(), ['name', 'active']
         );
         $brands = $this->brandRepository->getAll(
-            relations: ['media'],
+            relations: ['media', 'translations'],
             filters: $filters
         );
 
@@ -46,7 +46,7 @@ class BrandController extends Controller
 
     public function show(string $id)
     {
-        $brand = $this->getBrand($id);
+        $brand = $this->getBrand($id, ['media', 'translations']);
         return ApiResponse::success(new BrandResource($brand));
     }
 

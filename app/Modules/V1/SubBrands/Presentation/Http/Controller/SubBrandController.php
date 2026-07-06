@@ -32,7 +32,7 @@ class SubBrandController extends Controller
             request(), ['name', 'active', 'brand_id']
         );
         $subBrands = $this->subBrandRepository->getAll(
-            relations: ['media','brand'],
+            relations: ['media', 'translations', 'brand.translations'],
             filters: $filters
         );
         return ApiResponse::success(
@@ -44,7 +44,7 @@ class SubBrandController extends Controller
 
     public function show(string $id)
     {
-        $subBrand = $this->getSubBrand($id);
+        $subBrand = $this->getSubBrand($id, ['media', 'translations', 'brand.translations']);
         return ApiResponse::success(new SubBrandResource($subBrand));
     }
     public function store(StoreSubBrandRequest $request)
@@ -97,9 +97,9 @@ class SubBrandController extends Controller
         return SubBrandResource::collection($items)->response()->getData(true);
     }
 
-    private function getSubBrand(string $id)
+    private function getSubBrand(string $id, array $relations = [])
     {
-        $subBrand = $this->subBrandRepository->getById($id);
+        $subBrand = $this->subBrandRepository->getById($id, $relations);
         if (is_null($subBrand)) {
             throw new ModelNotFoundException(__('subBrands.not_found'));
         }

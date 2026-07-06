@@ -36,7 +36,7 @@ class ProductController extends Controller
             ['search', 'active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id']
         );
         $products = $this->productRepository->getAll(
-            relations: ['media', 'brand', 'subBrand', 'category', 'subCategory'],
+            relations: ['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations', 'subCategory.translations'],
             filters: $filters
         );
 
@@ -61,7 +61,7 @@ class ProductController extends Controller
     {
         $product = $this->getProduct(
             $id,
-            ['media', 'brand', 'subBrand', 'category', 'subCategory']
+            ['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations', 'subCategory.translations']
         );
         return ApiResponse::success(new ProductResource($product));
     }
@@ -75,7 +75,7 @@ class ProductController extends Controller
         );
 
         return ApiResponse::created(
-            new ProductResource($product->load(['media', 'brand', 'subBrand', 'category', 'subCategory']))
+            new ProductResource($product->load(['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations', 'subCategory.translations']))
         );
     }
 
@@ -89,7 +89,7 @@ class ProductController extends Controller
         );
 
         return ApiResponse::updated(
-            new ProductResource($product->refresh()->load(['media', 'brand', 'subBrand', 'category', 'subCategory']))
+            new ProductResource($product->refresh()->load(['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations', 'subCategory.translations']))
         );
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Categories\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
@@ -11,7 +12,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentCategoryRepository implements CategoryRepositoryInterface
 {
-    use CascadesCatalogTrashActions;
+    use CascadesCatalogTrashActions, HasTranslation;
 
     protected function trashableModel(): string
     {
@@ -36,7 +37,13 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
     public function create(array $attributes, UploadedFile $image = null): Category
     {
         return DB::transaction(function () use ($attributes, $image) {
+            $translations = $attributes['translations'] ?? [];
+
+            unset($attributes['translations']);
+
             $category = Category::create($attributes);
+            $this->fillTranslations($category, $translations);
+            $category->save();
             if ($image) {
                 $category->addMedia($image)->toMediaCollection('image');
             }
@@ -47,7 +54,13 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
     public function update(Category $category, array $attributes, UploadedFile $image = null): Category
     {
         return DB::transaction(function () use ($category, $attributes, $image) {
+            $translations = $attributes['translations'] ?? [];
+
+            unset($attributes['translations']);
+
             $category->update($attributes);
+            $this->fillTranslations($category, $translations);
+            $category->save();
             if ($image) {
                 $category->clearMediaCollection('image');
                 $category->addMedia($image)->toMediaCollection('image');

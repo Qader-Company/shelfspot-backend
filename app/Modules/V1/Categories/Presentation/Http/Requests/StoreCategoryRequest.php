@@ -13,7 +13,9 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'translations' => 'required|array',
+            'translations.en.name' => 'required|string|max:255',
+            'translations.ar.name' => 'required|string|max:255',
             'brand_id' => ['nullable', new ExistsInCurrentCompany('brands')],
             'sub_brand_id' => ['nullable', new ExistsInCurrentCompany('sub_brands')],
             'is_active' => 'required|boolean',

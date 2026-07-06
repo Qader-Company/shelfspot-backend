@@ -7,7 +7,6 @@ use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreProductRequest extends FormRequest
@@ -18,12 +17,15 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'translations' => 'required|array',
+            'translations.en.name' => 'required|string|max:255',
+            'translations.en.description' => 'nullable|string',
+            'translations.ar.name' => 'required|string|max:255',
+            'translations.ar.description' => 'nullable|string',
             'brand_id' => ['nullable', new ExistsInCurrentCompany('brands')],
             'sub_brand_id' => ['nullable', new ExistsInCurrentCompany('sub_brands')],
             'category_id' => ['nullable', new ExistsInCurrentCompany('categories')],
             'sub_category_id' => ['nullable', new ExistsInCurrentCompany('sub_categories')],
-            'description' => 'nullable|string',
             'sku' => [
                 'nullable',
                 'string',

@@ -8,4 +8,9 @@ enum TaskPaymentStatusEnum: string
     case CHARGED = 'charged';
     case REFUNDED = 'refunded';
     case FAILED = 'failed';
+
+    public function label(): string
+    {
+        return __("enums.task_payment_status.{$this->value}");
+    }
 }

@@ -23,7 +23,9 @@ class UpdateBrandRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:255',
+            'translations' => 'sometimes|array',
+            'translations.en.name' => 'sometimes|required|string|max:255',
+            'translations.ar.name' => 'sometimes|required|string|max:255',
             'logo' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'is_active' => 'sometimes|boolean'
         ];

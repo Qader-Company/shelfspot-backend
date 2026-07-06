@@ -41,17 +41,11 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
 
     public function collection(Collection $rows): void
     {
-        $this->totalRows = $rows->count();
-
-        if ($this->totalRows > self::MAX_ROWS) {
-            $this->addError(0, ['The uploaded file exceeds the maximum allowed rows.'], 'file');
-            return;
-        }
-
-        DB::transaction(function () use ($rows): void {
-            foreach ($rows as $index => $row) {
-                $rowNumber = $index + 2;
-                $data = $this->normalizeRow($row->toArray());
+        $normalizedRows = $rows
+            ->map(fn ($row, int $index): array => [
+                'index' => $index,
+                'data' => $this->normalizeRow($row->toArray()),
+            ]);
 
         $importRows = $normalizedRows
             ->reject(fn (array $row): bool => $this->isEmptyRow($row['data']))
@@ -141,8 +135,23 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
                 continue;
             }
 
+            if (in_array($field, ['name_en', 'name_ar', 'description_en', 'description_ar'], true)) {
+                continue;
+            }
+
             $attributes[$field] = $row[$field] ?? null;
         }
+
+        $attributes['translations'] = [
+            'en' => array_filter([
+                'name' => $row['name_en'] ?? null,
+                'description' => $row['description_en'] ?? null,
+            ], fn (mixed $value): bool => $value !== null),
+            'ar' => array_filter([
+                'name' => $row['name_ar'] ?? null,
+                'description' => $row['description_ar'] ?? null,
+            ], fn (mixed $value): bool => $value !== null),
+        ];
 
         foreach ($this->config['parents'] as $heading => $parent) {
             $value = $row[$heading] ?? null;
@@ -171,8 +180,12 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
             'is_active' => ['required', 'boolean'],
         ];
 
-        if (in_array('name', $this->config['fillable'], true)) {
-            $rules['name'] = ['required', 'string', 'max:255'];
+        if (in_array('name_en', $this->config['fillable'], true)) {
+            $rules['translations.en.name'] = ['required', 'string', 'max:255'];
+        }
+
+        if (in_array('name_ar', $this->config['fillable'], true)) {
+            $rules['translations.ar.name'] = ['required', 'string', 'max:255'];
         }
 
         if (in_array('sku', $this->config['fillable'], true)) {
@@ -183,8 +196,12 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
             $rules['barcode'] = ['nullable', 'max:255'];
         }
 
-        if (in_array('description', $this->config['fillable'], true)) {
-            $rules['description'] = ['nullable', 'string'];
+        if (in_array('description_en', $this->config['fillable'], true)) {
+            $rules['translations.en.description'] = ['nullable', 'string'];
+        }
+
+        if (in_array('description_ar', $this->config['fillable'], true)) {
+            $rules['translations.ar.description'] = ['nullable', 'string'];
         }
 
         foreach ($this->config['parents'] as $parent) {
@@ -220,8 +237,8 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         $cache = $this->parentCaches[$modelClass] ??= $modelClass::query()->get()->mapWithKeys(function (Model $model): array {
             return [
                 (string) $model->getKey() => $model->getKey(),
-                strtolower($model->getAttribute('name')) => $model->getKey(),
-                strtolower($model->getKey().' - '.$model->getAttribute('name')) => $model->getKey(),
+                strtolower($model->name) => $model->getKey(),
+                strtolower($model->getKey().' - '.$model->name) => $model->getKey(),
             ];
         })->all();
 
@@ -318,12 +335,22 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         }
 
         if ($model) {
+            $translations = Arr::pull($attributes, 'translations', []);
             $model->update($attributes);
+            foreach ($translations as $locale => $fields) {
+                $model->translateOrNew($locale)->fill($fields);
+            }
+            $model->save();
             $this->updated++;
             return;
         }
 
-        $modelClass::query()->create($attributes);
+        $translations = Arr::pull($attributes, 'translations', []);
+        $model = $modelClass::query()->create($attributes);
+        foreach ($translations as $locale => $fields) {
+            $model->translateOrNew($locale)->fill($fields);
+        }
+        $model->save();
         $this->created++;
     }
 

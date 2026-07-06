@@ -11,7 +11,9 @@ class StoreSubBrandRequest extends FormRequest
     {
         return [
             'brand_id' => ['required', new ExistsInCurrentCompany('brands')],
-            'name' => 'required|string|max:255',
+            'translations' => 'required|array',
+            'translations.en.name' => 'required|string|max:255',
+            'translations.ar.name' => 'required|string|max:255',
             'logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'is_active' => 'required|boolean',
         ];

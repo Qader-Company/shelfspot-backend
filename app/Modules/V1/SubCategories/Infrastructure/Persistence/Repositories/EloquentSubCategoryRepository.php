@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\SubCategories\Infrastructure\Persistence\Repositories;
 
+use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use App\Modules\V1\SubCategories\Domain\Repositories\SubCategoryRepositoryInterface;
@@ -11,7 +12,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
 {
-    use CascadesCatalogTrashActions;
+    use CascadesCatalogTrashActions, HasTranslation;
 
     protected function trashableModel(): string
     {
@@ -35,7 +36,13 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
     public function create(array $attributes, UploadedFile $image = null): SubCategory
     {
         return DB::transaction(function () use ($attributes, $image) {
+            $translations = $attributes['translations'] ?? [];
+
+            unset($attributes['translations']);
+
             $subCategory = SubCategory::create($attributes);
+            $this->fillTranslations($subCategory, $translations);
+            $subCategory->save();
             if ($image) {
                 $subCategory->addMedia($image)->toMediaCollection('image');
             }
@@ -46,7 +53,13 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
     public function update(SubCategory $subCategory, array $attributes, UploadedFile $image = null): SubCategory
     {
         return DB::transaction(function () use ($subCategory, $attributes, $image) {
+            $translations = $attributes['translations'] ?? [];
+
+            unset($attributes['translations']);
+
             $subCategory->update($attributes);
+            $this->fillTranslations($subCategory, $translations);
+            $subCategory->save();
             if ($image) {
                 $subCategory->clearMediaCollection('image');
                 $subCategory->addMedia($image)->toMediaCollection('image');

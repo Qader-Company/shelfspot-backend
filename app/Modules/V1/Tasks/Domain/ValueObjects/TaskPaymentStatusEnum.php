@@ -9,6 +9,14 @@ enum TaskPaymentStatusEnum: string
     case REFUNDED = 'refunded';
     case FAILED = 'failed';
 
+    public static function values(): array
+    {
+        return array_map(
+            fn (self $status) => $status->value,
+            self::cases()
+        );
+    }
+
     public function label(): string
     {
         return __("enums.task_payment_status.{$this->value}");

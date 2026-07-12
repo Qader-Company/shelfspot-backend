@@ -8,12 +8,14 @@ use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories\EloquentTaskRepository;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\NearbyTaskRequest;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
-use App\Modules\V1\Workers\Domain\Models\Worker;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
+use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
 class NearbyTaskDiscoveryTest extends TestCase
@@ -65,6 +67,14 @@ class NearbyTaskDiscoveryTest extends TestCase
         );
 
         $this->assertSame([$visible->id], $tasks->pluck('id')->all());
+    }
+
+    public function test_worker_can_request_a_nearby_task_radius_up_to_thirty_kilometers(): void
+    {
+        $request = new NearbyTaskRequest;
+
+        $this->assertTrue(Validator::make(['radius_km' => 30], $request->rules())->passes());
+        $this->assertTrue(Validator::make(['radius_km' => 30.1], $request->rules())->fails());
     }
 
     private function task(Company $company, array $overrides = []): Task

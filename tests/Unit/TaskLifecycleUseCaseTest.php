@@ -8,31 +8,32 @@ use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
 use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
-use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
-use App\Modules\V1\Tasks\Domain\Models\TaskService;
-use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
-use App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories\EloquentTaskRepository;
-use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReassignTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReopenTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\AutoAcceptExpiredReviewTasksUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\CancelCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\ForceDeleteCompanyDeletedTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\MarkOverdueInProgressTasksUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\PurgeCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ReleaseExpiredStartedTasksUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\RestoreCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\ReleaseExpiredStartedTasksUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\MarkOverdueInProgressTasksUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
+use App\Modules\V1\Tasks\Domain\Models\TaskService;
+use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories\EloquentTaskRepository;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
@@ -40,6 +41,7 @@ use App\Modules\V1\Workers\Domain\Models\Worker;
 use App\Modules\V1\Workers\Infrastructure\Persistence\Repositories\EloquentWorkerRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -80,7 +82,6 @@ class TaskLifecycleUseCaseTest extends TestCase
             'changed_by' => $worker->user_id,
         ]);
     }
-
 
     public function test_worker_extends_start_deadline_once_by_allowed_minutes(): void
     {
@@ -178,11 +179,48 @@ class TaskLifecycleUseCaseTest extends TestCase
         $this->assertDatabaseHas('task_status_histories', [
             'task_id' => $task->id,
             'from_status' => TaskStatusEnum::STARTED->value,
-//            'to_status' => TaskStatusEnum::COMPANY_DELETED->value,
+            //            'to_status' => TaskStatusEnum::COMPANY_DELETED->value,
             'changed_by' => $worker->user_id,
         ]);
     }
 
+    public function test_company_cancellation_refunds_pending_and_failed_charged_tasks_without_hiding_them(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        $companyUser = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+
+        foreach ([TaskStatusEnum::PENDING, TaskStatusEnum::FAILED] as $status) {
+            [$task] = $this->pendingTaskAndWorker(['status' => $status]);
+
+            $cancelledTask = app(CancelCompanyTaskUseCase::class)->execute($task, $companyUser);
+
+            $this->assertSame(TaskStatusEnum::COMPANY_CANCELLED, $cancelledTask->status);
+            $this->assertSame(TaskPaymentStatusEnum::REFUNDED, $cancelledTask->payment_status);
+            $this->assertNull($cancelledTask->company_deleted_at);
+            $this->assertDatabaseHas('company_wallet_transactions', [
+                'company_id' => $task->company_id,
+                'type' => 'task_refund',
+                'reference_type' => $task->getMorphClass(),
+                'reference_id' => $task->id,
+                'performed_by' => $companyUser->id,
+            ]);
+            $this->assertDatabaseHas('task_status_histories', [
+                'task_id' => $task->id,
+                'from_status' => $status->value,
+                'to_status' => TaskStatusEnum::COMPANY_CANCELLED->value,
+                'changed_by' => $companyUser->id,
+            ]);
+
+            $retriedTask = app(CancelCompanyTaskUseCase::class)->execute($cancelledTask, $companyUser);
+
+            $this->assertSame(TaskStatusEnum::COMPANY_CANCELLED, $retriedTask->status);
+            $this->assertSame(1, DB::table('company_wallet_transactions')
+                ->where('company_id', $task->company_id)
+                ->where('type', 'task_refund')
+                ->where('reference_id', $task->id)
+                ->count());
+        }
+    }
 
     public function test_company_trash_restore_and_purge_are_company_scoped_visibility_changes(): void
     {
@@ -322,7 +360,6 @@ class TaskLifecycleUseCaseTest extends TestCase
             'changed_by' => $worker->user_id,
         ]);
     }
-
 
     public function test_company_accepts_completed_task(): void
     {
@@ -539,7 +576,6 @@ class TaskLifecycleUseCaseTest extends TestCase
         $this->assertNull($acceptedTask->start_deadline_at);
     }
 
-
     public function test_overdue_in_progress_tasks_are_marked_after_expected_completion(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
@@ -565,7 +601,6 @@ class TaskLifecycleUseCaseTest extends TestCase
             'to_status' => TaskStatusEnum::IN_PROGRESS->value,
         ]);
     }
-
 
     public function test_worker_cannot_submit_task_service_before_task_started(): void
     {
@@ -718,7 +753,6 @@ class TaskLifecycleUseCaseTest extends TestCase
         return [$taskService, $product];
     }
 
-
     private function completedTaskAndWorker(): array
     {
         [$task, $worker] = $this->pendingTaskAndWorker();
@@ -735,5 +769,4 @@ class TaskLifecycleUseCaseTest extends TestCase
 
         return [$completedTask, $worker];
     }
-
 }

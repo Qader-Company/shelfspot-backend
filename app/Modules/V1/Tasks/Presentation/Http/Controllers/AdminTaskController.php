@@ -6,7 +6,6 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReassignTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\AdminReopenTaskUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\RefundTaskWalletUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminReassignTaskRequest;
@@ -24,9 +23,7 @@ class AdminTaskController extends Controller
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly WorkerRepositoryInterface $workerRepository
-    )
-    {
-    }
+    ) {}
 
     public function index(AdminTaskIndexRequest $request)
     {
@@ -41,7 +38,6 @@ class AdminTaskController extends Controller
                 ->getData(true)
         );
     }
-
 
     public function companyDeleted(AdminTaskIndexRequest $request)
     {
@@ -107,16 +103,6 @@ class AdminTaskController extends Controller
         return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
     }
 
-    public function refund(int $id, RefundTaskWalletUseCase $refundTaskWalletUseCase)
-    {
-        $refundTaskWalletUseCase->execute(
-            task: $this->task($id),
-            performedBy: request()->user()?->id
-        );
-
-        return ApiResponse::message(__('api.updated'));
-    }
-
     public function reassign(int $id, AdminReassignTaskRequest $request, AdminReassignTaskUseCase $adminReassignTaskUseCase)
     {
         $worker = $this->workerRepository->getById($request->validated('worker_id'));
@@ -129,7 +115,6 @@ class AdminTaskController extends Controller
 
         return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
     }
-
 
     private function companyDeletedTask(int $id, array $relations = ['services.service.translations', 'assignedWorker']): Task
     {

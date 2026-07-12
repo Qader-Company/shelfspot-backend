@@ -9,9 +9,9 @@ enum TaskStatusEnum: string
     case STARTED = 'started';
     case IN_PROGRESS = 'in_progress';
     case WORKER_CANCELLED = 'worker_cancelled';
+    case COMPANY_CANCELLED = 'company_cancelled';
     case COMPLETED = 'completed';
     case REJECTED = 'rejected';
-    case REFUND_REQUESTED = 'refund_requested';
     case ACCEPTED = 'accepted';
     case REOPENED = 'reopened';
     case FAILED = 'failed';
@@ -37,5 +37,4 @@ enum TaskStatusEnum: string
     {
         return __("enums.task_status.{$this->value}");
     }
-
 }

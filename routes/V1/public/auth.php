@@ -15,8 +15,8 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
 //            ->middleware('throttle:auth-register');
 
     Route::post('{type}/login', [AuthController::class, 'login'])
-        ->where('type', implode('|', PortalTypeEnum::values()))
-        ->middleware('throttle:auth-login');
+        ->where('type', implode('|', PortalTypeEnum::values()));
+//        ->middleware('throttle:auth-login');
 
     Route::post('{type}/social/{provider}/login', [AuthController::class, 'socialLogin'])
         ->where('type', implode('|', PortalTypeEnum::values()))
@@ -38,9 +38,9 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
         ->where('purpose', implode('|', OtpPurposeEnum::values()))
         ->middleware('throttle:auth-otp-send');
 
-    Route::post('{purpose}/send-otp', [AuthController::class, 'sendOTP'])
-        ->where('purpose', implode('|', OtpPurposeEnum::values()))
-        ->middleware('throttle:auth-otp-send');
+//    Route::post('{purpose}/send-otp', [AuthController::class, 'sendOTP'])
+//        ->where('purpose', implode('|', OtpPurposeEnum::values()))
+//        ->middleware('throttle:auth-otp-send');
 
     //////////////// verify email \\\\\\\\\\\\\\\\
     Route::patch('{type}/email-verification', [EmailVerificationController::class, 'verifyEmail'])

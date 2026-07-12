@@ -1,10 +1,8 @@
 <?php
 
 use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
-use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Controllers\CompanyTaskController;
 use App\Modules\V1\Tasks\Presentation\Http\Controllers\TaskReviewMessageController;
-use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 
 Route::controller(CompanyTaskController::class)
     ->group(function () {
@@ -20,7 +18,7 @@ Route::controller(CompanyTaskController::class)
         Route::post('/{id}/pay', 'pay')
             ->middleware('permission:'.CompanyPermissionEnum::CREATE_TASK->value);
 
-        Route::post('/{id}/request-refund', 'requestRefund')
+        Route::post('/{id}/cancel', 'cancel')
             ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
 
         Route::patch('/{id}/accept', 'accept')

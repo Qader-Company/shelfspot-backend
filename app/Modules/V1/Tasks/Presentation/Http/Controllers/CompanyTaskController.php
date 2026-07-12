@@ -6,12 +6,12 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Tasks\Application\UseCases\CancelCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CreateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\PayDraftTaskUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\RequestTaskRefundUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\UpdateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
@@ -24,27 +24,26 @@ use Illuminate\Http\Request;
 class CompanyTaskController extends Controller
 {
     use Filterable;
+
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TenantContextInterface $tenantContext,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
         $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
         $tasks = $this->taskRepository
-        ->getAll(
-            relations: $this->taskRepository->listRelations(),
-            filters: $filters
-        );
+            ->getAll(
+                relations: $this->taskRepository->listRelations(),
+                filters: $filters
+            );
 
         return ApiResponse::success(
             TaskResource::collection($tasks)
-            ->response()->getData(true)
+                ->response()->getData(true)
         );
     }
-
 
     public function trash(Request $request)
     {
@@ -100,6 +99,7 @@ class CompanyTaskController extends Controller
             $id,
             $this->taskRepository->detailRelations()
         );
+
         return ApiResponse::success(new TaskResource($task));
     }
 
@@ -113,9 +113,9 @@ class CompanyTaskController extends Controller
         return ApiResponse::updated(new TaskResource($task));
     }
 
-    public function requestRefund(int $id, Request $request, RequestTaskRefundUseCase $requestTaskRefundUseCase)
+    public function cancel(int $id, Request $request, CancelCompanyTaskUseCase $cancelCompanyTaskUseCase)
     {
-        $task = $requestTaskRefundUseCase->execute(
+        $task = $cancelCompanyTaskUseCase->execute(
             $this->getCompanyTask($id),
             $request->user()
         );
@@ -153,7 +153,6 @@ class CompanyTaskController extends Controller
 
         return ApiResponse::deleted();
     }
-
 
     private function getCompanyDeletedTask(int $id, array $relations = []): Task
     {

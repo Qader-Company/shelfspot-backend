@@ -121,7 +121,7 @@ class TaskReviewLifecycleApiTest extends TestCase
             ->assertJsonValidationErrors(['feedback']);
     }
 
-    public function test_company_reject_requires_reason_and_then_exposes_admin_message_and_reopen_flow(): void
+    public function test_company_reject_requires_reason_and_then_allows_admin_to_reopen(): void
     {
         Carbon::setTestNow('2026-06-10 09:00:00');
         [$task, $companyUser] = $this->completedTaskWithCompanyUser();
@@ -142,25 +142,7 @@ class TaskReviewLifecycleApiTest extends TestCase
             ->assertJsonPath('data.status', TaskStatusEnum::REJECTED->value)
             ->assertJsonPath('data.rejection_reason', 'Submitted photos are not clear enough.');
 
-        $this->postJson(
-            $this->companyTaskUrl($task, 'review-messages'),
-            ['message' => 'Please review the rejection details.'],
-            $this->companyHeaders($task->company)
-        )
-            ->assertCreated()
-            ->assertJsonPath('data.sender_role', 'company')
-            ->assertJsonPath('data.message', 'Please review the rejection details.');
-
         Sanctum::actingAs($admin, [PortalTypeEnum::ADMIN->value, 'access']);
-
-        $this->postJson($this->adminTaskUrl($task, 'review-messages'), ['message' => 'We will reopen this task.'])
-            ->assertCreated()
-            ->assertJsonPath('data.sender_role', 'admin')
-            ->assertJsonPath('data.message', 'We will reopen this task.');
-
-        $this->getJson($this->adminTaskUrl($task, 'review-messages'))
-            ->assertOk()
-            ->assertJsonCount(2, 'data.data');
 
         $this->postJson($this->adminTaskUrl($task, 'reopen'), ['reason' => 'Company rejection is valid.'])
             ->assertOk()

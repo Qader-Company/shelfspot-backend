@@ -36,7 +36,5 @@ return [
         'reject_completed_only' => 'لا يمكن رفض المهمة إلا بعد اكتمالها.',
         'reject_review_window_expired' => 'انتهت فترة المراجعة ولا يمكن رفض هذه المهمة الآن.',
         'reopen_rejected_only' => 'لا يمكن إعادة فتح المهمة إلا إذا كانت مرفوضة.',
-        'review_messages_unavailable' => 'رسائل المراجعة متاحة فقط بعد رفض المهمة.',
-        'review_messages_rejected_only' => 'لا يمكن إرسال رسائل المراجعة إلا أثناء رفض المهمة.',
     ],
 ];

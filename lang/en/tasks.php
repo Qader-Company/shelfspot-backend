@@ -36,7 +36,5 @@ return [
         'reject_completed_only' => 'Only completed tasks can be rejected.',
         'reject_review_window_expired' => 'The review window has expired; this task can no longer be rejected.',
         'reopen_rejected_only' => 'Only rejected tasks can be reopened.',
-        'review_messages_unavailable' => 'Review messages are only available after a task is rejected.',
-        'review_messages_rejected_only' => 'Review messages can only be sent while the task is rejected.',
     ],
 ];

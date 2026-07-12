@@ -104,9 +104,4 @@ class Task extends Model
     {
         return $this->hasMany(TaskStatusHistory::class);
     }
-
-    public function reviewMessages(): HasMany
-    {
-        return $this->hasMany(TaskReviewMessage::class);
-    }
 }

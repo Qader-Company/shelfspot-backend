@@ -2,7 +2,6 @@
 
 use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Controllers\CompanyTaskController;
-use App\Modules\V1\Tasks\Presentation\Http\Controllers\TaskReviewMessageController;
 
 Route::controller(CompanyTaskController::class)
     ->group(function () {
@@ -41,15 +40,5 @@ Route::controller(CompanyTaskController::class)
 
         Route::delete('/{id}', 'destroy')
             ->middleware('permission:'.CompanyPermissionEnum::DELETE_TASK->value);
-
-    });
-
-Route::controller(TaskReviewMessageController::class)
-    ->group(function () {
-        Route::get('/{id}/review-messages', 'indexForCompany')
-            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
-
-        Route::post('/{id}/review-messages', 'storeForCompany')
-            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
 
     });

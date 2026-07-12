@@ -12,13 +12,11 @@ use Illuminate\Support\Facades\DB;
 
 class CompanyAcceptTaskUseCase
 {
-    public function __construct(private readonly TaskRepositoryInterface $taskRepository)
-    {
-    }
+    public function __construct(private readonly TaskRepositoryInterface $taskRepository) {}
 
-    public function execute(Task $task, User $actor): Task
+    public function execute(Task $task, User $actor, ?array $feedback = null): Task
     {
-        return DB::transaction(function () use ($task, $actor) {
+        return DB::transaction(function () use ($task, $actor, $feedback) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
             $fromStatus = $lockedTask->status;
 
@@ -31,6 +29,7 @@ class CompanyAcceptTaskUseCase
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::ACCEPTED,
                 'company_accepted_at' => now(),
+                'feedback' => $feedback,
             ])->save();
 
             TaskStatusUpdated::dispatch(

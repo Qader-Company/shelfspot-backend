@@ -39,6 +39,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'completed_at',
     'rejected_at',
     'rejection_reason',
+    'feedback',
     'company_accepted_at',
     'auto_accept_at',
     'reopened_at',
@@ -52,7 +53,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Task extends Model
 {
-    use Filterable, BelongsToCompany;
+    use BelongsToCompany, Filterable;
 
     protected $casts = [
         'date' => 'date',
@@ -67,6 +68,7 @@ class Task extends Model
         'in_progress_overdue_at' => 'datetime',
         'completed_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'feedback' => 'array',
         'company_accepted_at' => 'datetime',
         'auto_accept_at' => 'datetime',
         'reopened_at' => 'datetime',

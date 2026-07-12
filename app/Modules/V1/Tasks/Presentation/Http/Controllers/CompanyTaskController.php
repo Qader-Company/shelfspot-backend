@@ -15,6 +15,7 @@ use App\Modules\V1\Tasks\Application\UseCases\PayDraftTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\UpdateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyAcceptTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyRejectTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
@@ -123,11 +124,12 @@ class CompanyTaskController extends Controller
         return ApiResponse::updated(new TaskResource($task));
     }
 
-    public function accept(int $id, Request $request, CompanyAcceptTaskUseCase $companyAcceptTaskUseCase)
+    public function accept(int $id, CompanyAcceptTaskRequest $request, CompanyAcceptTaskUseCase $companyAcceptTaskUseCase)
     {
         $task = $companyAcceptTaskUseCase->execute(
             $this->getCompanyTask($id),
-            $request->user()
+            $request->user(),
+            $request->validated('feedback'),
         );
 
         return ApiResponse::updated(new TaskResource($task));

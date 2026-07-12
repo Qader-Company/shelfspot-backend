@@ -88,15 +88,37 @@ class TaskReviewLifecycleApiTest extends TestCase
         [$task, $companyUser] = $this->completedTaskWithCompanyUser();
         Sanctum::actingAs($companyUser, [PortalTypeEnum::COMPANY->value, 'access']);
 
-        $this->postJson($this->companyTaskUrl($task, 'accept'), [], $this->companyHeaders($task->company))
+        $feedback = [
+            'platform_comment' => 'The platform made the task easy to follow.',
+            'worker_comment' => 'The worker was punctual and professional.',
+            'overall_comment' => 'A very good experience overall.',
+        ];
+
+        $this->patchJson($this->companyTaskUrl($task, 'accept'), ['feedback' => $feedback], $this->companyHeaders($task->company))
             ->assertOk()
             ->assertJsonPath('data.status', TaskStatusEnum::ACCEPTED->value)
-            ->assertJsonPath('data.company_accepted_at', now()->toDateTimeString());
+            ->assertJsonPath('data.company_accepted_at', now()->toDateTimeString())
+            ->assertJsonPath('data.feedback', $feedback);
 
         $this->assertDatabaseHas('tasks', [
             'id' => $task->id,
             'status' => TaskStatusEnum::ACCEPTED->value,
+            'feedback' => json_encode($feedback),
         ]);
+    }
+
+    public function test_company_accept_feedback_rejects_unknown_fields(): void
+    {
+        [$task, $companyUser] = $this->completedTaskWithCompanyUser();
+        Sanctum::actingAs($companyUser, [PortalTypeEnum::COMPANY->value, 'access']);
+
+        $this->patchJson(
+            $this->companyTaskUrl($task, 'accept'),
+            ['feedback' => ['worker_comment' => 'Great work.', 'rating' => 5]],
+            $this->companyHeaders($task->company)
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['feedback']);
     }
 
     public function test_company_reject_requires_reason_and_then_exposes_admin_message_and_reopen_flow(): void

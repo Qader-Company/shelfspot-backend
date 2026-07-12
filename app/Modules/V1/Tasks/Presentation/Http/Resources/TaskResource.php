@@ -2,7 +2,6 @@
 
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
-
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Http\Request;
@@ -15,6 +14,7 @@ class TaskResource extends JsonResource
         $userType = $request->user()?->type;
         $isWorker = $userType->value === 'worker';
         $isCompany = $userType->value === 'company';
+        $isAdmin = $userType->value === 'admin';
 
         return [
             'id' => $this->id,
@@ -26,7 +26,7 @@ class TaskResource extends JsonResource
                 'phone' => $this->company?->phone,
             ]),
             'date' => $this->date?->toDateString(),
-//            'execution_time' => $this->execution_time?->format('H:i:s'),
+            //            'execution_time' => $this->execution_time?->format('H:i:s'),
             'estimated_duration_minutes' => $this->estimated_duration_minutes,
             'location' => [
                 'latitude' => $this->latitude,
@@ -42,7 +42,7 @@ class TaskResource extends JsonResource
             ),
             'payment_status' => $this->payment_status->value,
             'payment_status_label' => $this->payment_status->label(),
-            'created_by' => $this->whenLoaded('creator', $this->creator->name),
+            'created_by' => $this->whenLoaded('creator', fn () => $this->creator?->name),
             'expires_at' => $this->expires_at?->toDateTimeString(),
             'charged_at' => $this->charged_at?->toDateTimeString(),
             'accepted_at' => $this->accepted_at?->toDateTimeString(),
@@ -54,11 +54,12 @@ class TaskResource extends JsonResource
             'in_progress_overdue_at' => $this->in_progress_overdue_at?->toDateTimeString(),
             'completed_at' => $this->completed_at?->toDateTimeString(),
             'rejected_at' => $this->rejected_at?->toDateTimeString(),
-            'rejection_reason' => $this->when($this->rejection_reason, $this->rejection_reason),
+            'rejection_reason' => $this->rejection_reason,
             'company_accepted_at' => $this->company_accepted_at?->toDateTimeString(),
+            'feedback' => $this->when($isCompany || $isAdmin, $this->feedback),
             'auto_accept_at' => $this->auto_accept_at?->toDateTimeString(),
             'reopened_at' => $this->reopened_at?->toDateTimeString(),
-            'reopen_reason' => $this->when($this->reopen_reason, $this->reopen_reason),
+            'reopen_reason' => $this->reopen_reason,
             'progress' => $this->progress(),
             'assigned_worker_id' => $this->when($isWorker || $this->relationLoaded('assignedWorker'), $this->assigned_worker_id),
             'assigned_worker' => new WorkerResource($this->whenLoaded('assignedWorker')),
@@ -71,9 +72,10 @@ class TaskResource extends JsonResource
 
     private function companyFacingStatus(): string
     {
-        if($this->status === TaskStatusEnum::WORKER_CANCELLED){
+        if ($this->status === TaskStatusEnum::WORKER_CANCELLED) {
             return TaskStatusEnum::IN_PROGRESS->value;
-        };
+        }
+
         return $this->status->value;
     }
 

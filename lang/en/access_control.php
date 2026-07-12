@@ -19,6 +19,7 @@ return [
             'view_task' => 'View tasks',
             'delete_task' => 'Delete task',
             'reassign_task' => 'Reassign task',
+            'view_payment' => 'View payments',
             'view_wallet_coupon' => 'View wallet coupons',
             'create_wallet_coupon' => 'Create wallet coupon',
             'edit_wallet_coupon' => 'Edit wallet coupon',

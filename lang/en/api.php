@@ -8,6 +8,7 @@ return [
     'forbidden' => 'Forbidden access',
     'created' => 'created successfully',
     'updated' => 'Updated successfully',
+    'completed' => 'Completed',
     'bulk_deleted' => ':count items moved to trash successfully',
     'restored' => 'Restored successfully',
     'restore_queued' => 'Restore has been queued.',

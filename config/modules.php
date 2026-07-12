@@ -20,6 +20,7 @@ return [
             [ 'prefix' => 'admin/services',                           'file' => 'services.php',               'middlewares' => $adminAuthMiddlewares ],
             [ 'prefix' => 'admin/companies',                          'file' => 'companies.php',              'middlewares' => $adminAuthMiddlewares ],
             [ 'prefix' => 'admin/wallet-coupons',                     'file' => 'wallet-coupons.php',         'middlewares' => $adminAuthMiddlewares ],
+            [ 'prefix' => 'admin/payments',                           'file' => 'payments.php',              'middlewares' => $adminAuthMiddlewares ],
             [ 'prefix' => 'admin/workers',                            'file' => 'workers.php',                'middlewares' => $adminAuthMiddlewares ],
             [ 'prefix' => 'admin/tasks',                              'file' => 'tasks.php',                  'middlewares' => $adminAuthMiddlewares ],
             [ 'prefix' => 'admin/access-control',                     'file' => 'access-control.php',         'middlewares' => $adminAuthMiddlewares ],

@@ -19,6 +19,7 @@ return [
             'view_task' => 'عرض المهام',
             'delete_task' => 'حذف مهمة',
             'reassign_task' => 'إعادة تعيين مهمة',
+            'view_payment' => 'عرض المدفوعات',
             'view_wallet_coupon' => 'عرض كوبونات المحفظة',
             'create_wallet_coupon' => 'إنشاء كوبون محفظة',
             'edit_wallet_coupon' => 'تعديل كوبون محفظة',

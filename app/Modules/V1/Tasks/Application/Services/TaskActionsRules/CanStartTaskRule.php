@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 
 class CanStartTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null, bool $workerHasActiveTask = false): void
+    public static function validate(Task $task, ?Worker $worker = null, bool $workerHasActiveTask = false): void
     {
         parent::validate($task);
 
@@ -21,7 +21,7 @@ class CanStartTaskRule extends AbstractTaskActionRule
         parent::insureTaskIsNotDeleted($task);
         parent::insureTaskDateIsSameDay($task);
         parent::insureTaskAssignmentToWorker(
-            task: $task,
+            $task,
             message: __('tasks.validation.accept_unassigned_only')
         );
         parent::insureTaskStatusIsOneOf(

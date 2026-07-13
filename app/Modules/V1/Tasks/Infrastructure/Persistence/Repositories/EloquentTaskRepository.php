@@ -6,16 +6,15 @@ use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 
 class EloquentTaskRepository implements TaskRepositoryInterface
 {
-
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)
@@ -29,7 +28,6 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->first();
     }
 
-
     public function getByIdAndLockedForUpdate(int $id, array $relations = [], array $relationsCount = []): ?Task
     {
         return $this->query($relations, $relationsCount)
@@ -38,17 +36,17 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->first();
     }
 
-
-
     public function create(array $attributes): Task
     {
         $task = Task::create($attributes);
+
         return $task;
     }
 
     public function update(Task $task, array $attributes): Task
     {
         $task->update($attributes);
+
         return $task->refresh();
     }
 
@@ -56,7 +54,6 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         $task->delete();
     }
-
 
     public function getCompanyTrash(int $companyId, array $relations = [], array $filters = []): LengthAwarePaginator
     {
@@ -110,23 +107,43 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             relations: ['company', 'services'],
             filters: $filters
         )->where('status', TaskStatusEnum::PENDING->value)
-        ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
-        ->whereNull('assigned_worker_id')
-        ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
-        ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
-        ->select('tasks.*')
-        ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
-        ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
-        ->orderBy('distance_km')
-        ->cursorPaginate();
+            ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
+            ->whereNull('assigned_worker_id')
+            ->whereBetween('latitude', [$boundingBox['min_latitude'], $boundingBox['max_latitude']])
+            ->whereBetween('longitude', [$boundingBox['min_longitude'], $boundingBox['max_longitude']])
+            ->select('tasks.*')
+            ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
+            ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
+            ->orderBy('distance_km')
+            ->cursorPaginate();
     }
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator
     {
         $query = $this->query($relations, [], $filters)
-        ->where('assigned_worker_id', $workerId)
-        ->orderByDesc('date')
-        ->orderByDesc('id');
+            ->leftJoin('task_worker_assignments as current_assignments', function ($join) {
+                $join->on('current_assignments.task_id', '=', 'tasks.id')
+                    ->whereNull('current_assignments.unassigned_at');
+            })
+            ->where('tasks.assigned_worker_id', $workerId)
+            ->select('tasks.*')
+            ->selectRaw(
+                'CASE
+                    WHEN tasks.status = ? THEN 0
+                    WHEN current_assignments.assignment_type IN (?, ?, ?) THEN 1
+                    ELSE 2
+                END AS worker_priority_rank',
+                [
+                    TaskStatusEnum::IN_PROGRESS->value,
+                    TaskWorkerAssignmentTypeEnum::REOPENED_SAME_WORKER->value,
+                    TaskWorkerAssignmentTypeEnum::REOPENED_REASSIGNED->value,
+                    TaskWorkerAssignmentTypeEnum::REASSIGNED->value,
+                ]
+            )
+            ->selectRaw('COALESCE(current_assignments.assigned_at, tasks.updated_at) AS worker_priority_at')
+            ->orderBy('worker_priority_rank')
+            ->orderByDesc('worker_priority_at')
+            ->orderByDesc('tasks.id');
 
         return match ($paginationType) {
             'cursor' => $query->cursorPaginate(),
@@ -141,7 +158,6 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->where('assigned_worker_id', $workerId)
             ->first();
     }
-
 
     public function assignedToWorkerForAdmin(int $workerId, array $filters = [], array $relations = []): Collection
     {
@@ -175,7 +191,6 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->latest('id')
             ->first();
     }
-
 
     public function latestForCompany(int $companyId, int $limit = 15, array $relations = []): Collection
     {

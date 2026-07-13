@@ -427,11 +427,18 @@ class TaskLifecycleUseCaseTest extends TestCase
         $admin = User::factory()->create(['type' => PortalTypeEnum::ADMIN]);
         $rejectedTask = app(CompanyRejectTaskUseCase::class)->execute($task, $companyUser, 'Need clearer execution evidence.');
 
-        $reopenedTask = app(AdminReopenTaskUseCase::class)->execute($rejectedTask, $admin, 'Company rejection is valid.');
+        $reopenedTask = app(AdminReopenTaskUseCase::class)->execute(
+            $rejectedTask,
+            $worker,
+            $admin,
+            'Company rejection is valid.'
+        );
 
         $this->assertSame(TaskStatusEnum::REOPENED, $reopenedTask->status);
         $this->assertNull($reopenedTask->auto_accept_at);
         $this->assertSame('Company rejection is valid.', $reopenedTask->reopen_reason);
+        $this->assertTrue($reopenedTask->reopen_deadline_at->equalTo(now()->startOfDay()->addDays(2)));
+        $this->assertSame($worker->id, $reopenedTask->assigned_worker_id);
         $this->assertSame(TaskServiceStatusEnum::PENDING, $reopenedTask->services()->first()->status);
 
         $executedTask = app(StartExecuteTaskUseCase::class)->execute($reopenedTask, $worker, 30.0444, 31.2357);

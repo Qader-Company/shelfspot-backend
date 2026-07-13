@@ -20,12 +20,13 @@ class WorkerAccountController extends Controller
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
         private readonly UserRepositoryInterface $userRepository,
-    ) {
-    }
+    ) {}
 
     public function profile(Request $request)
     {
-        return ApiResponse::success(new WorkerResource($this->worker($request)->load('user')));
+        return ApiResponse::success(new WorkerResource(
+            $this->worker($request)->load(['user', 'priorityTasks.currentWorkerAssignment'])
+        ));
     }
 
     public function updateProfile(UpdateWorkerRequest $request)
@@ -54,6 +55,7 @@ class WorkerAccountController extends Controller
         $this->userRepository->delete($request->user());
 
         $this->workerRepository->delete($this->worker($request));
+
         return ApiResponse::deleted();
     }
 

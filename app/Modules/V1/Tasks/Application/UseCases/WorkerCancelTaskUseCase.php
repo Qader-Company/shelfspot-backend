@@ -4,18 +4,20 @@ namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanCancelTaskRule;
+use App\Modules\V1\Tasks\Application\Services\TaskWorkerAssignmentManager;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentOutcomeEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class WorkerCancelTaskUseCase
 {
-    public function __construct(private readonly TaskRepositoryInterface $taskRepository)
-    {
-    }
+    public function __construct(
+        private readonly TaskRepositoryInterface $taskRepository,
+        private readonly TaskWorkerAssignmentManager $assignmentManager,
+    ) {}
 
     public function execute(Task $task, Worker $worker, string $reason): Task
     {
@@ -32,6 +34,12 @@ class WorkerCancelTaskUseCase
                 'worker_cancelled_at' => now(),
                 'worker_cancel_reason' => $reason,
             ])->save();
+
+            $this->assignmentManager->closeCurrent(
+                $lockedTask,
+                TaskWorkerAssignmentOutcomeEnum::WORKER_CANCELLED,
+                $reason,
+            );
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,

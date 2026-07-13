@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Domain\Models;
 
 use App\Modules\Shared\Support\Traits\BelongsToCompany;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskFailureReasonEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'company_id',
@@ -43,7 +45,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'company_accepted_at',
     'auto_accept_at',
     'reopened_at',
+    'reopen_deadline_at',
     'reopen_reason',
+    'failure_reason',
     'worker_cancelled_at',
     'worker_cancel_reason',
     'company_deleted_at',
@@ -72,12 +76,14 @@ class Task extends Model
         'company_accepted_at' => 'datetime',
         'auto_accept_at' => 'datetime',
         'reopened_at' => 'datetime',
+        'reopen_deadline_at' => 'datetime',
         'worker_cancelled_at' => 'datetime',
         'company_deleted_at' => 'datetime',
         'company_purged_at' => 'datetime',
         'charged_at' => 'datetime',
         'status' => TaskStatusEnum::class,
         'payment_status' => TaskPaymentStatusEnum::class,
+        'failure_reason' => TaskFailureReasonEnum::class,
     ];
 
     public function creator(): BelongsTo
@@ -103,5 +109,17 @@ class Task extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(TaskStatusHistory::class);
+    }
+
+    public function workerAssignments(): HasMany
+    {
+        return $this->hasMany(TaskWorkerAssignment::class);
+    }
+
+    public function currentWorkerAssignment(): HasOne
+    {
+        return $this->hasOne(TaskWorkerAssignment::class)
+            ->whereNull('unassigned_at')
+            ->latest('id');
     }
 }

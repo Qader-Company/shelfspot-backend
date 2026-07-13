@@ -17,6 +17,7 @@ return [
         'start_extension_started_only' => 'Only accepted tasks can have their start deadline extended.',
         'start_extension_once' => 'The start deadline can only be extended once.',
         'start_deadline_expired' => 'The start window for this task has expired.',
+        'reopen_deadline_expired' => 'The rework window for this task has expired.',
         'start_outside_geofence' => 'You must be at or near the task location to start it.',
         'minimum_price' => 'The service price must be at least :price.',
         'minimum_execution_time' => 'The service execution time must be at least :minutes minutes.',

@@ -57,7 +57,7 @@ abstract class AbstractTaskActionRule
         }
     }
 
-    public static function insureTaskAssignmentToWorker(Task $task, int $workerId = null, string $message): void
+    public static function insureTaskAssignmentToWorker(Task $task, ?int $workerId = null, ?string $message = ''): void
     {
         if ($task->assigned_worker_id !== $workerId) {
             throw ValidationException::withMessages(['task' => $message]);

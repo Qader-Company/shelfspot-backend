@@ -6,11 +6,12 @@ use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Application\Services\TaskWorkerAssignmentManager;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskFailureReasonEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentOutcomeEnum;
 use Illuminate\Support\Facades\DB;
 
-class AutoAcceptExpiredReviewTasksUseCase
+class FailExpiredReopenedTasksUseCase
 {
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
@@ -21,51 +22,56 @@ class AutoAcceptExpiredReviewTasksUseCase
     public function execute(?int $limit = null): int
     {
         $query = Task::query()
-            ->where('status', TaskStatusEnum::COMPLETED->value)
-            ->whereNotNull('auto_accept_at')
-            ->where('auto_accept_at', '<=', now())
+            ->where('status', TaskStatusEnum::REOPENED->value)
+            ->whereNotNull('reopen_deadline_at')
+            ->where('reopen_deadline_at', '<=', now())
+            ->orderBy('reopen_deadline_at')
             ->orderBy('id');
 
         if ($limit !== null) {
             $query->limit($limit);
         }
 
-        $accepted = 0;
+        $failed = 0;
 
-        $query->get()->each(function (Task $task) use (&$accepted) {
-            DB::transaction(function () use ($task, &$accepted) {
+        $query->get(['id'])->each(function (Task $task) use (&$failed) {
+            DB::transaction(function () use ($task, &$failed) {
                 $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
 
-                if ($lockedTask->status !== TaskStatusEnum::COMPLETED
-                    || $lockedTask->auto_accept_at === null
-                    || now()->lessThan($lockedTask->auto_accept_at)) {
+                if ($lockedTask->status !== TaskStatusEnum::REOPENED
+                    || $lockedTask->reopen_deadline_at === null
+                    || now()->lessThan($lockedTask->reopen_deadline_at)) {
                     return;
                 }
 
                 $fromStatus = $lockedTask->status;
-                $now = now();
+                $deadline = $lockedTask->reopen_deadline_at;
 
                 $lockedTask->forceFill([
-                    'status' => TaskStatusEnum::ACCEPTED,
-                    'company_accepted_at' => $now,
+                    'status' => TaskStatusEnum::FAILED,
+                    'failure_reason' => TaskFailureReasonEnum::REOPEN_DEADLINE_EXPIRED,
+                    'assigned_worker_id' => null,
                 ])->save();
 
                 $this->assignmentManager->closeCurrent(
                     $lockedTask,
-                    TaskWorkerAssignmentOutcomeEnum::COMPLETED,
+                    TaskWorkerAssignmentOutcomeEnum::REOPEN_DEADLINE_EXPIRED,
                 );
 
                 $this->statusHistoryRecorder->record(
                     task: $lockedTask,
                     fromStatus: $fromStatus,
-                    toStatus: TaskStatusEnum::ACCEPTED,
-                    meta: ['actor_type' => 'system', 'auto_accepted' => true]
+                    toStatus: TaskStatusEnum::FAILED,
+                    meta: [
+                        'failure_reason' => TaskFailureReasonEnum::REOPEN_DEADLINE_EXPIRED->value,
+                        'reopen_deadline_at' => $deadline->toDateTimeString(),
+                    ],
                 );
 
-                $accepted++;
+                $failed++;
             });
         });
 
-        return $accepted;
+        return $failed;
     }
 }

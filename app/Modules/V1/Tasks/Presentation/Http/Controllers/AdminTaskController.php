@@ -96,6 +96,7 @@ class AdminTaskController extends Controller
     {
         $task = $adminReopenTaskUseCase->execute(
             task: $this->task($id),
+            worker: $this->workerRepository->getById($request->validated('worker_id')),
             admin: $request->user(),
             reason: $request->validated('reason')
         );

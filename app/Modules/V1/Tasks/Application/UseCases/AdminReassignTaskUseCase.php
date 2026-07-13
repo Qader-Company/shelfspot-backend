@@ -4,18 +4,22 @@ namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanReassignTaskRule;
+use App\Modules\V1\Tasks\Application\Services\TaskWorkerAssignmentManager;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentOutcomeEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Support\Facades\DB;
 
 class AdminReassignTaskUseCase
 {
-    public function __construct(private readonly TaskRepositoryInterface $taskRepository)
-    {
-    }
+    public function __construct(
+        private readonly TaskRepositoryInterface $taskRepository,
+        private readonly TaskWorkerAssignmentManager $assignmentManager,
+    ) {}
 
     public function execute(Task $task, Worker $worker, ?User $admin = null): Task
     {
@@ -44,12 +48,23 @@ class AdminReassignTaskUseCase
                 'worker_cancel_reason' => null,
             ])->save();
 
+            $this->assignmentManager->closeCurrent(
+                $lockedTask,
+                TaskWorkerAssignmentOutcomeEnum::REASSIGNED,
+            );
+            $this->assignmentManager->assign(
+                $lockedTask,
+                $worker,
+                TaskWorkerAssignmentTypeEnum::REASSIGNED,
+                $admin,
+            );
+
             TaskStatusUpdated::dispatch(
                 $lockedTask,
                 $fromStatus,
                 TaskStatusEnum::STARTED,
                 $admin ?? $worker,
-                ['reassigned_worker_id' => $worker->id]
+                ['reassigned_worker_id' => $worker->id, 'assignment_type' => TaskWorkerAssignmentTypeEnum::REASSIGNED->value]
             );
 
             return $lockedTask->refresh();

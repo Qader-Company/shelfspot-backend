@@ -11,6 +11,9 @@ Artisan::command('inspire', function () {
 Schedule::command('tasks:fail-expired')
     ->dailyAt('00:00')
     ->withoutOverlapping();
+Schedule::command('tasks:fail-expired-reopened --limit=100')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
 Schedule::command('tasks:release-expired-started --limit=100')
     ->everyFiveMinutes()
     ->withoutOverlapping();

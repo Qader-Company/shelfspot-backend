@@ -17,6 +17,7 @@ return [
         'start_extension_started_only' => 'يمكن تمديد موعد الوصول للمهام المقبولة فقط.',
         'start_extension_once' => 'يمكن تمديد موعد الوصول مرة واحدة فقط.',
         'start_deadline_expired' => 'انتهت نافذة بدء هذه المهمة.',
+        'reopen_deadline_expired' => 'انتهت مهلة إعادة تنفيذ هذه المهمة.',
         'start_outside_geofence' => 'يجب أن تكون داخل أو بالقرب من موقع المهمة لبدئها.',
         'minimum_price' => 'يجب ألا يقل سعر الخدمة عن :price.',
         'minimum_execution_time' => 'يجب ألا يقل وقت تنفيذ الخدمة عن :minutes دقيقة.',

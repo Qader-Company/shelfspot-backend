@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class CompleteTaskUseCase
 {
-    public function __construct(private readonly TaskRepositoryInterface $taskRepository)
-    {
-    }
+    public function __construct(private readonly TaskRepositoryInterface $taskRepository) {}
 
     public function execute(Task $task, Worker $worker): Task
     {
@@ -31,7 +29,6 @@ class CompleteTaskUseCase
                 'status' => TaskStatusEnum::COMPLETED,
                 'completed_at' => now(),
                 'auto_accept_at' => TaskAutoAcceptDate::fromTask($lockedTask),
-                'auto_accepted_at' => null,
             ])->save();
 
             TaskStatusUpdated::dispatch(
@@ -45,5 +42,4 @@ class CompleteTaskUseCase
             return $lockedTask->refresh();
         });
     }
-
 }

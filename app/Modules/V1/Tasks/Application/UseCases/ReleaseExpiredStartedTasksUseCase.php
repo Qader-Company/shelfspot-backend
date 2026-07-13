@@ -3,9 +3,11 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
+use App\Modules\V1\Tasks\Application\Services\TaskWorkerAssignmentManager;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentOutcomeEnum;
 use Illuminate\Support\Facades\DB;
 
 class ReleaseExpiredStartedTasksUseCase
@@ -14,9 +16,9 @@ class ReleaseExpiredStartedTasksUseCase
 
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
-        private readonly TaskStatusHistoryRecorder $statusHistoryRecorder
-    ) {
-    }
+        private readonly TaskStatusHistoryRecorder $statusHistoryRecorder,
+        private readonly TaskWorkerAssignmentManager $assignmentManager,
+    ) {}
 
     public function execute(?int $limit = null): int
     {
@@ -55,6 +57,12 @@ class ReleaseExpiredStartedTasksUseCase
                     'start_deadline_extension_minutes' => null,
                     'start_deadline_extended_at' => null,
                 ])->save();
+
+                $this->assignmentManager->closeCurrent(
+                    $lockedTask,
+                    TaskWorkerAssignmentOutcomeEnum::START_DEADLINE_EXPIRED,
+                    self::EXPIRED_START_DEADLINE_REASON,
+                );
 
                 $this->statusHistoryRecorder->record(
                     task: $lockedTask,

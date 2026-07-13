@@ -145,6 +145,13 @@ class TaskReviewLifecycleApiTest extends TestCase
         Sanctum::actingAs($admin, [PortalTypeEnum::ADMIN->value, 'access']);
 
         $this->postJson($this->adminTaskUrl($task, 'reopen'), ['reason' => 'Company rejection is valid.'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['worker_id']);
+
+        $this->postJson($this->adminTaskUrl($task, 'reopen'), [
+            'worker_id' => $task->assigned_worker_id,
+            'reason' => 'Company rejection is valid.',
+        ])
             ->assertOk()
             ->assertJsonPath('data.status', TaskStatusEnum::REOPENED->value)
             ->assertJsonPath('data.reopen_reason', 'Company rejection is valid.');

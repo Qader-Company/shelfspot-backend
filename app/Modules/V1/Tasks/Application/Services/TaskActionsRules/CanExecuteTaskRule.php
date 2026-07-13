@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 
 class CanExecuteTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null): void
+    public static function validate(Task $task, ?Worker $worker = null): void
     {
         parent::validate($task);
         parent::insureTaskStatusIsOneOf(
@@ -30,6 +30,12 @@ class CanExecuteTaskRule extends AbstractTaskActionRule
             && $task->start_deadline_at !== null
             && now()->greaterThan($task->start_deadline_at)) {
             throw ValidationException::withMessages(['task' => __('tasks.validation.start_deadline_expired')]);
+        }
+
+        if ($task->status === TaskStatusEnum::REOPENED
+            && $task->reopen_deadline_at !== null
+            && now()->greaterThanOrEqualTo($task->reopen_deadline_at)) {
+            throw ValidationException::withMessages(['task' => __('tasks.validation.reopen_deadline_expired')]);
         }
     }
 }

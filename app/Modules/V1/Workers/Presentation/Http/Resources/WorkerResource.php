@@ -18,6 +18,7 @@ class WorkerResource extends JsonResource
     public function toArray(Request $request): array
     {
         [$worker, $user] = $this->resolveWorkerAndUser();
+        $isOwnProfile = $request->user()?->id === $user?->id;
 
         return [
             'id' => $user?->id,
@@ -39,6 +40,10 @@ class WorkerResource extends JsonResource
                 $worker->in_progress_task_completion_percentage ?? null
             ),
             'assigned_tasks' => TaskResource::collection($this->whenLoaded('assignedTasks')),
+            'priority_tasks' => $this->when(
+                $isOwnProfile && $worker?->relationLoaded('priorityTasks'),
+                fn () => WorkerPriorityTaskResource::collection($worker->priorityTasks)->resolve($request),
+            ),
         ];
     }
 

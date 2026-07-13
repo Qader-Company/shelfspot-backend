@@ -4,9 +4,11 @@ namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Events\TaskStatusUpdated;
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanStartTaskRule;
+use App\Modules\V1\Tasks\Application\Services\TaskWorkerAssignmentManager;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Support\Facades\DB;
 
@@ -20,9 +22,10 @@ class StartTaskUseCase
         TaskStatusEnum::REOPENED,
     ];
 
-    public function __construct(private readonly TaskRepositoryInterface $taskRepository,)
-    {
-    }
+    public function __construct(
+        private readonly TaskRepositoryInterface $taskRepository,
+        private readonly TaskWorkerAssignmentManager $assignmentManager,
+    ) {}
 
     public function execute(Task $task, Worker $worker): Task
     {
@@ -46,6 +49,13 @@ class StartTaskUseCase
                 'start_deadline_at' => $now->copy()->addMinutes(self::START_DEADLINE_MINUTES),
             ])->save();
 
+            $this->assignmentManager->assign(
+                $lockedTask,
+                $worker,
+                TaskWorkerAssignmentTypeEnum::INITIAL,
+                $worker->user,
+            );
+
             TaskStatusUpdated::dispatch(
                 $lockedTask,
                 $fromStatus,
@@ -53,7 +63,7 @@ class StartTaskUseCase
                 $worker,
                 [
                     'worker_id' => $worker->id,
-                    'start_deadline_minutes' => self::START_DEADLINE_MINUTES
+                    'start_deadline_minutes' => self::START_DEADLINE_MINUTES,
                 ]
             );
 

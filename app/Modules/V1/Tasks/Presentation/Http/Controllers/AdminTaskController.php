@@ -28,7 +28,7 @@ class AdminTaskController extends Controller
     public function index(AdminTaskIndexRequest $request)
     {
         $tasks = $this->taskRepository->getAll(
-            relations: $this->taskRepository->listRelations(),
+            relations: $this->adminListRelations(),
             filters: $request->filters()
         );
 
@@ -42,7 +42,7 @@ class AdminTaskController extends Controller
     public function companyDeleted(AdminTaskIndexRequest $request)
     {
         $tasks = $this->taskRepository->getCompanyDeletedForAdmin(
-            relations: $this->taskRepository->listRelations(),
+            relations: $this->adminListRelations(),
             filters: $request->filters()
         );
 
@@ -56,7 +56,7 @@ class AdminTaskController extends Controller
     public function showCompanyDeleted(int $id)
     {
         return ApiResponse::success(new TaskResource(
-            $this->companyDeletedTask($id, $this->taskRepository->detailRelations())
+            $this->companyDeletedTask($id, $this->adminDetailRelations())
         ));
     }
 
@@ -70,7 +70,7 @@ class AdminTaskController extends Controller
     public function show(int $id)
     {
         return ApiResponse::success(new TaskResource(
-            $this->task($id, $this->taskRepository->detailRelations())
+            $this->task($id, $this->adminDetailRelations())
         ));
     }
 
@@ -101,7 +101,7 @@ class AdminTaskController extends Controller
             reason: $request->validated('reason')
         );
 
-        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+        return ApiResponse::updated(new TaskResource($task->load($this->adminDetailRelations())));
     }
 
     public function reassign(int $id, AdminReassignTaskRequest $request, AdminReassignTaskUseCase $adminReassignTaskUseCase)
@@ -114,7 +114,7 @@ class AdminTaskController extends Controller
             admin: $request->user()
         );
 
-        return ApiResponse::updated(new TaskResource($task->load(['services.service.translations', 'services.products.product', 'services.submission', 'assignedWorker'])));
+        return ApiResponse::updated(new TaskResource($task->load($this->adminDetailRelations())));
     }
 
     private function companyDeletedTask(int $id, array $relations = ['services.service.translations', 'assignedWorker']): Task
@@ -137,5 +137,21 @@ class AdminTaskController extends Controller
         }
 
         return $task;
+    }
+
+    private function adminListRelations(): array
+    {
+        return array_merge($this->taskRepository->listRelations(), [
+            'workerAssignments.worker.user',
+            'workerAssignments.assigner',
+        ]);
+    }
+
+    private function adminDetailRelations(): array
+    {
+        return array_merge($this->taskRepository->detailRelations(), [
+            'workerAssignments.worker.user',
+            'workerAssignments.assigner',
+        ]);
     }
 }

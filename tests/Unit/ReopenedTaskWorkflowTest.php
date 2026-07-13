@@ -15,6 +15,7 @@ use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentOutcomeEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Tasks\Infrastructure\Persistence\Repositories\EloquentTaskRepository;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
@@ -169,6 +170,37 @@ class ReopenedTaskWorkflowTest extends TestCase
         );
 
         $this->assertSame([$priorityTask->id, $historicalTask->id], $tasks->pluck('id')->all());
+    }
+
+    public function test_assignment_history_is_only_exposed_to_admins(): void
+    {
+        $company = $this->company();
+        $worker = $this->worker();
+        $admin = User::factory()->create(['type' => PortalTypeEnum::ADMIN]);
+        $companyUser = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+        $task = $this->task($company, $worker);
+
+        app(TaskWorkerAssignmentManager::class)->assign(
+            $task,
+            $worker,
+            TaskWorkerAssignmentTypeEnum::INITIAL,
+            $admin,
+        );
+
+        $task->load(['workerAssignments.worker.user', 'workerAssignments.assigner']);
+
+        $adminRequest = Request::create('/api/v1/admin/tasks/'.$task->id);
+        $adminRequest->setUserResolver(fn () => $admin);
+        $adminData = (new TaskResource($task))->resolve($adminRequest);
+
+        $companyRequest = Request::create('/api/v1/company/tasks/'.$task->id);
+        $companyRequest->setUserResolver(fn () => $companyUser);
+        $companyData = (new TaskResource($task))->resolve($companyRequest);
+
+        $this->assertSame($worker->id, $adminData['assignment_history'][0]['worker']['id']);
+        $this->assertSame($worker->user->name, $adminData['assignment_history'][0]['worker']['name']);
+        $this->assertSame($admin->id, $adminData['assignment_history'][0]['assigned_by']['id']);
+        $this->assertArrayNotHasKey('assignment_history', $companyData);
     }
 
     private function company(): Company

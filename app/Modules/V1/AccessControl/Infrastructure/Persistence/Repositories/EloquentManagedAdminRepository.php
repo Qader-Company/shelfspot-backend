@@ -192,7 +192,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         return User::query()
             ->where('type', PortalTypeEnum::COMPANY)
             ->whereHas('companyUser', fn (Builder $query) => $query->where('company_id', $companyId))
-            ->with(['companyUser', 'roles'])
+            ->with(['companyUser', 'roles','admin'])
             ->when($this->activeFilter($filters) !== null, fn (Builder $query) => $query->whereHas('companyUser', fn (Builder $query) => $query->where('company_id', $companyId)->where('is_active', $this->activeFilter($filters))))
             ->when(isset($filters['role']), fn (Builder $query) => $query->whereHas('roles', fn (Builder $query) => $query->where('name', $filters['role'])->where('portal', PermissionCatalog::COMPANY_PORTAL)->where('company_id', $companyId)))
             ->when(isset($filters['search']), fn (Builder $query) => $this->applySearchFilter($query, $filters['search']))

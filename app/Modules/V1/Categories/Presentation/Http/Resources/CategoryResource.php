@@ -33,6 +33,7 @@ class CategoryResource extends JsonResource
                 relationship: 'subBrand',
                 value:fn() =>new SubBrandResource($this->subBrand)
             ),
+            'created_at' => $this->created_at
         ];
     }
 }

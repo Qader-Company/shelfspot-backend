@@ -29,6 +29,7 @@ class BrandResource extends JsonResource
                 ''
             ),
             'active' => (bool) $this->is_active,
+            'created_at' => $this->created_at
         ];
     }
 }

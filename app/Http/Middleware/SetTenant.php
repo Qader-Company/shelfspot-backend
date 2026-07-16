@@ -18,6 +18,7 @@ class SetTenant
     public function handle(Request $request, Closure $next): Response
     {
         $tenantID = $request->header('X-Company-id') ?? $request->route('company');
+
         if (!filled($tenantID)  || ! $this->tenantContext->setCompany($tenantID)) {
             abort(404, 'Company not found.');
         }

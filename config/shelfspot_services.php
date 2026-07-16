@@ -119,7 +119,7 @@ return [
             ],
             'product_details_form' => [
                 'fields' => [
-                    'expected_quantity' => ['type' => 'integer', 'required' => false, 'min' => 1],
+//                    'expected_quantity' => ['type' => 'integer', 'required' => false, 'min' => 1],
                     'expected_expiry_date' => ['type' => 'date', 'required' => false],
                 ],
             ],

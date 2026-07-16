@@ -43,6 +43,7 @@ class ProductResource extends JsonResource
                 relationship: 'subCategory',
                 value:fn() =>new SubCategoryResource($this->subCategory)
             ),
+            'created_at' => $this->created_at
         ];
     }
 }

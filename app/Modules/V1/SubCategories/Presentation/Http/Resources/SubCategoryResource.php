@@ -38,6 +38,7 @@ class SubCategoryResource extends JsonResource
                 relationship: 'category',
                 value:fn() =>new CategoryResource($this->category)
             ),
+            'created_at' => $this->created_at
         ];
     }
 }

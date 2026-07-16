@@ -26,7 +26,7 @@ class SubBrandResource extends JsonResource
             'brand' => $this->whenLoaded(
                 relationship: 'brand',
                 value:fn() =>new BrandResource($this->brand)
-            ),
+            ),'created_at' => $this->created_at
         ];
     }
 }

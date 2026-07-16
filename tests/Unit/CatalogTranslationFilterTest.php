@@ -99,6 +99,7 @@ class CatalogTranslationFilterTest extends TestCase
             }
 
             $tableBlueprint->timestamps();
+            $tableBlueprint->softDeletes();
         });
     }
 

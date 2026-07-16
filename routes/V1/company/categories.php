@@ -7,6 +7,14 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 
 Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEnum::ACCESS_TOKEN->value)
     ->controller(CategoryController::class)->group(function () {
+        Route::prefix('trash')->group(function (){
+            Route::get('', 'trash')->middleware('permission:'.CompanyPermissionEnum::VIEW_CATEGORY->value);
+            Route::post('/bulk-restore', 'bulkRestore')->middleware('permission:'.CompanyPermissionEnum::EDIT_CATEGORY->value);
+            Route::delete('/bulk-force-delete', 'bulkForceDelete')->middleware('permission:'.CompanyPermissionEnum::DELETE_CATEGORY->value);
+            Route::post('/{id}/restore', 'restore')->middleware('permission:'.CompanyPermissionEnum::EDIT_CATEGORY->value);
+            Route::delete('/{id}', 'forceDelete')->middleware('permission:'.CompanyPermissionEnum::DELETE_CATEGORY->value);
+        });
+
         Route::get('/', 'index')
             ->middleware('permission:'.CompanyPermissionEnum::VIEW_CATEGORY->value);
         Route::post('/', 'store')
@@ -29,12 +37,6 @@ Route::middleware('abilities:'. PortalTypeEnum::COMPANY->value .','. TokenTypeEn
                 ->middleware('permission:'.CompanyPermissionEnum::CREATE_CATEGORY->value);
         });
 
-        Route::prefix('trash')->group(function (){
-            Route::get('', 'trash')->middleware('permission:'.CompanyPermissionEnum::VIEW_CATEGORY->value);
-            Route::post('/bulk-restore', 'bulkRestore')->middleware('permission:'.CompanyPermissionEnum::EDIT_CATEGORY->value);
-            Route::delete('/bulk-force-delete', 'bulkForceDelete')->middleware('permission:'.CompanyPermissionEnum::DELETE_CATEGORY->value);
-            Route::post('/{id}/restore', 'restore')->middleware('permission:'.CompanyPermissionEnum::EDIT_CATEGORY->value);
-            Route::delete('/{id}', 'forceDelete')->middleware('permission:'.CompanyPermissionEnum::DELETE_CATEGORY->value);
-        });
+
 
     });

@@ -9,7 +9,7 @@ class ProductFilter extends ModelFilter
     public function search($value)
     {
         return $this->where(function ($query) use ($value) {
-            $query->where('name', 'like', "%$value%")
+            $query->whereTranslationLike('name', "%{$value}%")
                 ->orWhere('sku', 'like', "%$value%")
                 ->orWhere('barcode', 'like', "%$value%");
         });

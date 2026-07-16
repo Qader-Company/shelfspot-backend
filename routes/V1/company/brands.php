@@ -4,6 +4,19 @@ use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
 use App\Modules\V1\Brands\Presentation\Http\Controller\BrandController;
 
 Route::controller(BrandController::class)->group(function () {
+        Route::prefix('trash')->group(function () {
+            Route::get('', 'trash')
+                ->middleware('permission:'.CompanyPermissionEnum::VIEW_BRAND->value);
+            Route::post('/bulk-restore', 'bulkRestore')
+                ->middleware('permission:'.CompanyPermissionEnum::EDIT_BRAND->value);
+            Route::delete('/bulk-force-delete', 'bulkForceDelete')
+                ->middleware('permission:'.CompanyPermissionEnum::DELETE_BRAND->value);
+            Route::post('/{id}/restore', 'restore')
+                ->middleware('permission:'.CompanyPermissionEnum::EDIT_BRAND->value);
+            Route::delete('/{id}', 'forceDelete')
+                ->middleware('permission:'.CompanyPermissionEnum::DELETE_BRAND->value);
+        });
+
         Route::get('/', 'index')
             ->middleware('permission:'.CompanyPermissionEnum::VIEW_BRAND->value);
         Route::post('/', 'store')
@@ -26,17 +39,6 @@ Route::controller(BrandController::class)->group(function () {
                 ->middleware('permission:' . CompanyPermissionEnum::CREATE_BRAND->value);
         });
 
-        Route::prefix('trash')->group(function () {
-            Route::get('', 'trash')
-                ->middleware('permission:'.CompanyPermissionEnum::VIEW_BRAND->value);
-            Route::post('/bulk-restore', 'bulkRestore')
-                ->middleware('permission:'.CompanyPermissionEnum::EDIT_BRAND->value);
-            Route::delete('/bulk-force-delete', 'bulkForceDelete')
-                ->middleware('permission:'.CompanyPermissionEnum::DELETE_BRAND->value);
-            Route::post('/{id}/restore', 'restore')
-                ->middleware('permission:'.CompanyPermissionEnum::EDIT_BRAND->value);
-            Route::delete('/{id}', 'forceDelete')
-                ->middleware('permission:'.CompanyPermissionEnum::DELETE_BRAND->value);
-        });
+
 
     });

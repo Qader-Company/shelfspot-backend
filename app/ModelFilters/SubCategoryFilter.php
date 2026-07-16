@@ -8,7 +8,7 @@ class SubCategoryFilter extends ModelFilter
 {
     public function name($name)
     {
-        return $this->where('name', 'like', "%$name%");
+        return $this->whereTranslationLike('name', "%{$name}%");
     }
 
     public function active($isActive)

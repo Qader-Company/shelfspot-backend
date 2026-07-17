@@ -31,7 +31,7 @@ class EnsureTenantUser
             ->exists();
 
         if (! $belongsToCompany) {
-            throw new AccessDeniedHttpException();
+            throw new AccessDeniedHttpException(__('company.tenant.user_does_not_allowed'));
         }
 
         return $next($request);

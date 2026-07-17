@@ -5,8 +5,7 @@ use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
 return [
     'catalog' => [
         ServiceTypeEnum::PRIMARY_DISPLAY->value => [
-            'minimum_price' => 50,
-            'minimum_execution_time' => 30,
+            'price' => 50,
             'description' => [
                 'en' => 'Ensure products are displayed on shelf according to planogram, FIFO rules and pricing tag guidelines.',
                 'ar' => 'التأكد من عرض المنتجات على الرف الأساسي حسب البلانوجرام وقواعد FIFO وإرشادات بطاقة السعر.',
@@ -28,8 +27,7 @@ return [
         ],
 
         ServiceTypeEnum::SECONDARY_DISPLAY_EXECUTION->value => [
-            'minimum_price' => 75,
-            'minimum_execution_time' => 45,
+            'price' => 75,
             'description' => [
                 'en' => 'Execute secondary displays in the right store location according to the approved job order and planogram guidelines.',
                 'ar' => 'تنفيذ العرض الثانوي في المكان الصحيح داخل المتجر حسب أمر التشغيل والبلانوجرام المعتمدين.',
@@ -52,8 +50,7 @@ return [
         ],
 
         ServiceTypeEnum::ON_SHELF_AVAILABILITY->value => [
-            'minimum_price' => 25,
-            'minimum_execution_time' => 15,
+            'price' => 25,
             'description' => [
                 'en' => 'Report each selected SKU shelf availability as available or unavailable.',
                 'ar' => 'تقرير حالة توفر كل SKU مختار على الرف كمتوفر أو غير متوفر.',
@@ -83,8 +80,7 @@ return [
         ],
 
         ServiceTypeEnum::INSTORE_VISIBILITY->value => [
-            'minimum_price' => 30,
-            'minimum_execution_time' => 20,
+            'price' => 30,
             'description' => [
                 'en' => 'Capture visibility photos for selected products at primary and/or secondary displays.',
                 'ar' => 'تصوير ظهور المنتجات المختارة في العرض الأساسي و/أو العرض الثانوي داخل المتجر.',
@@ -105,8 +101,7 @@ return [
         ],
 
         ServiceTypeEnum::FRESHNESS_REPORT->value => [
-            'minimum_price' => 40,
-            'minimum_execution_time' => 25,
+            'price' => 40,
             'description' => [
                 'en' => 'Report selected SKU quantities and expiry dates from backdoor/store inventory.',
                 'ar' => 'تقرير كميات وتواريخ صلاحية الـ SKUs المختارة من المخزن أو منطقة الـ Backdoor.',
@@ -119,7 +114,7 @@ return [
             ],
             'product_details_form' => [
                 'fields' => [
-//                    'expected_quantity' => ['type' => 'integer', 'required' => false, 'min' => 1],
+                    //                    'expected_quantity' => ['type' => 'integer', 'required' => false, 'min' => 1],
                     'expected_expiry_date' => ['type' => 'date', 'required' => false],
                 ],
             ],

@@ -15,7 +15,7 @@ This flow belongs to the company portal Tasks module. Endpoints are under `/api/
 - Client sends `X-Company-Slug` for tenant context.
 - The acting company user has the required permission: `view_task`, `create_task`, `edit_task`, or `delete_task`.
 - Task date must be today or tomorrow in `Y-m-d` format.
-- Each service must use an active service `service_key`, meet the service minimum price and execution time, and include at least one current-company product.
+- Each service must use an active service `service_key` and include at least one current-company product. Its price is read from the service catalog.
 - Request files, when sent, must be `jpg`, `jpeg`, `png`, `webp`, or `pdf`, max `10240 KB`.
 
 ## Walkthrough
@@ -144,8 +144,6 @@ X-Company-Slug: {{company_slug}}
   "services": [
     {
       "service_key": "string (required, distinct, supported service key)",
-      "price": "number (required, must be >= service minimum_price)",
-      "execution_time_minutes": "integer (required, must be >= service minimum_execution_time)",
       "execution_instructions": "string (optional nullable, max:5000)",
       "products": [
         {
@@ -191,7 +189,6 @@ X-Company-Slug: {{company_slug}}
   "message": "The given data was invalid.",
   "errors": {
     "date": ["The date must be a date after or equal to today."],
-    "services.0.price": ["The selected service price is below the minimum price."],
     "services.0.products.0.product_id": ["The selected product does not belong to the current company."]
   }
 }
@@ -213,8 +210,6 @@ Request:
   "services": [
     {
       "service_key": "primary_display",
-      "price": 150,
-      "execution_time_minutes": 60,
       "execution_instructions": "Check main aisle display.",
       "products": [
         { "product_id": 10, "product_details": { "facing_count": 4 } }
@@ -238,7 +233,7 @@ Response:
 ```
 
 ### Notes
-`execution_time` is prohibited at the top level. Total task price is derived from service prices. Service-specific dynamic validation may require additional fields based on each `service_key`.
+`execution_time` is prohibited at the top level. Total task price is derived from the selected services' catalog prices. Service-specific dynamic validation may require additional fields based on each `service_key`.
 
 ## Endpoint: Show Task
 - **Method:** GET
@@ -386,8 +381,6 @@ Request:
   "services": [
     {
       "service_key": "primary_display",
-      "price": 180,
-      "execution_time_minutes": 60,
       "products": [{ "product_id": 10 }]
     }
   ]

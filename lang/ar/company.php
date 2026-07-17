@@ -40,4 +40,7 @@ return [
             'refund_description' => 'استرداد تكلفة المهمة رقم :task إلى المحفظة',
         ],
     ],
+    'tenant' => [
+        'user_does_not_allowed' => 'غير مسموح لك بالتوجد هنا'
+    ]
 ];

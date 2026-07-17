@@ -19,8 +19,6 @@ return [
         'start_deadline_expired' => 'The start window for this task has expired.',
         'reopen_deadline_expired' => 'The rework window for this task has expired.',
         'start_outside_geofence' => 'You must be at or near the task location to start it.',
-        'minimum_price' => 'The service price must be at least :price.',
-        'minimum_execution_time' => 'The service execution time must be at least :minutes minutes.',
         'required_file' => 'This service requires the requested file upload.',
         'product_not_in_company' => 'The selected product does not belong to the current company.',
         'service_not_in_task' => 'This service does not belong to the selected task.',

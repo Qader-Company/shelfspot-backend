@@ -28,8 +28,7 @@ class StoreCompanyTaskRequestTest extends TestCase
     {
         $service = Service::query()->create([
             'key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
-            'minimum_price' => 50,
-            'minimum_execution_time' => 30,
+            'price' => 50,
             'is_active' => true,
         ]);
 
@@ -63,8 +62,6 @@ class StoreCompanyTaskRequestTest extends TestCase
                 'services' => [
                     [
                         'service_key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
-                        'price' => 50,
-                        'execution_time_minutes' => 30,
                         'products' => [
                             ['product_id' => $product->id],
                         ],
@@ -91,6 +88,8 @@ class StoreCompanyTaskRequestTest extends TestCase
 
         $this->assertSame(ServiceTypeEnum::PRIMARY_DISPLAY->value, $validated['services'][0]['service_key']);
         $this->assertSame($service->id, $validated['services'][0]['service_id']);
+        $this->assertSame(50, $validated['services'][0]['price']);
+        $this->assertArrayNotHasKey('execution_time_minutes', $validated['services'][0]);
     }
 
     public function test_company_task_payload_rejects_execution_time_from_request(): void
@@ -102,7 +101,7 @@ class StoreCompanyTaskRequestTest extends TestCase
             'execution_time' => '14:00',
         ]);
 
-        $validator = validator($request->all(), (new StoreCompanyTaskRequest())->rules());
+        $validator = validator($request->all(), (new StoreCompanyTaskRequest)->rules());
 
         $this->assertTrue($validator->fails());
         $this->assertArrayHasKey('execution_time', $validator->errors()->messages());
@@ -112,7 +111,7 @@ class StoreCompanyTaskRequestTest extends TestCase
     {
         Carbon::setTestNow('2026-06-19 10:00:00');
 
-        $rules = (new StoreCompanyTaskRequest())->rules();
+        $rules = (new StoreCompanyTaskRequest)->rules();
 
         $futureValidator = validator(['date' => '2026-06-21'], ['date' => $rules['date']]);
         $todayValidator = validator(['date' => '2026-06-19'], ['date' => $rules['date']]);

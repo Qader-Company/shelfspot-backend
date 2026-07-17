@@ -16,8 +16,7 @@ class ServiceCatalogConfigTest extends TestCase
             $catalog = $serviceType->catalog();
 
             $this->assertNotEmpty($catalog, "Missing catalog config for {$serviceType->value}.");
-            $this->assertArrayHasKey('minimum_price', $catalog);
-            $this->assertArrayHasKey('minimum_execution_time', $catalog);
+            $this->assertArrayHasKey('price', $catalog);
             $this->assertArrayHasKey('description', $catalog);
             $this->assertArrayHasKey('en', $catalog['description']);
             $this->assertArrayHasKey('ar', $catalog['description']);
@@ -53,8 +52,7 @@ class ServiceCatalogConfigTest extends TestCase
     {
         $service = new Service([
             'key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
-            'minimum_price' => 50,
-            'minimum_execution_time' => 30,
+            'price' => 50,
             'is_active' => true,
         ]);
         $service->id = 1;
@@ -62,6 +60,9 @@ class ServiceCatalogConfigTest extends TestCase
         $payload = (new ServiceResource($service))->toArray(Request::create('/'));
 
         $this->assertArrayHasKey('request_form', $payload);
+        $this->assertSame(50, $payload['price']);
+        $this->assertArrayNotHasKey('minimum_price', $payload);
+        $this->assertArrayNotHasKey('minimum_execution_time', $payload);
         $this->assertArrayHasKey('submit_form', $payload);
         $this->assertArrayHasKey('submission_form', $payload);
         $this->assertSame(ServiceTypeEnum::PRIMARY_DISPLAY->requestForm(), $payload['request_form']);

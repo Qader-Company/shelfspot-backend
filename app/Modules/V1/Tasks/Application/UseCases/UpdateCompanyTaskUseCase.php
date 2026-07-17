@@ -20,8 +20,7 @@ class UpdateCompanyTaskUseCase
 
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(Task $task, array $data, array $files = []): Task
     {
@@ -32,13 +31,11 @@ class UpdateCompanyTaskUseCase
 
             $taskServices = $data['services'];
             $totalPrice = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
-            $estimatedDuration = collect($taskServices)->sum(fn (array $service) => (int) $service['execution_time_minutes']);
 
             $lockedTask->forceFill([
                 'date' => $data['date'],
                 'execution_time' => self::FIXED_EXECUTION_TIME,
                 'expires_at' => TaskExpiryDate::fromExecutionDate($data['date']),
-                'estimated_duration_minutes' => $estimatedDuration,
                 'latitude' => $data['location']['latitude'],
                 'longitude' => $data['location']['longitude'],
                 'location_name' => $data['location']['location_name'] ?? null,

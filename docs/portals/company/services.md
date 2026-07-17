@@ -1,10 +1,10 @@
 # Flow: Company Service Discovery
 
 ## Description
-Company Service Discovery documents how a company user lists active ShelfSpot services and opens a specific service by key to read pricing, execution-time minimums, request form schema, submission form schema, and translations.
+Company Service Discovery documents how a company user lists active ShelfSpot services and opens a specific service by key to read its price, request form schema, submission form schema, and translations.
 
 ## Business Goal
-Allow the company portal to show which services can be selected during task creation, including the minimum price and minimum execution time that the frontend must respect later in task flows.
+Allow the company portal to show which services can be selected during task creation, including the catalog price.
 
 ## Module Overview
 This flow belongs to the company portal Services module. Endpoints are under `/api/v1/company/services`, require an authenticated company Bearer token, and require the `view_service` permission. For company users, the backend forces the service list to active services only.
@@ -17,10 +17,10 @@ This flow belongs to the company portal Services module. Endpoints are under `/a
 
 ## Walkthrough
 1. Call `List Services` when rendering the company task/service selection screen.
-2. Read each service `key`, `minimum_price`, `minimum_execution_time`, `request_form`, and `submission_form` from the response.
+2. Read each service `key`, `price`, `request_form`, and `submission_form` from the response.
 3. Call `Show Service` with a selected service key when the UI needs detailed translated descriptions.
 4. Use the returned `request_form` to build the company-side task request form for that service.
-5. Use the returned minimum values as constraints when pricing or scheduling a task that includes the service.
+5. Use the returned price when displaying the service cost.
 
 ## Endpoint: List Services
 - **Method:** GET
@@ -50,8 +50,7 @@ Authorization: Bearer {{token}}
       "key": "primary_display",
       "name": "Primary Display",
       "description": "Main display execution service.",
-      "minimum_price": "100.00",
-      "minimum_execution_time": 60,
+      "price": "100.00",
       "is_active": true,
       "request_form": [
         {
@@ -99,8 +98,7 @@ Response:
       "key": "primary_display",
       "name": "Primary Display",
       "description": "Main display execution service.",
-      "minimum_price": "100.00",
-      "minimum_execution_time": 60,
+      "price": "100.00",
       "is_active": true,
       "request_form": [],
       "submission_form": []
@@ -110,8 +108,7 @@ Response:
       "key": "on_shelf_availability",
       "name": "On Shelf Availability",
       "description": "Availability checking service.",
-      "minimum_price": "50.00",
-      "minimum_execution_time": 30,
+      "price": "50.00",
       "is_active": true,
       "request_form": [],
       "submission_form": []
@@ -150,8 +147,7 @@ Authorization: Bearer {{token}}
     "key": "primary_display",
     "name": "Primary Display",
     "description": "Main display execution service.",
-    "minimum_price": "100.00",
-    "minimum_execution_time": 60,
+    "price": "100.00",
     "is_active": true,
     "request_form": [
       {
@@ -210,8 +206,7 @@ Response:
     "key": "primary_display",
     "name": "Primary Display",
     "description": "Main display execution service.",
-    "minimum_price": "100.00",
-    "minimum_execution_time": 60,
+    "price": "100.00",
     "is_active": true,
     "request_form": [],
     "submission_form": [],
@@ -235,7 +230,7 @@ The `{key}` path value is the service key, not the numeric service ID. Supported
 
 ### Case: Load selected service details
 **When:** The UI needs translated descriptions or a complete form schema for the selected service.
-**Explanation:** Use the selected service `key` from `List Services` to call `Show Service`, then render the returned `request_form` and enforce `minimum_price` and `minimum_execution_time` in the task creation UI.
+**Explanation:** Use the selected service `key` from `List Services` to call `Show Service`, then render the returned `request_form` and display the catalog `price` in the task creation UI.
 
 #### Endpoint: Show Service
 - **Method:** GET

@@ -16,8 +16,7 @@ class ServiceSeeder extends Seeder
             $service = Service::updateOrCreate(
                 ['key' => $key],
                 [
-                    'minimum_price' => $serviceConfig['minimum_price'],
-                    'minimum_execution_time' => $serviceConfig['minimum_execution_time'],
+                    'price' => $serviceConfig['price'],
                     'is_active' => true,
                 ]
             );

@@ -1,10 +1,10 @@
 # Flow: Admin Service Management
 
 ## Description
-Admin Service Management documents how ShelfSpot admins list available service definitions, open a service by key, and update service pricing, execution time, activation, and translations.
+Admin Service Management documents how ShelfSpot admins list available service definitions, open a service by key, and update service price, activation, and translations.
 
 ## Business Goal
-Allow platform admins to control the service catalog that companies use when creating tasks, including minimum pricing, minimum execution time, and localized descriptions.
+Allow platform admins to control the service catalog that companies use when creating tasks, including pricing and localized descriptions.
 
 ## Module Overview
 This flow belongs to the admin portal Services module. The admin routes are under `/api/v1/admin/services` and require an admin Bearer token. The same Service controller also serves company service discovery, but admin users can see inactive services and can update service configuration.
@@ -20,7 +20,7 @@ This flow belongs to the admin portal Services module. The admin routes are unde
 1. Admin opens the service catalog management screen.
 2. Client calls `List Admin Services` to show service definitions.
 3. Admin opens a service using `Show Admin Service`.
-4. Admin edits minimum price, minimum execution time, active state, or translations.
+4. Admin edits price, active state, or translations.
 5. Client submits changes through `Update Admin Service`.
 
 ## Endpoint: List Admin Services
@@ -54,8 +54,7 @@ Authorization: Bearer {{admin_access_token}}
       "key": "primary_display",
       "name": "Primary Display",
       "description": "Ensure products are displayed on shelf according to planogram.",
-      "minimum_price": "50.00",
-      "minimum_execution_time": 30,
+      "price": "50.00",
       "is_active": true,
       "request_form": {
         "fields": {
@@ -109,8 +108,7 @@ Response:
       "id": 1,
       "key": "primary_display",
       "name": "Primary Display",
-      "minimum_price": "50.00",
-      "minimum_execution_time": 30,
+      "price": "50.00",
       "is_active": true
     }
   ]
@@ -150,8 +148,7 @@ Authorization: Bearer {{admin_access_token}}
     "key": "primary_display",
     "name": "Primary Display",
     "description": "Ensure products are displayed on shelf according to planogram.",
-    "minimum_price": "50.00",
-    "minimum_execution_time": 30,
+    "price": "50.00",
     "is_active": true,
     "request_form": {
       "fields": {
@@ -215,8 +212,7 @@ Response:
   "data": {
     "id": 1,
     "key": "primary_display",
-    "minimum_price": "50.00",
-    "minimum_execution_time": 30,
+    "price": "50.00",
     "is_active": true,
     "translations": {
       "en": { "description": "Ensure products are displayed on shelf according to planogram." }
@@ -232,7 +228,7 @@ The route parameter is named `{id}`, but the controller show method resolves the
 - **Method:** PATCH
 - **URL:** /api/v1/admin/services/{id}
 - **Auth:** Bearer
-- **Purpose:** Update service translations, minimum price, minimum execution time, or active state.
+- **Purpose:** Update service translations, price, or active state.
 
 ### Headers
 ```
@@ -256,8 +252,7 @@ Authorization: Bearer {{admin_access_token}}
       "description": "string (optional, max:255)"
     }
   },
-  "minimum_price": "number (optional, min:0)",
-  "minimum_execution_time": "number (optional, min:0)",
+  "price": "number (optional, min:0)",
   "is_active": "boolean (optional)"
 }
 ```
@@ -289,21 +284,20 @@ Authorization: Bearer {{admin_access_token}}
 - **422 — validation error**
 ```json
 {
-  "message": "The minimum price field must be at least 0.",
+  "message": "The price field must be at least 0.",
   "errors": {
-    "minimum_price": ["The minimum price field must be at least 0."],
+    "price": ["The price field must be at least 0."],
     "translations.en.description": ["The translations.en.description field must not be greater than 255 characters."]
   }
 }
 ```
 
 ### Examples
-#### Example: Update service minimums and translation
+#### Example: Update service price and translation
 Request:
 ```json
 {
-  "minimum_price": 75,
-  "minimum_execution_time": 45,
+  "price": 75,
   "is_active": true,
   "translations": {
     "en": { "description": "Updated admin service description." }
@@ -319,7 +313,7 @@ Response:
 ```
 
 ### Notes
-The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. Updating `minimum_price` or `minimum_execution_time` affects future task validation for companies.
+The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. Updating `price` affects the price applied to future company tasks.
 
 ## Branch: Service disabled by admin
 **Condition:** Admin sets `is_active` to `false` for a service.

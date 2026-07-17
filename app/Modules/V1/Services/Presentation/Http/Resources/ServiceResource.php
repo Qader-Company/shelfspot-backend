@@ -19,8 +19,7 @@ class ServiceResource extends JsonResource
             'key' => $this->key->value,
             'name' => $this->key->label(),
             'description' => $this->description,
-            'minimum_price' => $this->minimum_price,
-            'minimum_execution_time' => $this->minimum_execution_time,
+            'price' => $this->price,
             'is_active' => (bool) $this->is_active,
             'request_form' => $this->key->requestForm(),
             'submission_form' => $this->key->submissionForm(),
@@ -39,5 +38,4 @@ class ServiceResource extends JsonResource
     {
         return new self($resource, true);
     }
-
 }

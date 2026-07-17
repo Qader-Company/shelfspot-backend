@@ -15,6 +15,7 @@ use Illuminate\Validation\Validator;
 class StoreCompanyTaskRequest extends FormRequest
 {
     private const ALLOWED_UPLOAD_MIMES = 'jpg,jpeg,png,webp,pdf';
+
     private const MAX_UPLOAD_KB = 10240;
 
     public function authorize(): bool
@@ -57,7 +58,10 @@ class StoreCompanyTaskRequest extends FormRequest
 
                     if ($resolvedService !== null) {
                         $service['service_id'] = $resolvedService->id;
+                        $service['price'] = $resolvedService->price;
                     }
+
+                    unset($service['execution_time_minutes']);
 
                     return $service;
                 })
@@ -80,7 +84,6 @@ class StoreCompanyTaskRequest extends FormRequest
             'services.*.service_key' => ['required', 'string', 'distinct', new Enum(ServiceTypeEnum::class)],
             'services.*.service_id' => ['required', 'integer', 'distinct'],
             'services.*.price' => ['required', 'numeric', 'min:0'],
-            'services.*.execution_time_minutes' => ['required', 'integer', 'min:1'],
             'services.*.execution_instructions' => ['nullable', 'string', 'max:5000'],
             'services.*.products' => ['required', 'array', 'min:1'],
             'services.*.products.*.product_id' => ['required', 'integer', 'exists:products,id'],
@@ -111,18 +114,11 @@ class StoreCompanyTaskRequest extends FormRequest
             ->get()
             ->keyBy('key');
         foreach ($this->input('services', []) as $index => $taskService) {
-            $service = $servicesByKey->get( ($taskService['service_key'] ?? 0));
+            $service = $servicesByKey->get(($taskService['service_key'] ?? 0));
             if (! $service || ! $service->is_active) {
                 $validator->errors()->add("services.$index.service_key", __('api.not_found'));
+
                 continue;
-            }
-
-            if ((float) $taskService['price'] < (float) $service->minimum_price) {
-                $validator->errors()->add("services.$index.price", __('tasks.validation.minimum_price', ['price' => $service->minimum_price]));
-            }
-
-            if ((int) $taskService['execution_time_minutes'] < (int) $service->minimum_execution_time) {
-                $validator->errors()->add("services.$index.execution_time_minutes", __('tasks.validation.minimum_execution_time', ['minutes' => $service->minimum_execution_time]));
             }
 
             app(TaskServiceValidationGenerator::class)->validate(

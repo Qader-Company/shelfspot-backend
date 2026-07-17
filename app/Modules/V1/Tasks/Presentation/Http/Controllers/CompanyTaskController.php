@@ -6,6 +6,7 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
 use App\Modules\V1\Tasks\Application\UseCases\CancelCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
@@ -74,6 +75,7 @@ class CompanyTaskController extends Controller
 
     public function store(StoreCompanyTaskRequest $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
+        dd('');
         $task = $createCompanyTaskUseCase->execute(
             $request->validated(),
             $request->user(),

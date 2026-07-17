@@ -40,4 +40,7 @@ return [
             'refund_description' => 'Task #:task wallet refund',
         ],
     ],
+    'tenant' => [
+        'user_does_not_allowed' => 'You are not allowed to be here.'
+    ]
 ];

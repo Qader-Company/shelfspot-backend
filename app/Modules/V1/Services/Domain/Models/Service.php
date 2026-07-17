@@ -8,12 +8,13 @@ use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[fillable('key', 'minimum_price', 'minimum_execution_time', 'is_active')]
+#[Fillable('key', 'price', 'is_active')]
 class Service extends Model
 {
-    use Translatable, Filterable;
+    use Filterable, Translatable;
 
     public $translatedAttributes = ['description'];
+
     public $casts = [
         'key' => ServiceTypeEnum::class,
     ];

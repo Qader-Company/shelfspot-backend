@@ -728,8 +728,7 @@ class TaskLifecycleUseCaseTest extends TestCase
     {
         $service = Service::query()->create([
             'key' => ServiceTypeEnum::ON_SHELF_AVAILABILITY,
-            'minimum_price' => 25,
-            'minimum_execution_time' => 15,
+            'price' => 25,
             'is_active' => true,
         ]);
 

@@ -13,8 +13,10 @@ use App\Modules\V1\Brands\Domain\Repositories\BrandRepositoryInterface;
 use App\Modules\V1\Brands\Presentation\Http\Requests\StoreBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Requests\UpdateBrandRequest;
 use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -63,8 +65,9 @@ class BrandController extends Controller
         $brand = $this->getBrand($id);
         $this->brandRepository->update(
             $brand,
-            $attributes,
-            logo: $attributes['logo'] ?? null
+            Arr::except($attributes, ['logo', 'logo_action']),
+            logo: $attributes['logo'] ?? null,
+            logoAction: isset($attributes['logo_action']) ? SingleMediaUpdateActionEnum::from($attributes['logo_action']) : null,
         );
         return ApiResponse::message(__('api.updated'));
     }

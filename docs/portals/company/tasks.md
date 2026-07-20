@@ -235,6 +235,8 @@ Response:
 ### Notes
 `execution_time` is prohibited at the top level. Total task price is derived from the selected services' catalog prices. Service-specific dynamic validation may require additional fields based on each `service_key`.
 
+For `on_shelf_availability`, every selected product must include `product_details.minimum_quantity` as a positive integer. The worker receives this value with the task product and uses it when deciding whether the product is available.
+
 ## Endpoint: Show Task
 - **Method:** GET
 - **URL:** /api/v1/company/tasks/{id}
@@ -317,7 +319,7 @@ Company responses map `worker_cancelled` to `in_progress` for company-facing sta
 - **Method:** PATCH
 - **URL:** /api/v1/company/tasks/{id}
 - **Auth:** Bearer
-- **Purpose:** Update an editable company task using the same request contract as create.
+- **Purpose:** Partially update a draft task and reconcile its services when they are sent.
 
 ### Headers
 ```
@@ -331,9 +333,30 @@ X-Company-Slug: {{company_slug}}
 ### Request Body
 ```json
 {
-  "date": "string (required by current request rules, format:Y-m-d, today or tomorrow)",
-  "location": "object (required by current request rules)",
-  "services": "array (required by current request rules, min:1)"
+  "date": "string (optional, format:Y-m-d, today or tomorrow)",
+  "location": {
+    "latitude": "number (required when location is sent, between:-90,90)",
+    "longitude": "number (required when location is sent, between:-180,180)",
+    "location_name": "string (optional nullable, max:255)",
+    "address": "string (optional nullable, max:2000)"
+  },
+  "notes": "string (optional nullable, max:5000)",
+  "services": [
+    {
+      "task_service_id": "integer (required for an existing task service; omit for a new service)",
+      "service_key": "string (required, distinct, supported service key)",
+      "execution_instructions": "string (optional nullable, max:5000)",
+      "request_details": "object (optional, service-specific request details)",
+      "products": [
+        {
+          "product_id": "integer (required, must belong to current company)",
+          "product_details": "object (optional, service-specific product details)"
+        }
+      ],
+      "keep_attachment_ids": "array of existing attachment IDs to retain (optional; omit or send [] to remove all existing attachments for this service)",
+      "request_files": "object (optional, newly uploaded files grouped by request field)"
+    }
+  ]
 }
 ```
 
@@ -366,7 +389,8 @@ X-Company-Slug: {{company_slug}}
 {
   "message": "The given data was invalid.",
   "errors": {
-    "services": ["The services field is required."]
+    "task": ["This task can no longer be updated."],
+    "services.0.keep_attachment_ids": ["The selected attachment was not found."]
   }
 }
 ```
@@ -376,12 +400,12 @@ X-Company-Slug: {{company_slug}}
 Request:
 ```json
 {
-  "date": "2026-07-04",
-  "location": { "latitude": 25.2854, "longitude": 51.5310 },
   "services": [
     {
+      "task_service_id": 812,
       "service_key": "primary_display",
-      "products": [{ "product_id": 10 }]
+      "products": [{ "product_id": 10 }],
+      "keep_attachment_ids": [1201, 1202]
     }
   ]
 }
@@ -396,7 +420,7 @@ Response:
 ```
 
 ### Notes
-The update endpoint currently uses the same request class as create, so clients should send the full task payload rather than a sparse partial payload.
+Only tasks with status `draft` can be updated. Scalar fields that are not sent remain unchanged. When `services` is not sent, existing services remain unchanged. When `services` is sent, it is the complete desired service list: an existing service omitted from the list is deleted; an item with `task_service_id` is updated in place; and an item without it is created. Within each submitted service, `products` and the combination of `keep_attachment_ids` plus newly uploaded `request_files` are also the final desired state. Required service files are validated against both retained and newly uploaded attachments.
 
 ## Endpoint: Pay Task
 - **Method:** POST

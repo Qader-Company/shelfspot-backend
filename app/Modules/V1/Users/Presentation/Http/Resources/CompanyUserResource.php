@@ -18,9 +18,10 @@ class CompanyUserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'type' => $this->type?->value,
             'company_id' => $this->companyUser->company_id,
             'is_owner' => (bool) $this->companyUser->is_owner,
-            'is_active' => (bool) $this->companyUser->is_active
+            'is_active' => (bool) $this->companyUser->is_active,
         ];
     }
 }

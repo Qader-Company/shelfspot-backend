@@ -58,9 +58,9 @@ class StoreCompanyTaskRequest extends FormRequest
 
                     if ($resolvedService !== null) {
                         $service['service_id'] = $resolvedService->id;
-                        $service['price'] = $resolvedService->price;
                     }
 
+                    unset($service['price']);
                     unset($service['execution_time_minutes']);
 
                     return $service;
@@ -83,7 +83,6 @@ class StoreCompanyTaskRequest extends FormRequest
             'services' => ['required', 'array', 'min:1'],
             'services.*.service_key' => ['required', 'string', 'distinct', new Enum(ServiceTypeEnum::class)],
             'services.*.service_id' => ['required', 'integer', 'distinct'],
-            'services.*.price' => ['required', 'numeric', 'min:0'],
             'services.*.execution_instructions' => ['nullable', 'string', 'max:5000'],
             'services.*.products' => ['required', 'array', 'min:1'],
             'services.*.products.*.product_id' => ['required', 'integer', 'exists:products,id'],

@@ -26,8 +26,6 @@ class TaskResource extends JsonResource
                 'phone' => $this->company?->phone,
             ]),
             'date' => $this->date?->toDateString(),
-            //            'execution_time' => $this->execution_time?->format('H:i:s'),
-            'estimated_duration_minutes' => $this->estimated_duration_minutes,
             'location' => [
                 'latitude' => $this->latitude,
                 'longitude' => $this->longitude,

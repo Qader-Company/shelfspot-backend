@@ -4,15 +4,14 @@ namespace App\Modules\V1\Workers\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\V1\Users\Application\Profiles\ProfileHandlerFactory;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
+use App\Modules\V1\Users\Presentation\Http\Requests\UpdateProfileRequest;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
 use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerLocationRequest;
-use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class WorkerAccountController extends Controller
@@ -20,6 +19,7 @@ class WorkerAccountController extends Controller
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
         private readonly UserRepositoryInterface $userRepository,
+        private readonly ProfileHandlerFactory $profileHandlerFactory,
     ) {}
 
     public function profile(Request $request)
@@ -29,25 +29,14 @@ class WorkerAccountController extends Controller
         ));
     }
 
-    public function updateProfile(UpdateWorkerRequest $request)
+    public function updateProfile(UpdateProfileRequest $request)
     {
-        $worker = $this->worker($request)->load('user');
-        $data = $request->validated();
-
-        DB::transaction(function () use ($worker, $data) {
-            $userAttributes = Arr::only($data, ['name', 'email', 'password']);
-            $workerAttributes = Arr::only($data, ['phone']);
-
-            if ($userAttributes !== []) {
-                $this->userRepository->update($worker->user, $userAttributes);
-            }
-
-            if ($workerAttributes !== []) {
-                $this->workerRepository->update($worker, $workerAttributes);
-            }
-        });
-
-        return ApiResponse::updated(new WorkerResource($worker->refresh()->load('user')));
+        return ApiResponse::updated(
+            $this->profileHandlerFactory->for($request->user())->update(
+                $request->user(),
+                $request->validated(),
+            )
+        );
     }
 
     public function deleteAccount(Request $request)

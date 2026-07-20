@@ -31,6 +31,12 @@ class TaskService extends Model implements HasMedia
         'status' => TaskServiceStatusEnum::class,
     ];
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('planogram_files');
+        $this->addMediaCollection('job_order_files');
+    }
+
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);

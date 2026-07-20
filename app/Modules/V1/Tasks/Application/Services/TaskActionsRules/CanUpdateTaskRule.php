@@ -13,8 +13,8 @@ class CanUpdateTaskRule extends AbstractTaskActionRule
         parent::validate($task);
         parent::insureTaskStatusIsOneOf(
             $task,
-            [TaskStatusEnum::DRAFT, TaskStatusEnum::PENDING],
-            __('tasks.validation.update_started_task')
+            [TaskStatusEnum::DRAFT],
+            __('tasks.validation.update_draft_task')
         );
     }
 }

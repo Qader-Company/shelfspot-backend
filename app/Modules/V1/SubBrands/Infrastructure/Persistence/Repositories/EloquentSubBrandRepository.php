@@ -3,6 +3,7 @@ namespace App\Modules\V1\SubBrands\Infrastructure\Persistence\Repositories;
 
 use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -47,9 +48,9 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
         });
     }
 
-    public function update(SubBrand $subBrand, array $attributes, UploadedFile $logo = null): SubBrand
+    public function update(SubBrand $subBrand, array $attributes, UploadedFile $logo = null, ?SingleMediaUpdateActionEnum $logoAction = null): SubBrand
     {
-        return DB::transaction(function () use ($subBrand, $attributes, $logo) {
+        return DB::transaction(function () use ($subBrand, $attributes, $logo, $logoAction) {
             $translations = $attributes['translations'] ?? [];
 
             unset($attributes['translations']);
@@ -57,7 +58,9 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
             $subBrand->update($attributes);
             $this->fillTranslations($subBrand, $translations);
             $subBrand->save();
-            if ($logo) {
+            if ($logoAction === SingleMediaUpdateActionEnum::REMOVE) {
+                $subBrand->clearMediaCollection('logo');
+            } elseif ($logo) {
                 $subBrand->clearMediaCollection('logo');
                 $subBrand->addMedia($logo)->toMediaCollection('logo');
             }

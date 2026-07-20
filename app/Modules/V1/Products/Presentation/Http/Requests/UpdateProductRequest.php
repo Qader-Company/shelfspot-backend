@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Products\Presentation\Http\Requests;
 
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
+use App\Modules\Shared\Presentation\Http\Requests\Concerns\ValidatesSingleMediaUpdate;
 use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -11,6 +12,7 @@ use Illuminate\Validation\Validator;
 
 class UpdateProductRequest extends FormRequest
 {
+    use ValidatesSingleMediaUpdate;
 
     public function authorize(): bool { return true; }
 
@@ -35,6 +37,7 @@ class UpdateProductRequest extends FormRequest
                     ->ignore($this->route('id')),
             ],
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ...$this->singleMediaActionRules('image_action'),
             'is_active' => 'sometimes|boolean',
         ];
     }
@@ -42,6 +45,7 @@ class UpdateProductRequest extends FormRequest
     public function after(): array
     {
         return [
+            $this->validateSingleMediaUpdate('image', 'image_action'),
             function (Validator $validator) {
                 $current = $this->currentProduct();
                 $brandId = $this->effectiveValue('brand_id', $current);

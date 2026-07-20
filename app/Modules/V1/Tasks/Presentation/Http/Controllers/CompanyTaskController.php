@@ -13,12 +13,15 @@ use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CreateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\DeleteCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\PayDraftTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\PurgeCompanyTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\RestoreCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\UpdateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyAcceptTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyRejectTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\UpdateCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -75,7 +78,6 @@ class CompanyTaskController extends Controller
 
     public function store(StoreCompanyTaskRequest $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
-        dd('');
         $task = $createCompanyTaskUseCase->execute(
             $request->validated(),
             $request->user(),
@@ -85,7 +87,7 @@ class CompanyTaskController extends Controller
         return ApiResponse::created(new TaskResource($task));
     }
 
-    public function update(int $id, StoreCompanyTaskRequest $request, UpdateCompanyTaskUseCase $updateCompanyTaskUseCase)
+    public function update(int $id, UpdateCompanyTaskRequest $request, UpdateCompanyTaskUseCase $updateCompanyTaskUseCase)
     {
         $task = $updateCompanyTaskUseCase->execute(
             $this->getCompanyTask($id),

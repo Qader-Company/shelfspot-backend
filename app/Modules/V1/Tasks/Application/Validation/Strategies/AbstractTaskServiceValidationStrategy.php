@@ -84,7 +84,7 @@ abstract class AbstractTaskServiceValidationStrategy
         try {
             app(DynamicFormValidator::class)->validateFiles(
                 $this->fileFields($data),
-                $data->filesByField,
+                $data->allFilesByField(),
                 "services.{$data->index}.request_files",
             );
         } catch (ValidationException $exception) {

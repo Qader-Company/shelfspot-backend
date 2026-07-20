@@ -6,7 +6,7 @@ return [
         'accept_charged_only' => 'Task payment must be charged before acceptance.',
         'pay_draft_only' => 'Only draft tasks can be paid.',
         'company_cancel_pending_or_failed_only' => 'Only pending or failed tasks can be cancelled by the company.',
-        'update_started_task' => 'Task can only be updated while it is draft or pending.',
+        'update_draft_task' => 'Task can only be updated while it is draft.',
         'accept_deleted_task' => 'Deleted tasks cannot be accepted.',
         'accept_unassigned_only' => 'This task is already assigned to another worker.',
         'accept_worker_busy' => 'You already have an active task. Complete or cancel it before accepting another task.',

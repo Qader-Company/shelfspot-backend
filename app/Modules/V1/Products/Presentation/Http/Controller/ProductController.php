@@ -15,8 +15,10 @@ use App\Modules\V1\Products\Presentation\Http\Requests\ProductFilterOptionsReque
 use App\Modules\V1\Products\Presentation\Http\Requests\StoreProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Requests\UpdateProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Resources\ProductResource;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductController extends Controller
@@ -84,8 +86,9 @@ class ProductController extends Controller
         $data = $request->validated();
         $product = $this->productRepository->update(
             $this->getProduct($id),
-            $data,
-            image: $data['image'] ?? null
+            Arr::except($data, ['image', 'image_action']),
+            image: $data['image'] ?? null,
+            imageAction: isset($data['image_action']) ? SingleMediaUpdateActionEnum::from($data['image_action']) : null,
         );
 
         return ApiResponse::updated(

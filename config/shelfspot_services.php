@@ -16,6 +16,11 @@ return [
                 ],
                 'requires_products' => true,
             ],
+            'product_details_form' => [
+                'fields' => [
+                    'minimum_quantity' => ['type' => 'integer', 'required' => true, 'min' => 1],
+                ],
+            ],
             'submission_form' => [
                 'readonly_job_order_fields' => ['location', 'service_type', 'attachments'],
                 'fields' => [
@@ -114,7 +119,6 @@ return [
             ],
             'product_details_form' => [
                 'fields' => [
-                    //                    'expected_quantity' => ['type' => 'integer', 'required' => false, 'min' => 1],
                     'expected_expiry_date' => ['type' => 'date', 'required' => false],
                 ],
             ],
@@ -127,7 +131,6 @@ return [
                         'min_items' => 1,
                         'item_fields' => [
                             'product_id' => ['type' => 'integer', 'required' => true],
-                            'sku' => ['type' => 'string', 'required' => true],
                             'quantity' => ['type' => 'integer', 'required' => true, 'min' => 0],
                             'expiry_date' => ['type' => 'date', 'required' => true],
                         ],

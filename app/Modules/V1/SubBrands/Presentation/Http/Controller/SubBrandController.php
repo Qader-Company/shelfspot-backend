@@ -12,8 +12,10 @@ use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
 use App\Modules\V1\SubBrands\Presentation\Http\Requests\StoreSubBrandRequest;
 use App\Modules\V1\SubBrands\Presentation\Http\Requests\UpdateSubBrandRequest;
 use App\Modules\V1\SubBrands\Presentation\Http\Resources\SubBrandResource;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -50,14 +52,19 @@ class SubBrandController extends Controller
     public function store(StoreSubBrandRequest $request)
     {
         $data = $request->validated();
-        $this->subBrandRepository->create($data, $data['logo']);
+        $this->subBrandRepository->create($data, $data['logo'] ?? null);
         return ApiResponse::message(__('api.created'));
     }
     public function update(UpdateSubBrandRequest $request, string $id)
     {
         $data = $request->validated();
         $subBrand = $this->getSubBrand($id);
-        $this->subBrandRepository->update($subBrand, $data, $data['logo'] ?? null);
+        $this->subBrandRepository->update(
+            $subBrand,
+            Arr::except($data, ['logo', 'logo_action']),
+            logo: $data['logo'] ?? null,
+            logoAction: isset($data['logo_action']) ? SingleMediaUpdateActionEnum::from($data['logo_action']) : null,
+        );
         return ApiResponse::message(__('api.updated'));
     }
     public function destroy(string $id)

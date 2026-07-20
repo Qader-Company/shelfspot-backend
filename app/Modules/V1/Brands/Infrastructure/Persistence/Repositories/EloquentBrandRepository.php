@@ -4,6 +4,7 @@ namespace App\Modules\V1\Brands\Infrastructure\Persistence\Repositories;
 
 use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Brands\Domain\Repositories\{BrandRepositoryInterface};
 use App\Modules\V1\Companies\Domain\Models\Scopes\CompanyScope;
@@ -82,9 +83,9 @@ class EloquentBrandRepository implements BrandRepositoryInterface
         });
     }
 
-    public function update(Brand $brand, array $attributes, UploadedFile $logo = null): Brand
+    public function update(Brand $brand, array $attributes, UploadedFile $logo = null, ?SingleMediaUpdateActionEnum $logoAction = null): Brand
     {
-        return DB::transaction(function () use ($brand, $attributes, $logo) {
+        return DB::transaction(function () use ($brand, $attributes, $logo, $logoAction) {
 
             $translations = $attributes['translations'] ?? [];
 
@@ -93,7 +94,9 @@ class EloquentBrandRepository implements BrandRepositoryInterface
             $brand->update($attributes);
             $this->fillTranslations($brand, $translations);
             $brand->save();
-            if(!is_null($logo)){
+            if ($logoAction === SingleMediaUpdateActionEnum::REMOVE) {
+                $brand->clearMediaCollection('logo');
+            } elseif (! is_null($logo)) {
                 $brand->clearMediaCollection('logo');
                 $brand->addMedia($logo)->toMediaCollection('logo');
             }

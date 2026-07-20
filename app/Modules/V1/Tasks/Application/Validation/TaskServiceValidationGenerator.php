@@ -16,11 +16,18 @@ use Illuminate\Validation\Validator;
 class TaskServiceValidationGenerator
 {
 
-    public function validate(int $index, array $taskService, Service $service, array $filesByField, Validator $validator): void
+    public function validate(
+        int $index,
+        array $taskService,
+        Service $service,
+        array $filesByField,
+        Validator $validator,
+        array $existingFilesByField = [],
+    ): void
     {
         $this->strategyFactory($service->key)
             ->validate(
-                new TaskServiceValidationData($index, $taskService, $service, $filesByField),
+                new TaskServiceValidationData($index, $taskService, $service, $filesByField, $existingFilesByField),
                 $validator,
             );
     }

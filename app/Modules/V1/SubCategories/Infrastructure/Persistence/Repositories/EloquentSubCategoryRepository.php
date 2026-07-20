@@ -4,6 +4,7 @@ namespace App\Modules\V1\SubCategories\Infrastructure\Persistence\Repositories;
 
 use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use App\Modules\V1\SubCategories\Domain\Repositories\SubCategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -50,9 +51,9 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
         });
     }
 
-    public function update(SubCategory $subCategory, array $attributes, UploadedFile $image = null): SubCategory
+    public function update(SubCategory $subCategory, array $attributes, UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): SubCategory
     {
-        return DB::transaction(function () use ($subCategory, $attributes, $image) {
+        return DB::transaction(function () use ($subCategory, $attributes, $image, $imageAction) {
             $translations = $attributes['translations'] ?? [];
 
             unset($attributes['translations']);
@@ -60,7 +61,9 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
             $subCategory->update($attributes);
             $this->fillTranslations($subCategory, $translations);
             $subCategory->save();
-            if ($image) {
+            if ($imageAction === SingleMediaUpdateActionEnum::REMOVE) {
+                $subCategory->clearMediaCollection('image');
+            } elseif ($image) {
                 $subCategory->clearMediaCollection('image');
                 $subCategory->addMedia($image)->toMediaCollection('image');
             }

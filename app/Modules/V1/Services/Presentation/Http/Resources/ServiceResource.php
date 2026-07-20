@@ -22,6 +22,7 @@ class ServiceResource extends JsonResource
             'price' => $this->price,
             'is_active' => (bool) $this->is_active,
             'request_form' => $this->key->requestForm(),
+            'product_details_form' => $this->key->productDetailsForm(),
             'submission_form' => $this->key->submissionForm(),
             'translations' => $this->when(
                 $this->withTranslations,

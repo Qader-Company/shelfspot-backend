@@ -17,6 +17,7 @@ return [
         ],
 
         'admin' => [
+            [ 'prefix' => 'admin/profile',                            'file' => 'profile.php',                'middlewares' => $adminAuthMiddlewares ],
             [ 'prefix' => 'admin/services',                           'file' => 'services.php',               'middlewares' => $adminAuthMiddlewares ],
             [ 'prefix' => 'admin/companies',                          'file' => 'companies.php',              'middlewares' => $adminAuthMiddlewares ],
             [ 'prefix' => 'admin/wallet-coupons',                     'file' => 'wallet-coupons.php',         'middlewares' => $adminAuthMiddlewares ],
@@ -32,11 +33,13 @@ return [
         ],
 
         'worker' => [
+            [ 'prefix' => 'worker/profile', 'file' => 'profile.php', 'middlewares' => $workerAuthMiddlewares ],
             [ 'prefix' => 'worker/account', 'file' => 'account.php', 'middlewares' => $workerAuthMiddlewares ],
             [ 'prefix' => 'worker/tasks',   'file' => 'tasks.php',   'middlewares' => $workerAuthMiddlewares ],
         ],
 
         'company' => [
+            [ 'prefix' => 'company/profile',        'file' => 'profile.php',        'middlewares' => $companyAuthMiddlewares ],
             [ 'prefix' => 'company/services',       'file' => 'services.php',       'middlewares' => $companyAuthMiddlewares ],
             [ 'prefix' => 'company/brands',         'file' => 'brands.php',         'middlewares' => $companyMiddlewares ],
             [ 'prefix' => 'company/sub-brands',     'file' => 'sub-brands.php',     'middlewares' => $companyMiddlewares ],

@@ -248,7 +248,9 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return [
             'services.service.translations',
+            'services.media',
             'services.submission',
+            'services.submission.media',
             'company',
             'assignedWorker.user',
         ];
@@ -258,7 +260,9 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return [
             'services.service.translations',
+            'services.media',
             'services.submission',
+            'services.submission.media',
             'services.products.product.media',
             'services.products.product.brand.media',
             'services.products.product.subBrand.media',

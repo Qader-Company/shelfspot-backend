@@ -4,6 +4,7 @@ namespace App\Modules\V1\Categories\Infrastructure\Persistence\Repositories;
 
 use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -51,9 +52,9 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
         });
     }
 
-    public function update(Category $category, array $attributes, UploadedFile $image = null): Category
+    public function update(Category $category, array $attributes, UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): Category
     {
-        return DB::transaction(function () use ($category, $attributes, $image) {
+        return DB::transaction(function () use ($category, $attributes, $image, $imageAction) {
             $translations = $attributes['translations'] ?? [];
 
             unset($attributes['translations']);
@@ -61,7 +62,9 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
             $category->update($attributes);
             $this->fillTranslations($category, $translations);
             $category->save();
-            if ($image) {
+            if ($imageAction === SingleMediaUpdateActionEnum::REMOVE) {
+                $category->clearMediaCollection('image');
+            } elseif ($image) {
                 $category->clearMediaCollection('image');
                 $category->addMedia($image)->toMediaCollection('image');
             }

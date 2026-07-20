@@ -4,6 +4,7 @@ namespace App\Modules\V1\Products\Infrastructure\Persistence\Repositories;
 
 use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Products\Domain\Repositories\ProductRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -45,9 +46,9 @@ class EloquentProductRepository implements ProductRepositoryInterface
         });
     }
 
-    public function update(Product $product, array $attributes, UploadedFile $image = null): Product
+    public function update(Product $product, array $attributes, UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): Product
     {
-        return DB::transaction(function () use ($product, $attributes, $image) {
+        return DB::transaction(function () use ($product, $attributes, $image, $imageAction) {
             $translations = $attributes['translations'] ?? [];
 
             unset($attributes['translations']);
@@ -55,7 +56,9 @@ class EloquentProductRepository implements ProductRepositoryInterface
             $product->update($attributes);
             $this->fillTranslations($product, $translations);
             $product->save();
-            if ($image) {
+            if ($imageAction === SingleMediaUpdateActionEnum::REMOVE) {
+                $product->clearMediaCollection('image');
+            } elseif ($image) {
                 $product->clearMediaCollection('image');
                 $product->addMedia($image)->toMediaCollection('image');
             }

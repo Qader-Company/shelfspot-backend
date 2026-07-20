@@ -88,7 +88,7 @@ class StoreCompanyTaskRequestTest extends TestCase
 
         $this->assertSame(ServiceTypeEnum::PRIMARY_DISPLAY->value, $validated['services'][0]['service_key']);
         $this->assertSame($service->id, $validated['services'][0]['service_id']);
-        $this->assertSame(50, $validated['services'][0]['price']);
+        $this->assertArrayNotHasKey('price', $validated['services'][0]);
         $this->assertArrayNotHasKey('execution_time_minutes', $validated['services'][0]);
     }
 

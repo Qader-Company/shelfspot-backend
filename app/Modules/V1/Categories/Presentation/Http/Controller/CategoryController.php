@@ -13,8 +13,10 @@ use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
 use App\Modules\V1\Categories\Presentation\Http\Requests\StoreCategoryRequest;
 use App\Modules\V1\Categories\Presentation\Http\Requests\UpdateCategoryRequest;
 use App\Modules\V1\Categories\Presentation\Http\Resources\CategoryResource;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -60,7 +62,12 @@ class CategoryController extends Controller
     public function update(UpdateCategoryRequest $request, string $id)
     {
         $data = $request->validated();
-        $this->categoryRepository->update($this->getCategory($id), $data, $data['image'] ?? null);
+        $this->categoryRepository->update(
+            $this->getCategory($id),
+            Arr::except($data, ['image', 'image_action']),
+            image: $data['image'] ?? null,
+            imageAction: isset($data['image_action']) ? SingleMediaUpdateActionEnum::from($data['image_action']) : null,
+        );
         return ApiResponse::message(__('api.updated'));
     }
 

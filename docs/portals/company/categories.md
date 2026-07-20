@@ -276,7 +276,8 @@ X-Company-Slug: {{company_slug}}
   "brand_id": "integer (optional nullable, must exist in current company brands when present)",
   "sub_brand_id": "integer (optional nullable, must exist in current company sub-brands when present)",
   "is_active": "boolean (optional)",
-  "image": "file (optional nullable, image, mimes:jpeg,png,jpg,gif,svg, max:2048KB)"
+  "image": "file (optional nullable, image, mimes:jpeg,png,jpg,gif,svg, max:2048KB)",
+  "image_action": "keep | remove | replace (optional)"
 }
 ```
 
@@ -331,7 +332,7 @@ Response:
 ```
 
 ### Notes
-The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. Sending a new image replaces the current image file.
+The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. Omit both image fields to keep the current image. Use `image_action=remove` to delete it, or `image_action=replace` with a new `image` file to replace it. A new image without an action remains supported and replaces the current image.
 
 ## Endpoint: Delete Category
 - **Method:** DELETE

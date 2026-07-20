@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
+use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use App\Modules\V1\Tasks\Domain\Models\Task;
@@ -33,7 +34,7 @@ class CreateCompanyTaskUseCase
     public function execute(array $data, User $actor, array $files = []): Task
     {
         return DB::transaction(function () use ($data, $actor, $files) {
-            $taskServices = $data['services'];
+            $taskServices = $this->withCatalogPrices($data['services']);
             $totalPrice = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
 
             $task = $this->taskRepository->create([
@@ -113,6 +114,21 @@ class CreateCompanyTaskUseCase
             ->whereIn('service_id', collect($taskServices)->pluck('service_id'))
             ->get()
             ->keyBy(fn (TaskService $taskService) => (int) $taskService->service_id);
+    }
+
+    private function withCatalogPrices(array $taskServices): array
+    {
+        $pricesByServiceId = Service::query()
+            ->whereIn('id', collect($taskServices)->pluck('service_id'))
+            ->pluck('price', 'id');
+
+        return collect($taskServices)
+            ->map(function (array $taskService) use ($pricesByServiceId) {
+                $taskService['price'] = $pricesByServiceId->get($taskService['service_id']);
+
+                return $taskService;
+            })
+            ->all();
     }
 
     private function createTaskServiceProducts(Collection $taskServiceModels, array $taskServices): void

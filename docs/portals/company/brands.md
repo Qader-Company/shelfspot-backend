@@ -267,6 +267,7 @@ X-Company-Slug: {{company_slug}}
 {
   "name": "string (optional, max:255)",
   "logo": "file (optional, image, mimes:jpeg,png,jpg,gif,svg, max:2048KB)",
+  "logo_action": "keep | remove | replace (optional)",
   "is_active": "boolean (optional)"
 }
 ```
@@ -322,7 +323,7 @@ Response:
 ```
 
 ### Notes
-The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. Sending a new logo replaces the current logo file.
+The route supports both `PUT` and `PATCH`; prefer `PATCH` for partial updates. Omit both logo fields to keep the current logo. Use `logo_action=remove` to delete it, or `logo_action=replace` with a new `logo` file to replace it. A new logo without an action remains supported and replaces the current logo.
 
 ## Endpoint: Delete Brand
 - **Method:** DELETE

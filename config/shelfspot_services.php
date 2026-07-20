@@ -16,11 +16,6 @@ return [
                 ],
                 'requires_products' => true,
             ],
-            'product_details_form' => [
-                'fields' => [
-                    'minimum_quantity' => ['type' => 'integer', 'required' => true, 'min' => 1],
-                ],
-            ],
             'submission_form' => [
                 'readonly_job_order_fields' => ['location', 'service_type', 'attachments'],
                 'fields' => [
@@ -65,6 +60,11 @@ return [
                     'planogram_files' => ['type' => 'array<file>', 'required' => true, 'min_items' => 1, 'attachment_type' => 'planogram', 'accept' => ['application/pdf', 'image/*']],
                 ],
                 'requires_products' => true,
+                'product_details_form' => [
+                    'fields' => [
+                        'minimum_quantity' => ['type' => 'integer', 'required' => true, 'min' => 1],
+                    ],
+                ],
             ],
             'submission_form' => [
                 'readonly_job_order_fields' => ['location', 'service_type', 'attachments', 'products'],

@@ -6,6 +6,8 @@ use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class ProductFilterOptionsService
 {
@@ -15,7 +17,7 @@ class ProductFilterOptionsService
         $subBrandId = $filters['sub_brand_id'] ?? null;
         $categoryId = $filters['category_id'] ?? null;
 
-        $brand = Brand::query()->whereKey($brandId)->first();
+        $brand = Brand::query()->with('translations')->whereKey($brandId)->first();
         if (! $brand) {
             return $this->emptyResponse($filters);
         }
@@ -28,9 +30,7 @@ class ProductFilterOptionsService
             $subBrandQuery->whereKey($subBrandId);
         }
 
-        $subBrandOptions = $subBrandQuery
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $subBrandOptions = $this->translatedOptions($subBrandQuery);
 
         $categoryQuery = Category::query()
             ->where('brand_id', $brandId)
@@ -40,9 +40,7 @@ class ProductFilterOptionsService
             $categoryQuery->where('sub_brand_id', $subBrandId);
         }
 
-        $categoryOptions = $categoryQuery
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $categoryOptions = $this->translatedOptions($categoryQuery);
 
         $subCategoryQuery = SubCategory::query()
             ->where('brand_id', $brandId)
@@ -56,9 +54,7 @@ class ProductFilterOptionsService
             $subCategoryQuery->where('category_id', $categoryId);
         }
 
-        $subCategoryOptions = $subCategoryQuery
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $subCategoryOptions = $this->translatedOptions($subCategoryQuery);
 
         return [
             'data' => [
@@ -84,6 +80,15 @@ class ProductFilterOptionsService
             'id' => $model->id,
             'label' => $model->name,
         ];
+    }
+
+    private function translatedOptions(Builder $query): Collection
+    {
+        return $query
+            ->with('translations')
+            ->get(['id'])
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
     }
 
     private function emptyResponse(array $filters): array

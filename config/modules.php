@@ -33,7 +33,6 @@ return [
         ],
 
         'worker' => [
-            [ 'prefix' => 'worker/profile', 'file' => 'profile.php', 'middlewares' => $workerAuthMiddlewares ],
             [ 'prefix' => 'worker/account', 'file' => 'account.php', 'middlewares' => $workerAuthMiddlewares ],
             [ 'prefix' => 'worker/tasks',   'file' => 'tasks.php',   'middlewares' => $workerAuthMiddlewares ],
         ],

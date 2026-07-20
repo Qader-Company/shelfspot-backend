@@ -24,9 +24,9 @@ class WorkerAccountController extends Controller
 
     public function profile(Request $request)
     {
-        return ApiResponse::success(new WorkerResource(
-            $this->worker($request)->load(['user', 'priorityTasks.currentWorkerAssignment'])
-        ));
+        return ApiResponse::success(
+            $this->profileHandlerFactory->for($request->user())->profile($request->user())
+        );
     }
 
     public function updateProfile(UpdateProfileRequest $request)

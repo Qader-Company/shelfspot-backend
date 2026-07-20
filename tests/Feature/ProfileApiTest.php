@@ -76,14 +76,19 @@ class ProfileApiTest extends TestCase
         ]);
         Sanctum::actingAs($user, ['worker', 'access']);
 
-        $this->patchJson('/api/v1/worker/profile', [
+        $this->getJson('/api/v1/worker/account/profile')
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonPath('data.type', 'worker');
+
+        $this->patchJson('/api/v1/worker/account/profile', [
             'name' => 'Updated Worker',
             'phone' => '01100000000',
         ])->assertOk()
             ->assertJsonPath('data.name', 'Updated Worker')
             ->assertJsonPath('data.phone', '01100000000');
 
-        $this->patchJson('/api/v1/worker/profile', ['is_active' => false])
+        $this->patchJson('/api/v1/worker/account/profile', ['is_active' => false])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('is_active');
 

@@ -7,6 +7,6 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 
 
 Route::controller(ServiceController::class)->group(function (){
-    Route::get('/', 'index')->middleware('permission:'.CompanyPermissionEnum::VIEW_SERVICE->value);
-    Route::get('/{id}', 'show')->middleware('permission:'.CompanyPermissionEnum::VIEW_SERVICE->value);
+    Route::get('/', 'index');
+    Route::get('/{id}', 'show');
 });

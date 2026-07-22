@@ -20,6 +20,7 @@ class CompanyUserResource extends JsonResource
             'email' => $this->email,
             'type' => $this->type?->value,
             'company_id' => $this->companyUser->company_id,
+            'company_name' => $this->companyUser->company->name,
             'is_owner' => (bool) $this->companyUser->is_owner,
             'is_active' => (bool) $this->companyUser->is_active,
         ];

@@ -21,6 +21,7 @@ class CreateCompanyWithOwnerUseCase
     {
         return DB::transaction(function () use ($attributes) {
             $company = $this->companyRepository->create($attributes);
+            $attributes['name'] = $attributes['name'] . ' Owner';
             $companyUser = $this->createCompanyUserUseCase->execute($company, $attributes, true);
 
             $this->fullAccessRoleProvisioner->assignCompanyOwnerRole($companyUser->user, $company->id);

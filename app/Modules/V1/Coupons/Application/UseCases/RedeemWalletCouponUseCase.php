@@ -10,6 +10,7 @@ use App\Modules\V1\Coupons\Domain\Models\WalletCoupon;
 use App\Modules\V1\Coupons\Domain\Models\WalletCouponRedemption;
 use App\Modules\V1\Coupons\Domain\Repositories\CouponRepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -81,8 +82,10 @@ class RedeemWalletCouponUseCase
                     ->orWhere('assigned_company_id', $companyId);
             })
             ->lockForUpdate()
-            ->firstOrFail();
-
+            ->firs();
+        if(! $coupon) {
+             throw new ModelNotFoundException(__('company.wallet.coupons.invalid'));
+        }
         if (! $coupon->hasRemainingRedemptions()) {
             throw ValidationException::withMessages([
                 'code' => __('company.wallet.coupons.max_redemptions_reached'),

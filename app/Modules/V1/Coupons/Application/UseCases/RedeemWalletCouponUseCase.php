@@ -82,7 +82,7 @@ class RedeemWalletCouponUseCase
                     ->orWhere('assigned_company_id', $companyId);
             })
             ->lockForUpdate()
-            ->firs();
+            ->first();
         if(! $coupon) {
              throw new ModelNotFoundException(__('company.wallet.coupons.invalid'));
         }

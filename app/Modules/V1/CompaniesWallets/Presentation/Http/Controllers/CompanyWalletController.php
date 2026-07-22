@@ -62,8 +62,8 @@ class CompanyWalletController extends Controller
     {
         $transaction = $redeemWalletCouponUseCase->execute(
             $request->validated('code'),
-            $request->user()?->id,
             $tenantContext->getCompanyId(),
+            $request->user()?->id,
         )->load('performedBy');
 
         return ApiResponse::success([

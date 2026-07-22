@@ -38,8 +38,8 @@ return [
         ],
 
         'company' => [
-            [ 'prefix' => 'company/profile',        'file' => 'profile.php',        'middlewares' => $companyAuthMiddlewares ],
             [ 'prefix' => 'company/services',       'file' => 'services.php',       'middlewares' => $companyAuthMiddlewares ],
+            [ 'prefix' => 'company/profile',        'file' => 'profile.php',        'middlewares' => $companyMiddlewares ],
             [ 'prefix' => 'company/brands',         'file' => 'brands.php',         'middlewares' => $companyMiddlewares ],
             [ 'prefix' => 'company/sub-brands',     'file' => 'sub-brands.php',     'middlewares' => $companyMiddlewares ],
             [ 'prefix' => 'company/categories',     'file' => 'categories.php',     'middlewares' => $companyMiddlewares ],

@@ -4,6 +4,8 @@ namespace App\Modules\V1\AccessControl\Domain\ValueObjects;
 
 enum CompanyPermissionEnum: string
 {
+    case VIEW_COMPANY = 'view_company';
+    case EDIT_COMPANY = 'edit_company';
     case VIEW_BRAND = 'view_brand';
     case CREATE_BRAND = 'create_brand';
     case EDIT_BRAND = 'edit_brand';

@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Companies\Presentation\Http\Requests;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
+use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,12 +23,14 @@ class UpdateCompanyRequest extends FormRequest
      */
     public function rules(): array
     {
-        $companyId = $this->route('company');
+        $companyId = $this->route('company')
+            ?? app(TenantContextInterface::class)->getCompanyId();
         return [
             'name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:255|unique:companies,phone,'.$companyId,
             'cr_number' => 'sometimes|string|max:255',
             'is_active' => 'sometimes|boolean',
+            'email' => 'sometimes|string|email|max:255|unique:companies,email,'.$companyId,
             'industry' => [
                 'sometimes',
                 'string',

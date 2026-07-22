@@ -32,6 +32,7 @@ class CompanyResource extends JsonResource
             'pending_requests_count' => $this->when(isset($this->pending_requests_count), (int) $this->pending_requests_count),
             'total_spending' => $this->when(isset($this->total_spending), (float) $this->total_spending),
             'total_products_count' => $this->when(isset($this->total_products_count), (int) $this->total_products_count),
+            'created_at' => $this->created_at
         ];
     }
 }

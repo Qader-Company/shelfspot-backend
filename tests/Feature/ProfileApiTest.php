@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\CheckApiKey;
+use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
 use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
@@ -64,6 +65,61 @@ class ProfileApiTest extends TestCase
         $this->patchJson('/api/v1/company/profile', ['name' => 'Updated Company User'])
             ->assertOk()
             ->assertJsonPath('data.name', 'Updated Company User');
+    }
+
+    public function test_company_owner_can_update_its_company_when_it_has_the_edit_permission(): void
+    {
+        $company = $this->company();
+        $user = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+        CompanyUser::query()->create([
+            'company_id' => $company->id,
+            'user_id' => $user->id,
+            'is_active' => true,
+            'is_owner' => true,
+        ]);
+        app(FullAccessRoleProvisioner::class)->assignCompanyOwnerRole($user, $company->id);
+        Sanctum::actingAs($user, ['company', 'access']);
+
+        $this->patchJson('/api/v1/company/profile/company', [
+            'name' => 'Updated Company',
+            'phone' => '01112345678',
+        ], ['X-Company-id' => $company->id])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Updated Company');
+
+        $this->assertDatabaseHas('companies', [
+            'id' => $company->id,
+            'name' => 'Updated Company',
+            'phone' => '01112345678',
+            'is_active' => true,
+        ]);
+
+        $this->patchJson('/api/v1/company/profile/company', ['is_active' => false], [
+            'X-Company-id' => $company->id,
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('is_active');
+    }
+
+    public function test_company_user_cannot_update_its_company_without_the_edit_permission(): void
+    {
+        $company = $this->company();
+        $user = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+        CompanyUser::query()->create([
+            'company_id' => $company->id,
+            'user_id' => $user->id,
+            'is_active' => true,
+        ]);
+        Sanctum::actingAs($user, ['company', 'access']);
+
+        $this->patchJson('/api/v1/company/profile/company', [
+            'name' => 'Unauthorized Update',
+        ], ['X-Company-id' => $company->id])
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('companies', [
+            'id' => $company->id,
+            'name' => 'Profile Company',
+        ]);
     }
 
     public function test_worker_profile_updates_its_model_fields_and_rejects_other_portal_fields(): void

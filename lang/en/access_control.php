@@ -34,6 +34,8 @@ return [
             'delete_admin' => 'Delete admin',
         ],
         'company' => [
+            'view_company' => 'View company',
+            'edit_company' => 'Edit company',
             'view_brand' => 'View brands',
             'create_brand' => 'Create brand',
             'edit_brand' => 'Edit brand',

@@ -17,6 +17,8 @@ class CanDeleteTaskRule extends AbstractTaskActionRule
                 TaskStatusEnum::IN_PROGRESS,
                 TaskStatusEnum::WORKER_CANCELLED,
                 TaskStatusEnum::COMPLETED,
+                TaskStatusEnum::REJECTED,
+                TaskStatusEnum::REOPENED,
             ],
             __('tasks.validation.accept_deleted_task')
         );

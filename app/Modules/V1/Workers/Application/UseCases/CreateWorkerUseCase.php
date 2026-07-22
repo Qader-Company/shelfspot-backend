@@ -32,6 +32,7 @@ class CreateWorkerUseCase
                 'is_active' => true,
                 'last_latitude' => $attributes['latitude'] ?? null,
                 'last_longitude' => $attributes['longitude'] ?? null,
+                'last_location_name' => $attributes['location_name'] ?? null,
                 'location_updated_at' => isset($attributes['latitude'], $attributes['longitude']) ? now() : null,
             ]);
 

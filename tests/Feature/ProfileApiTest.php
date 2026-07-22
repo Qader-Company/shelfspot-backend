@@ -95,6 +95,31 @@ class ProfileApiTest extends TestCase
         $this->assertDatabaseHas('workers', ['id' => $worker->id, 'is_active' => true]);
     }
 
+    public function test_worker_can_update_its_location_with_a_location_name(): void
+    {
+        $user = User::factory()->create(['type' => PortalTypeEnum::WORKER]);
+        $worker = Worker::query()->create([
+            'user_id' => $user->id,
+            'phone' => '01000000001',
+            'is_active' => true,
+        ]);
+        Sanctum::actingAs($user, ['worker', 'access']);
+
+        $this->patchJson('/api/v1/worker/account/location', [
+            'latitude' => 30.0444,
+            'longitude' => 31.2357,
+            'location_name' => 'Tahrir Square, Cairo',
+        ])->assertOk()
+            ->assertJsonPath('data.last_location.latitude', '30.0444000')
+            ->assertJsonPath('data.last_location.longitude', '31.2357000')
+            ->assertJsonPath('data.last_location.name', 'Tahrir Square, Cairo');
+
+        $this->assertDatabaseHas('workers', [
+            'id' => $worker->id,
+            'last_location_name' => 'Tahrir Square, Cairo',
+        ]);
+    }
+
     private function company(): Company
     {
         return Company::query()->create([

@@ -15,13 +15,13 @@ Route::get('transactions-types', function (){
     return ApiResponse::success(CompanyWalletTransactionTypeEnum::getTypes());
 });
 
-Route::get('transactions-types', function (){
-    return ApiResponse::success(PortalTypeEnum::getTypes());
-});
-
-Route::get('transactions-types', function (){
-    return ApiResponse::success(OtpPurposeEnum::getTypes());
-});
+//Route::get('transactions-types', function (){
+//    return ApiResponse::success(PortalTypeEnum::getTypes());
+//});
+//
+//Route::get('transactions-types', function (){
+//    return ApiResponse::success(OtpPurposeEnum::getTypes());
+//});
 
 
 

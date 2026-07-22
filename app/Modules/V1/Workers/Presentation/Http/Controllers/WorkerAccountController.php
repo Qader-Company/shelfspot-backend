@@ -54,6 +54,7 @@ class WorkerAccountController extends Controller
         $this->workerRepository->update($worker, [
             'last_latitude' => $request->validated('latitude'),
             'last_longitude' => $request->validated('longitude'),
+            'last_location_name' => $request->validated('location_name'),
             'location_updated_at' => now(),
         ]);
 

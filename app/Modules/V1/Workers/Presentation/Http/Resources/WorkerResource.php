@@ -32,6 +32,7 @@ class WorkerResource extends JsonResource
             'last_location' => [
                 'latitude' => $worker?->last_latitude,
                 'longitude' => $worker?->last_longitude,
+                'name' => $worker?->last_location_name,
                 'updated_at' => $worker?->location_updated_at?->toISOString(),
             ],
             'task_counts' => $this->when(isset($worker->admin_task_counts), $worker->admin_task_counts),

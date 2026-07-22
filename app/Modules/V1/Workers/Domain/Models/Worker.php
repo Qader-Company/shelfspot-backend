@@ -21,12 +21,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'wallet_balance',
     'last_latitude',
     'last_longitude',
+    'last_location_name',
     'location_updated_at',
 ])]
 class Worker extends Model
 {
-    use Filterable;
-    use SoftDeletes;
+    use Filterable, SoftDeletes;
 
     protected $casts = [
         'is_active' => 'boolean',

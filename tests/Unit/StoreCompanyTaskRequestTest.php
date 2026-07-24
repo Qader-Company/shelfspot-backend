@@ -2,11 +2,14 @@
 
 namespace Tests\Unit;
 
+use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
+use App\Modules\V1\Tasks\Domain\Models\Task;
+use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -90,6 +93,81 @@ class StoreCompanyTaskRequestTest extends TestCase
         $this->assertSame($service->id, $validated['services'][0]['service_id']);
         $this->assertArrayNotHasKey('price', $validated['services'][0]);
         $this->assertArrayNotHasKey('execution_time_minutes', $validated['services'][0]);
+    }
+
+    public function test_repeat_task_payload_accepts_existing_attachment_ids_for_required_files(): void
+    {
+        $service = Service::query()->create([
+            'key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
+            'price' => 50,
+            'is_active' => true,
+        ]);
+
+        $company = Company::query()->create([
+            'name' => 'Acme Repeat',
+            'email' => 'repeat@example.com',
+            'phone' => '01000000001',
+            'cr_number' => 'CR-101',
+            'industry' => CompanyIndustryEnum::INDUSTRY_ONE,
+            'is_active' => true,
+        ]);
+
+        app(TenantContextInterface::class)->setCompany((string) $company->id);
+
+        $product = Product::withoutGlobalScopes()->create([
+            'company_id' => $company->id,
+            'name' => 'Repeat Product',
+            'sku' => 'SKU-101',
+            'is_active' => true,
+        ]);
+
+        $sourceTask = Task::query()->create([
+            'company_id' => $company->id,
+            'date' => '2026-06-19',
+            'execution_time' => '00:00:00',
+            'latitude' => 30.0444,
+            'longitude' => 31.2357,
+        ]);
+
+        $sourceTaskService = TaskService::query()->create([
+            'task_id' => $sourceTask->id,
+            'service_id' => $service->id,
+            'unit_price' => 50,
+        ]);
+
+        $media = $sourceTaskService
+            ->addMedia(UploadedFile::fake()->create('planogram.pdf', 1, 'application/pdf'))
+            ->withCustomProperties(['field' => 'planogram_files'])
+            ->toMediaCollection('planogram_files');
+
+        Carbon::setTestNow('2026-06-19 10:00:00');
+
+        $request = StoreCompanyTaskRequest::create('/company/tasks', 'POST', [
+            'repeat_task_id' => $sourceTask->id,
+            'date' => '2026-06-20',
+            'location' => [
+                'latitude' => 30.0444,
+                'longitude' => 31.2357,
+            ],
+            'services' => [
+                [
+                    'service_key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
+                    'keep_attachment_ids' => [$media->id],
+                    'products' => [
+                        ['product_id' => $product->id],
+                    ],
+                ],
+            ],
+        ]);
+
+        $request->setContainer($this->app);
+        $request->setRedirector($this->app['redirect']);
+        $request->validateResolved();
+
+        $validated = $request->validated();
+
+        $this->assertSame($sourceTask->id, $validated['repeat_task_id']);
+        $this->assertSame([$media->id], $validated['services'][0]['keep_attachment_ids']);
     }
 
     public function test_company_task_payload_rejects_execution_time_from_request(): void

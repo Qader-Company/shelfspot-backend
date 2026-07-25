@@ -18,7 +18,7 @@ This flow belongs to the company portal Wallets module. Endpoints are under `/ap
 
 ## Walkthrough
 1. Call `List Wallet Transactions` to show the current wallet balance and paginated transaction history.
-2. Optionally pass `type` as a query filter to narrow transaction history.
+2. Optionally pass `type`, `date_from`, and `date_to` as query filters to narrow transaction history.
 3. Read each transaction `id`, `type`, `amount`, `balance_after`, `performed_by`, and dates.
 4. Call `Show Wallet Transaction` when the UI needs to open one transaction detail record.
 
@@ -123,7 +123,13 @@ Response:
 ```
 
 ### Notes
-The endpoint accepts `type` as a query filter. The `balance` value is computed from the latest wallet transaction for the current company.
+The endpoint accepts the following optional query filters for transaction history:
+
+- `type`: one of the supported wallet transaction types.
+- `date_from`: include transactions created on or after this date.
+- `date_to`: include transactions created on or before this date; it must not be before `date_from`.
+
+The `balance` value is always computed from the latest wallet transaction for the current company, independently of the selected filters.
 
 ## Endpoint: Show Wallet Transaction
 - **Method:** GET

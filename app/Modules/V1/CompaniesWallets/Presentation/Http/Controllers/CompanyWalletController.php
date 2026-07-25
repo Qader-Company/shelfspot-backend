@@ -5,31 +5,25 @@ namespace App\Modules\V1\CompaniesWallets\Presentation\Http\Controllers;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
-use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\CompaniesWallets\Application\UseCases\RechargeWalletUseCase;
 use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
 use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
+use App\Modules\V1\CompaniesWallets\Presentation\Http\Requests\CompanyWalletIndexRequest;
 use App\Modules\V1\CompaniesWallets\Presentation\Http\Requests\RechargeWalletRequest;
+use App\Modules\V1\CompaniesWallets\Presentation\Http\Resources\CompanyWalletResource;
 use App\Modules\V1\Coupons\Application\UseCases\RedeemWalletCouponUseCase;
 use App\Modules\V1\Coupons\Presentation\Http\Requests\RedeemWalletCouponRequest;
-use App\Modules\V1\CompaniesWallets\Presentation\Http\Resources\CompanyWalletResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Request;
 
 class CompanyWalletController extends Controller
 {
-    use Filterable;
+    public function __construct(private readonly CompaniesWalletRepositoryInterface $walletRepository) {}
 
-    public function __construct(readonly private CompaniesWalletRepositoryInterface $walletRepository)
+    public function index(CompanyWalletIndexRequest $request)
     {
-    }
-
-    public function index(Request $request)
-    {
-        $filter = $this->acceptedFilters($request, ['type']);
         $transactions = $this->walletRepository->getAll(
             relations: ['performedBy'],
-            filters: $filter
+            filters: $request->filters()
         );
 
         return ApiResponse::success([

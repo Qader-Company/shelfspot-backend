@@ -7,6 +7,7 @@ use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
 use App\Modules\V1\Tasks\Application\Validation\TaskServiceValidationGenerator;
+use App\Modules\V1\Tasks\Domain\Models\Task;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rules\Enum;
@@ -80,6 +81,7 @@ class StoreCompanyTaskRequest extends FormRequest
             'location.location_name' => ['nullable', 'string', 'max:255'],
             'location.address' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:5000'],
+            'repeat_task_id' => ['nullable', 'integer', 'exists:tasks,id'],
             'services' => ['required', 'array', 'min:1'],
             'services.*.service_key' => ['required', 'string', 'distinct', new Enum(ServiceTypeEnum::class)],
             'services.*.service_id' => ['required', 'integer', 'distinct'],
@@ -87,6 +89,8 @@ class StoreCompanyTaskRequest extends FormRequest
             'services.*.products' => ['required', 'array', 'min:1'],
             'services.*.products.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'services.*.products.*.product_details' => ['nullable', 'array'],
+            'services.*.keep_attachment_ids' => ['nullable', 'array'],
+            'services.*.keep_attachment_ids.*' => ['integer', 'distinct'],
             'services.*.request_files' => ['nullable', 'array'],
             'services.*.request_files.*' => ['nullable', 'array'],
             'services.*.request_files.*.*' => ['file', 'mimes:'.self::ALLOWED_UPLOAD_MIMES, 'max:'.self::MAX_UPLOAD_KB],
@@ -101,6 +105,8 @@ class StoreCompanyTaskRequest extends FormRequest
                 return;
             }
 
+            $this->validateRepeatTask($validator);
+            $this->validateRepeatedAttachments($validator);
             $this->validateServices($validator);
             $this->validateProducts($validator);
         });
@@ -126,8 +132,98 @@ class StoreCompanyTaskRequest extends FormRequest
                 $service,
                 Arr::get($this->allFiles(), "services.$index.request_files", []),
                 $validator,
+                $this->existingRepeatedFilesByField($taskService),
             );
         }
+    }
+
+    private function validateRepeatTask(Validator $validator): void
+    {
+        if ($this->input('repeat_task_id') !== null && $this->repeatTask() === null) {
+            $validator->errors()->add('repeat_task_id', __('api.not_found'));
+        }
+    }
+
+    private function validateRepeatedAttachments(Validator $validator): void
+    {
+        $attachmentIds = collect($this->input('services', []))
+            ->flatMap(fn (array $service) => $service['keep_attachment_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($attachmentIds->isEmpty()) {
+            return;
+        }
+
+        $repeatTask = $this->repeatTask();
+
+        if ($repeatTask === null) {
+            foreach ($this->input('services', []) as $serviceIndex => $taskService) {
+                if (! empty($taskService['keep_attachment_ids'] ?? [])) {
+                    $validator->errors()->add("services.$serviceIndex.keep_attachment_ids", __('validation.prohibited', ['attribute' => 'keep_attachment_ids']));
+                }
+            }
+
+            return;
+        }
+
+        $mediaById = $repeatTask->services
+            ->flatMap(fn ($taskService) => $taskService->media)
+            ->keyBy('id');
+
+        foreach ($this->input('services', []) as $serviceIndex => $taskService) {
+            $serviceId = (int) ($taskService['service_id'] ?? 0);
+
+            foreach ($taskService['keep_attachment_ids'] ?? [] as $attachmentId) {
+                $media = $mediaById->get((int) $attachmentId);
+
+                if ($media === null || (int) $media->model?->service_id !== $serviceId) {
+                    $validator->errors()->add("services.$serviceIndex.keep_attachment_ids", __('api.not_found'));
+                }
+            }
+        }
+    }
+
+    private function existingRepeatedFilesByField(array $taskService): array
+    {
+        $repeatTask = $this->repeatTask();
+
+        if ($repeatTask === null) {
+            return [];
+        }
+
+        $keepAttachmentIds = collect($taskService['keep_attachment_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if ($keepAttachmentIds === []) {
+            return [];
+        }
+
+        return $repeatTask->services
+            ->firstWhere('service_id', (int) ($taskService['service_id'] ?? 0))
+            ?->media
+            ->whereIn('id', $keepAttachmentIds)
+            ->groupBy(fn ($media) => $media->getCustomProperty('field'))
+            ->map(fn ($media) => $media->all())
+            ->all() ?? [];
+    }
+
+    private function repeatTask(): ?Task
+    {
+        $repeatTaskId = $this->input('repeat_task_id');
+
+        if ($repeatTaskId === null) {
+            return null;
+        }
+
+        $companyId = app(TenantContextInterface::class)->getCompanyId();
+
+        return Task::query()
+            ->with('services.media')
+            ->when($companyId !== null, fn ($query) => $query->where('company_id', $companyId))
+            ->find((int) $repeatTaskId);
     }
 
     private function validateProducts(Validator $validator): void

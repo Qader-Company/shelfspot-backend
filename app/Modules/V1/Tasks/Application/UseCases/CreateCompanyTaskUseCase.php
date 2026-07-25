@@ -19,6 +19,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class CreateCompanyTaskUseCase
 {
@@ -63,6 +64,7 @@ class CreateCompanyTaskUseCase
                     continue;
                 }
 
+                $this->copyRepeatedAttachments($taskService, $serviceData['keep_attachment_ids'] ?? []);
                 $this->attachRequestFiles($taskService, Arr::get($files, "services.$index.request_files", []));
             }
 
@@ -154,6 +156,25 @@ class CreateCompanyTaskUseCase
 
         if ($productRows !== []) {
             TaskServiceProduct::query()->insert($productRows);
+        }
+    }
+
+    private function copyRepeatedAttachments(TaskService $taskService, array $attachmentIds): void
+    {
+        $mediaItems = Media::query()
+            ->whereIn('id', collect($attachmentIds)->map(fn ($id) => (int) $id)->all())
+            ->get();
+
+        foreach ($mediaItems as $media) {
+            $field = $media->getCustomProperty('field') ?: $media->collection_name;
+
+            $taskService
+                ->addMedia($media->getPath())
+                ->preservingOriginal()
+                ->usingName($media->name)
+                ->usingFileName($media->file_name)
+                ->withCustomProperties(array_merge($media->custom_properties ?? [], ['field' => $field]))
+                ->toMediaCollection($field);
         }
     }
 

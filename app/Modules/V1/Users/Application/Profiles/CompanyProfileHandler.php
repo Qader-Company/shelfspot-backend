@@ -13,6 +13,6 @@ class CompanyProfileHandler extends AbstractProfileHandler
 
     protected function relations(): array
     {
-        return ['companyUser'];
+        return ['companyUser.company'];
     }
 }

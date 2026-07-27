@@ -13,7 +13,13 @@ class UserResourceResolver
 {
     public static function resolve(User $user, PortalTypeEnum $userType): JsonResource
     {
-         return match ($userType){
+        $user->loadMissing(match ($userType) {
+            PortalTypeEnum::ADMIN => ['admin'],
+            PortalTypeEnum::WORKER => ['worker'],
+            PortalTypeEnum::COMPANY => ['companyUser.company'],
+        });
+
+        return match ($userType) {
             PortalTypeEnum::ADMIN => new AdminUserResource($user),
             PortalTypeEnum::WORKER => new WorkerResource($user),
             PortalTypeEnum::COMPANY => new CompanyUserResource($user),

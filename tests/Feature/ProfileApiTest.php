@@ -57,13 +57,16 @@ class ProfileApiTest extends TestCase
         ]);
         Sanctum::actingAs($user, ['company', 'access']);
 
-        $this->getJson('/api/v1/company/profile')
+        $this->getJson('/api/v1/company/profile', ['X-Company-id' => $company->id])
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.type', 'company')
-            ->assertJsonPath('data.company_id', $company->id);
+            ->assertJsonPath('data.company_id', $company->id)
+            ->assertJsonPath('data.company_name', $company->name);
 
-        $this->patchJson('/api/v1/company/profile', ['name' => 'Updated Company User'])
+        $this->patchJson('/api/v1/company/profile', ['name' => 'Updated Company User'], [
+            'X-Company-id' => $company->id,
+        ])
             ->assertOk()
             ->assertJsonPath('data.name', 'Updated Company User');
     }

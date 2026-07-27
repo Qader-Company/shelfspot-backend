@@ -14,7 +14,7 @@ class ManagedAdminResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'is_active' => (bool) ($this->admin?->is_active ?? $this->companyUser?->is_active),
-            'is_owner' => $this->when($this->companyUser, $this->companyUser?->is_owner),
+            'is_owner' => $this->whenLoaded('companyUser', $this->companyUser?->is_owner),
             'roles' => $this->roles->pluck('name')->values(),
         ];
     }

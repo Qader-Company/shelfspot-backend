@@ -26,7 +26,7 @@ class CreateWorkerUseCase
                 'type' => PortalTypeEnum::WORKER,
             ]);
 
-            $this->workerRepository->create([
+            $worker = $this->workerRepository->create([
                 'user_id' => $user->id,
                 'phone' => $attributes['phone'],
                 'is_active' => true,
@@ -35,6 +35,10 @@ class CreateWorkerUseCase
                 'last_location_name' => $attributes['location_name'] ?? null,
                 'location_updated_at' => isset($attributes['latitude'], $attributes['longitude']) ? now() : null,
             ]);
+
+            if (isset($attributes['image'])) {
+                $worker->addMedia($attributes['image'])->toMediaCollection('image');
+            }
 
             return $user->load('worker');
         });

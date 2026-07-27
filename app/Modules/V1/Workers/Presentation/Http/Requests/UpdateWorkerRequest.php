@@ -39,6 +39,7 @@ class UpdateWorkerRequest extends FormRequest
             'phone' => ['sometimes', 'string', 'max:255', Rule::unique('workers', 'phone')->ignore($workerId)],
             'password' => ['sometimes', 'string', 'confirmed', Password::min(8)->mixedCase()],
             'is_active' => ['sometimes', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ];
     }
 }

@@ -2,7 +2,8 @@
 
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
-use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
+use App\Events\TaskStatusUpdated;
+use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
@@ -17,13 +18,11 @@ class PayDraftTaskUseCase
     public function __construct(
         private readonly ChargeTaskWalletUseCase $chargeTaskWalletUseCase,
         private readonly TaskRepositoryInterface $taskRepository,
-        private readonly TaskStatusHistoryRecorder $statusHistoryRecorder,
-    ) {
-    }
+    ) {}
 
-    public function execute(Task $task, User $actor): Task
+    public function execute(Task $task, User $actor, ?string $executionDate = null): Task
     {
-        return DB::transaction(function () use ($task, $actor) {
+        return DB::transaction(function () use ($task, $actor, $executionDate) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
 
             if ($lockedTask->status === TaskStatusEnum::PENDING
@@ -35,6 +34,22 @@ class PayDraftTaskUseCase
                 throw ValidationException::withMessages([
                     'task' => __('tasks.validation.pay_draft_only'),
                 ]);
+            }
+
+            $executionDate ??= $lockedTask->date?->toDateString();
+
+            if (! in_array($executionDate, [now()->toDateString(), now()->addDay()->toDateString()], true)) {
+                throw ValidationException::withMessages([
+                    'date' => __('tasks.validation.pay_execution_date_invalid'),
+                ]);
+            }
+
+            if ($executionDate !== $lockedTask->date?->toDateString()) {
+                $lockedTask->forceFill([
+                    'date' => $executionDate,
+                    'execution_time' => '00:00:00',
+                    'expires_at' => TaskExpiryDate::fromExecutionDate($executionDate),
+                ])->save();
             }
 
             try {
@@ -56,12 +71,12 @@ class PayDraftTaskUseCase
                 'status' => TaskStatusEnum::PENDING,
             ])->save();
 
-            $this->statusHistoryRecorder->record(
-                task: $lockedTask,
-                fromStatus: $fromStatus,
-                toStatus: TaskStatusEnum::PENDING,
-                actor: $actor,
-                meta: ['payment_status' => $lockedTask->payment_status?->value]
+            TaskStatusUpdated::dispatch(
+                $lockedTask,
+                $fromStatus,
+                TaskStatusEnum::PENDING,
+                $actor,
+                ['payment_status' => $lockedTask->payment_status?->value],
             );
 
             return $lockedTask->refresh()->load($this->taskRepository->relations());

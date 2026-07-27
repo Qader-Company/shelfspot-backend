@@ -60,18 +60,6 @@ class CancelCompanyTaskUseCase
         $referenceType = $task->getMorphClass();
         $referenceId = (int) $task->id;
 
-        $existingTransaction = $this->walletRepository->findTransactionByReference(
-            companyId: (int) $task->company_id,
-            type: CompanyWalletTransactionTypeEnum::TASK_REFUND,
-            referenceType: $referenceType,
-            referenceId: $referenceId,
-            lockForUpdate: true,
-        );
-
-        if ($existingTransaction !== null) {
-            return;
-        }
-
         $this->walletRepository->createTransaction([
             'company_id' => $task->company_id,
             'amount' => $task->total_price,

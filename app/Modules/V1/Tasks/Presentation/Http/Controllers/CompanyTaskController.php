@@ -6,7 +6,6 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
-use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
 use App\Modules\V1\Tasks\Application\UseCases\CancelCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
@@ -20,6 +19,7 @@ use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyAcceptTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyRejectTaskRequest;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\PayDraftTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\UpdateCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
@@ -92,7 +92,8 @@ class CompanyTaskController extends Controller
         $task = $updateCompanyTaskUseCase->execute(
             $this->getCompanyTask($id),
             $request->validated(),
-            $request->allFiles()
+            $request->allFiles(),
+            $request->user(),
         );
 
         return ApiResponse::updated(new TaskResource($task));
@@ -108,11 +109,12 @@ class CompanyTaskController extends Controller
         return ApiResponse::success(new TaskResource($task));
     }
 
-    public function pay(int $id, Request $request, PayDraftTaskUseCase $payDraftTaskUseCase)
+    public function pay(int $id, PayDraftTaskRequest $request, PayDraftTaskUseCase $payDraftTaskUseCase)
     {
         $task = $payDraftTaskUseCase->execute(
             $this->getCompanyTask($id),
-            $request->user()
+            $request->user(),
+            $request->validated('date'),
         );
 
         return ApiResponse::updated(new TaskResource($task));

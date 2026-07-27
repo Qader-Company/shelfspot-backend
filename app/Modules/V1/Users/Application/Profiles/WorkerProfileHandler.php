@@ -28,16 +28,22 @@ class WorkerProfileHandler extends AbstractProfileHandler
                 'max:255',
                 Rule::unique('workers', 'phone')->ignore($user->worker?->id),
             ],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ];
     }
 
     protected function portalFields(): array
     {
-        return ['phone'];
+        return ['phone', 'image'];
     }
 
     protected function updatePortalModel(User $user, array $attributes): void
     {
-        $user->worker->update(Arr::only($attributes, $this->portalFields()));
+        $worker = $user->worker;
+        $worker->update(Arr::only($attributes, ['phone']));
+
+        if (isset($attributes['image'])) {
+            $worker->addMedia($attributes['image'])->toMediaCollection('image');
+        }
     }
 }

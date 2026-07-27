@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'from_status',
     'to_status',
     'changed_by',
+    'event_id',
     'meta',
 ])]
 class TaskStatusHistory extends Model

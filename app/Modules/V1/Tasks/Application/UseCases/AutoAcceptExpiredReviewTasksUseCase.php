@@ -2,8 +2,9 @@
 
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
-use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
+use App\Events\TaskStatusUpdated;
 use App\Modules\V1\Tasks\Application\Services\TaskWorkerAssignmentManager;
+use App\Modules\V1\Tasks\Application\Support\TaskSchedulerBatch;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
@@ -14,57 +15,55 @@ class AutoAcceptExpiredReviewTasksUseCase
 {
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
-        private readonly TaskStatusHistoryRecorder $statusHistoryRecorder,
         private readonly TaskWorkerAssignmentManager $assignmentManager,
     ) {}
 
     public function execute(?int $limit = null): int
     {
-        $query = Task::query()
+        $query = $this->taskRepository->query()
             ->where('status', TaskStatusEnum::COMPLETED->value)
             ->whereNotNull('auto_accept_at')
             ->where('auto_accept_at', '<=', now())
-            ->orderBy('id');
-
-        if ($limit !== null) {
-            $query->limit($limit);
-        }
+            ->reorder();
 
         $accepted = 0;
 
-        $query->get()->each(function (Task $task) use (&$accepted) {
-            DB::transaction(function () use ($task, &$accepted) {
-                $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
+        $query->lazyById(TaskSchedulerBatch::CHUNK_SIZE)
+            ->take(TaskSchedulerBatch::limit($limit))
+            ->each(function (Task $task) use (&$accepted) {
+                DB::transaction(function () use ($task, &$accepted) {
+                    $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
 
-                if ($lockedTask->status !== TaskStatusEnum::COMPLETED
-                    || $lockedTask->auto_accept_at === null
-                    || now()->lessThan($lockedTask->auto_accept_at)) {
-                    return;
-                }
+                    if ($lockedTask->status !== TaskStatusEnum::COMPLETED
+                        || $lockedTask->auto_accept_at === null
+                        || now()->lessThan($lockedTask->auto_accept_at)) {
+                        return;
+                    }
 
-                $fromStatus = $lockedTask->status;
-                $now = now();
+                    $fromStatus = $lockedTask->status;
+                    $now = now();
 
-                $lockedTask->forceFill([
-                    'status' => TaskStatusEnum::ACCEPTED,
-                    'company_accepted_at' => $now,
-                ])->save();
+                    $lockedTask->forceFill([
+                        'status' => TaskStatusEnum::ACCEPTED,
+                        'company_accepted_at' => $now,
+                    ])->save();
 
-                $this->assignmentManager->closeCurrent(
-                    $lockedTask,
-                    TaskWorkerAssignmentOutcomeEnum::COMPLETED,
-                );
+                    $this->assignmentManager->closeCurrent(
+                        $lockedTask,
+                        TaskWorkerAssignmentOutcomeEnum::COMPLETED,
+                    );
 
-                $this->statusHistoryRecorder->record(
-                    task: $lockedTask,
-                    fromStatus: $fromStatus,
-                    toStatus: TaskStatusEnum::ACCEPTED,
-                    meta: ['actor_type' => 'system', 'auto_accepted' => true]
-                );
+                    TaskStatusUpdated::dispatch(
+                        $lockedTask,
+                        $fromStatus,
+                        TaskStatusEnum::ACCEPTED,
+                        null,
+                        ['actor_type' => 'system', 'auto_accepted' => true],
+                    );
 
-                $accepted++;
+                    $accepted++;
+                });
             });
-        });
 
         return $accepted;
     }

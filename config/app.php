@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Worker application URL
+    |--------------------------------------------------------------------------
+    |
+    | This is intentionally separate from APP_URL, which normally points to
+    | the API. It is included in the welcome email sent to newly created
+    | workers.
+    |
+    */
+
+    'worker_app_url' => env('WORKER_APP_URL', env('APP_URL', 'http://localhost')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

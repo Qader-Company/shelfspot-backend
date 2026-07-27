@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 class FailExpiredTasksCommand extends Command
 {
-    protected $signature = 'tasks:fail-expired {--limit= : Maximum number of tasks to process}';
+    protected $signature = 'tasks:fail-expired {--limit=500 : Maximum number of tasks to process}';
 
     protected $description = 'Fail expired pending tasks and release accepted tasks whose start deadline expired.';
 

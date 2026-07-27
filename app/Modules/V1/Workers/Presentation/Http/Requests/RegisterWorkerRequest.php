@@ -35,6 +35,7 @@ class RegisterWorkerRequest extends FormRequest
             'latitude' => ['sometimes', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude' => ['sometimes', 'numeric', 'between:-180,180', 'required_with:latitude'],
             'location_name' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ];
     }
 }

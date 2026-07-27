@@ -3,6 +3,7 @@
 return [
     'permissions' => [
         'admin' => [
+            'view_dashboard' => 'عرض لوحة التحكم',
             'view_company' => 'عرض الشركات',
             'create_company' => 'إنشاء شركة',
             'edit_company' => 'تعديل شركة',

@@ -2,43 +2,45 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
+use App\Modules\V1\Tasks\Application\Data\TaskStatusNotificationSnapshot;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 class TaskStatusUpdated
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
+
     public $fromStatus;
+
     public $task;
+
     public $toStatus;
+
     public $worker;
+
     public $meta;
+
+    public readonly string $eventId;
+
+    public readonly string $occurredAt;
+
+    public ?int $statusHistoryId = null;
+
+    public ?TaskStatusNotificationSnapshot $notificationSnapshot = null;
+
     /**
      * Create a new event instance.
      */
-    public function __construct($task, $fromStatus, $toStatus, $worker, $meta)
+    public function __construct($task, $fromStatus, $toStatus, $worker, $meta, ?string $eventId = null)
     {
         $this->task = $task;
         $this->fromStatus = $fromStatus;
         $this->toStatus = $toStatus;
         $this->worker = $worker;
         $this->meta = $meta;
-    }
-
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, Channel>
-     */
-    public function broadcastOn(): array
-    {
-        return [
-            new PrivateChannel('channel-name'),
-        ];
+        $this->eventId = $eventId ?? (string) Str::uuid();
+        $this->occurredAt = now()->toIso8601String();
     }
 }

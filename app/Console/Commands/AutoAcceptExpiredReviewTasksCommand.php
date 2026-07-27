@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 class AutoAcceptExpiredReviewTasksCommand extends Command
 {
-    protected $signature = 'tasks:auto-accept-expired-review {--limit= : Maximum number of tasks to process}';
+    protected $signature = 'tasks:auto-accept-expired-review {--limit=500 : Maximum number of tasks to process}';
 
     protected $description = 'Automatically accept completed tasks after their company review window expires.';
 

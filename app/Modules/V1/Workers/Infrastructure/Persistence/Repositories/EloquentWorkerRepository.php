@@ -16,6 +16,10 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
 {
     use HandlesTrash;
 
+    public function __construct(
+        private readonly GeoDistanceCalculator $geoDistanceCalculator,
+    ) {}
+
     protected function trashableModel(): string
     {
         return Worker::class;
@@ -62,11 +66,9 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
         $worker->delete();
     }
 
-    public function availableNearTask(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox): Collection
+    public function availableNearTask(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, ?int $limit = null): Collection
     {
-        $distanceSql = $this->haversineSql();
-
-        return $this->query(['user'])
+        $workers = $this->query(['user'])
             ->where('is_active', true)
             ->whereNotNull('last_latitude')
             ->whereNotNull('last_longitude')
@@ -78,19 +80,46 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
                     'status',
                     TaskStatusEnum::values(TaskStatusEnum::workerActiveStatuses())
                 )
-            )
+            );
+
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return $workers
+                ->get()
+                ->map(function (Worker $worker) use ($latitude, $longitude): Worker {
+                    $worker->setAttribute('distance_km', $this->geoDistanceCalculator->haversineKilometers(
+                        $latitude,
+                        $longitude,
+                        (float) $worker->last_latitude,
+                        (float) $worker->last_longitude,
+                    ));
+
+                    return $worker;
+                })
+                ->filter(fn (Worker $worker) => $worker->distance_km <= $radiusKilometers)
+                ->sortBy('distance_km')
+                ->when($limit !== null, fn (Collection $collection) => $collection->take($limit))
+                ->values();
+        }
+
+        $distanceSql = $this->haversineSql();
+
+        return $workers
             ->select('workers.*')
             ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
             ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
             ->orderBy('distance_km')
+            ->when($limit !== null, fn (Builder $query) => $query->limit($limit))
             ->get();
     }
 
     private function haversineSql(): string
     {
+        $clampFunction = DB::connection()->getDriverName() === 'sqlite' ? 'min' : 'least';
+
         return sprintf(
-            '(%F * acos(least(1, cos(radians(?)) * cos(radians(last_latitude)) * cos(radians(last_longitude) - radians(?)) + sin(radians(?)) * sin(radians(last_latitude)))))',
-            GeoDistanceCalculator::EARTH_RADIUS_KM
+            '(%F * acos(%s(1, cos(radians(?)) * cos(radians(last_latitude)) * cos(radians(last_longitude) - radians(?)) + sin(radians(?)) * sin(radians(last_latitude)))))',
+            GeoDistanceCalculator::EARTH_RADIUS_KM,
+            $clampFunction,
         );
     }
 

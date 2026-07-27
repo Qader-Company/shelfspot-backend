@@ -13,9 +13,7 @@ class DeleteCompanyTaskUseCase
 {
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
-    )
-    {
-    }
+    ) {}
 
     public function execute(Task $task, ?User $actor = null): Task
     {
@@ -23,14 +21,24 @@ class DeleteCompanyTaskUseCase
             /** @var Task $lockedTask */
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id);
             CanDeleteTaskRule::validate($lockedTask);
+            $status = $lockedTask->status;
 
             $lockedTask->forceFill([
                 'company_deleted_at' => now(),
             ])->save();
 
+            TaskStatusUpdated::dispatch(
+                $lockedTask,
+                $status,
+                $status,
+                $actor,
+                [
+                    'reason' => 'company_deleted',
+                    'company_deleted_at' => $lockedTask->company_deleted_at?->toDateTimeString(),
+                ],
+            );
+
             return $lockedTask->refresh();
         });
     }
-
-
 }

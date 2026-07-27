@@ -2,9 +2,9 @@
 
 namespace App\Modules\V1\Tasks\Application\UseCases;
 
+use App\Events\TaskStatusUpdated;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Services\Domain\Models\Service;
-use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
@@ -28,7 +28,6 @@ class CreateCompanyTaskUseCase
     public function __construct(
         private readonly TenantContextInterface $tenantContext,
         private readonly ChargeTaskWalletUseCase $chargeTaskWalletUseCase,
-        private readonly TaskStatusHistoryRecorder $statusHistoryRecorder,
         private readonly TaskRepositoryInterface $taskRepository,
     ) {}
 
@@ -79,12 +78,12 @@ class CreateCompanyTaskUseCase
 
             $task->forceFill(['status' => TaskStatusEnum::PENDING])->save();
 
-            $this->statusHistoryRecorder->record(
-                task: $task,
-                fromStatus: TaskStatusEnum::DRAFT,
-                toStatus: TaskStatusEnum::PENDING,
-                actor: $actor,
-                meta: ['payment_status' => $task->payment_status?->value]
+            TaskStatusUpdated::dispatch(
+                $task,
+                TaskStatusEnum::DRAFT,
+                TaskStatusEnum::PENDING,
+                $actor,
+                ['payment_status' => $task->payment_status?->value],
             );
 
             return $task->load($this->taskRepository->relations());

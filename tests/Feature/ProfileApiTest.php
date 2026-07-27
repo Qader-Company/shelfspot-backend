@@ -12,6 +12,7 @@ use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -174,6 +175,34 @@ class ProfileApiTest extends TestCase
             'id' => $worker->id,
             'last_location_name' => 'Tahrir Square, Cairo',
         ]);
+    }
+
+    public function test_worker_can_add_and_replace_an_optional_profile_image(): void
+    {
+        $user = User::factory()->create(['type' => PortalTypeEnum::WORKER]);
+        $worker = Worker::query()->create([
+            'user_id' => $user->id,
+            'phone' => '01000000002',
+            'is_active' => true,
+        ]);
+        Sanctum::actingAs($user, ['worker', 'access']);
+
+        $this->getJson('/api/v1/worker/account/profile')
+            ->assertOk()
+            ->assertJsonPath('data.image', null);
+
+        $this->patch('/api/v1/worker/account/profile', [
+            'image' => UploadedFile::fake()->image('worker.png'),
+        ])->assertOk()
+            ->assertJsonPath('data.image', fn ($image) => is_string($image) && $image !== '');
+
+        $this->assertSame(1, $worker->fresh()->getMedia('image')->count());
+
+        $this->patch('/api/v1/worker/account/profile', [
+            'image' => UploadedFile::fake()->image('replacement.jpg'),
+        ])->assertOk();
+
+        $this->assertSame(1, $worker->fresh()->getMedia('image')->count());
     }
 
     private function company(): Company

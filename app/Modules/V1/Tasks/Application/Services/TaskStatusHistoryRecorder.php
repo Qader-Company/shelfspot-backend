@@ -14,7 +14,8 @@ class TaskStatusHistoryRecorder
         ?TaskStatusEnum $fromStatus,
         TaskStatusEnum $toStatus,
         ?User $actor = null,
-        array $meta = []
+        array $meta = [],
+        ?string $eventId = null,
     ): TaskStatusHistory {
         return TaskStatusHistory::query()->create([
             'task_id' => $task->id,
@@ -22,6 +23,7 @@ class TaskStatusHistoryRecorder
             'to_status' => $toStatus->value,
             'changed_by' => $actor?->id,
             'meta' => $meta === [] ? null : $meta,
+            'event_id' => $eventId,
         ]);
     }
 }

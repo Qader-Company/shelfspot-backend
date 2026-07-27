@@ -58,7 +58,11 @@ class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInte
 
     public function create(array $attributes): CompanyWalletTransaction
     {
-        return DB::transaction(fn () => CompanyWalletTransaction::create($attributes));
+        return DB::transaction(function () use ($attributes) {
+            $transaction = CompanyWalletTransaction::create($attributes);
+
+            return $transaction;
+        });
     }
 
     public function createTransaction(array $attributes, CompanyWalletTransactionTypeEnum $type): CompanyWalletTransaction
@@ -82,10 +86,12 @@ class EloquentCompaniesWalletRepository implements CompaniesWalletRepositoryInte
                 type: $type
             );
 
-            return CompanyWalletTransaction::create(array_merge($attributes, [
+            $transaction = CompanyWalletTransaction::create(array_merge($attributes, [
                 'type' => $type,
                 'balance_after' => $balanceAfter,
             ]));
+
+            return $transaction;
         });
     }
 

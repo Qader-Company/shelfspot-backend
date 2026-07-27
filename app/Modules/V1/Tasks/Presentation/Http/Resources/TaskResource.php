@@ -60,6 +60,10 @@ class TaskResource extends JsonResource
             'reopen_deadline_at' => $this->reopen_deadline_at?->toDateTimeString(),
             'reopen_reason' => $this->reopen_reason,
             'failure_reason' => $this->failure_reason?->value,
+            'assignment_type' => $this->when(
+                $isWorker && $this->relationLoaded('currentWorkerAssignment'),
+                fn () => $this->currentWorkerAssignment?->assignment_type?->value,
+            ),
             'assignment_history' => $this->when(
                 $isAdmin && $this->relationLoaded('workerAssignments'),
                 fn () => TaskWorkerAssignmentResource::collection($this->workerAssignments)->resolve($request),

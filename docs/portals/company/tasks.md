@@ -396,18 +396,11 @@ X-Company-Slug: {{company_slug}}
 ```
 
 ### Examples
-#### Example: Update draft task services
+#### Example: Reschedule a failed task
 Request:
 ```json
 {
-  "services": [
-    {
-      "task_service_id": 812,
-      "service_key": "primary_display",
-      "products": [{ "product_id": 10 }],
-      "keep_attachment_ids": [1201, 1202]
-    }
-  ]
+  "date": "2026-07-26"
 }
 ```
 Response:
@@ -415,12 +408,12 @@ Response:
 {
   "success": true,
   "message": "Updated successfully.",
-  "data": { "id": 501, "status": "draft", "payment_status": "pending" }
+  "data": { "id": 501, "status": "pending", "payment_status": "charged" }
 }
 ```
 
 ### Notes
-Only tasks with status `draft` can be updated. Scalar fields that are not sent remain unchanged. When `services` is not sent, existing services remain unchanged. When `services` is sent, it is the complete desired service list: an existing service omitted from the list is deleted; an item with `task_service_id` is updated in place; and an item without it is created. Within each submitted service, `products` and the combination of `keep_attachment_ids` plus newly uploaded `request_files` are also the final desired state. Required service files are validated against both retained and newly uploaded attachments.
+Tasks in `draft` and `pending` can be updated. Scalar fields that are not sent remain unchanged. When a `pending` task service change changes the catalog total, the wallet is atomically charged for an increase or credited for a decrease; an insufficient balance rejects the whole update. A `failed` task accepts only `{ "date": "Y-m-d" }`, and is returned to `pending` after being rescheduled. When `services` is not sent, existing services remain unchanged. When `services` is sent, it is the complete desired service list: an existing service omitted from the list is deleted; an item with `task_service_id` is updated in place; and an item without it is created. Within each submitted service, `products` and the combination of `keep_attachment_ids` plus newly uploaded `request_files` are also the final desired state. Required service files are validated against both retained and newly uploaded attachments.
 
 ## Endpoint: Pay Task
 - **Method:** POST
@@ -438,7 +431,9 @@ X-Company-Slug: {{company_slug}}
 
 ### Request Body
 ```json
-{}
+{
+  "date": "2026-07-26"
+}
 ```
 
 ### Success (200)
@@ -478,6 +473,7 @@ X-Company-Slug: {{company_slug}}
 
 ### Examples
 #### Example: Pay draft task
+The `date` field is optional. If the draft's saved execution date is `today` or `tomorrow`, payment succeeds without it. If that date is no longer valid, payment returns a validation error on `date`; retry with a new current execution date. When supplied, the new date is saved and the wallet charge is made in one transaction.
 Request:
 ```json
 {}

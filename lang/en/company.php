@@ -38,9 +38,10 @@ return [
             'not_charged' => 'Task wallet payment must be charged before it can be refunded.',
             'payment_description' => 'Task #:task wallet payment',
             'refund_description' => 'Task #:task wallet refund',
+            'price_adjustment_description' => 'Task #:task price adjustment (:amount)',
         ],
     ],
     'tenant' => [
-        'user_does_not_allowed' => 'You are not allowed to be here.'
-    ]
+        'user_does_not_allowed' => 'You are not allowed to be here.',
+    ],
 ];

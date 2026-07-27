@@ -8,6 +8,7 @@ use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
+use App\Modules\V1\Workers\Application\Jobs\SendWorkerCredentialsEmailJob;
 use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
 use App\Modules\V1\Workers\Application\UseCases\ShowAdminWorkerUseCase;
 use App\Modules\V1\Workers\Domain\Models\Worker;
@@ -48,7 +49,14 @@ class AdminWorkerController extends Controller
 
     public function store(RegisterWorkerRequest $request, CreateWorkerUseCase $createWorkerUseCase)
     {
-        $user = $createWorkerUseCase->execute($request->validated());
+        $attributes = $request->validated();
+        $user = $createWorkerUseCase->execute($attributes);
+
+        SendWorkerCredentialsEmailJob::dispatch(
+            name: $user->name,
+            email: $user->email,
+            password: $attributes['password'],
+        )->onQueue(config('notifications.queues.normal'));
 
         return ApiResponse::created(new WorkerResource($user));
     }
@@ -75,6 +83,10 @@ class AdminWorkerController extends Controller
 
             if ($workerAttributes !== []) {
                 $this->workerRepository->update($worker, $workerAttributes);
+            }
+
+            if (isset($data['image'])) {
+                $worker->addMedia($data['image'])->toMediaCollection('image');
             }
         });
 

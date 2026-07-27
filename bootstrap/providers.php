@@ -2,9 +2,12 @@
 
 use App\Providers\AppServiceProvider;
 use App\Providers\RateLimitServiceProvider;
+use App\Providers\TaskEventServiceProvider;
+use Ejarnutowski\LaravelApiKey\Providers\ApiKeyServiceProvider;
 
 return [
     RateLimitServiceProvider::class,
     AppServiceProvider::class,
-    Ejarnutowski\LaravelApiKey\Providers\ApiKeyServiceProvider::class
+    TaskEventServiceProvider::class,
+    ApiKeyServiceProvider::class,
 ];

@@ -10,6 +10,7 @@ use Spatie\Permission\PermissionRegistrar;
 class FullAccessRoleProvisioner
 {
     public const SUPER_ADMIN_ROLE = 'super_admin';
+
     public const COMPANY_OWNER_ROLE = 'owner';
 
     public function ensureSuperAdminRole(): Role
@@ -38,6 +39,33 @@ class FullAccessRoleProvisioner
     public function assignCompanyOwnerRole(User $user, int $companyId): void
     {
         $this->assignRole($user, $this->ensureCompanyOwnerRole($companyId));
+    }
+
+    /**
+     * Refresh the permissions of every existing protected full-access role.
+     *
+     * This keeps previously seeded roles up to date when a permission is added
+     * to either permission enum and the seeder is run again.
+     */
+    public function syncFullAccessRoles(): void
+    {
+        foreach ([
+            PermissionCatalog::ADMIN_PORTAL => self::SUPER_ADMIN_ROLE,
+            PermissionCatalog::COMPANY_PORTAL => self::COMPANY_OWNER_ROLE,
+        ] as $portal => $roleName) {
+            PermissionCatalog::sync($portal);
+
+            $permissions = Permission::query()
+                ->where('portal', $portal)
+                ->get();
+
+            Role::query()
+                ->where('portal', $portal)
+                ->where('name', $roleName)
+                ->each(fn (Role $role) => $role->syncPermissions($permissions));
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     private function ensureFullAccessRole(string $name, string $portal, ?int $companyId): Role

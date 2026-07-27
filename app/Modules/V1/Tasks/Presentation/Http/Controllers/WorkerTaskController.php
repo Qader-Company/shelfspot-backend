@@ -4,11 +4,10 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Modules\Shared\Support\Traits\Filterable;
-use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
-use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompleteTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\StartExecuteTaskUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\StartTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\SubmitTaskServiceUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\WorkerCancelTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
@@ -18,6 +17,7 @@ use App\Modules\V1\Tasks\Presentation\Http\Requests\NearbyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StartTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\SubmitTaskServiceRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\WorkerCancelTaskRequest;
+use App\Modules\V1\Tasks\Presentation\Http\Requests\WorkerMyTasksRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskServiceSubmissionResource;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
@@ -29,12 +29,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class WorkerTaskController extends Controller
 {
-    use Filterable;
-    public function __construct(private readonly TaskRepositoryInterface $taskRepository)
-    {
-    }
+    public function __construct(private readonly TaskRepositoryInterface $taskRepository) {}
 
-    public function nearbyTasks(NearbyTaskRequest $request, GeoDistanceCalculator $geoDistanceCalculator,)
+    public function nearbyTasks(NearbyTaskRequest $request, GeoDistanceCalculator $geoDistanceCalculator)
     {
         $worker = $this->worker($request);
         $latitude = $worker->last_latitude;
@@ -62,17 +59,17 @@ class WorkerTaskController extends Controller
                 'radius_km' => $radius ?? NearbyTaskRequest::DEFAULT_RADIUS_KM,
                 'tasks' => TaskResource::collection($tasks)
                     ->response()
-                    ->getData(true)
+                    ->getData(true),
             ]
         );
     }
 
-    public function mine(Request $request)
+    public function mine(WorkerMyTasksRequest $request)
     {
         $tasks = $this->taskRepository->assignedToWorker(
             workerId: $this->worker($request)->id,
-            filters: $this->acceptedFilters($request, ['status', 'date_from', 'date_to']),
-            relations: ['services.service.translations', 'assignedWorker']
+            filters: $request->filters(),
+            relations: ['services.service.translations', 'assignedWorker', 'currentWorkerAssignment']
         );
 
         return ApiResponse::success(
@@ -135,7 +132,7 @@ class WorkerTaskController extends Controller
                     'services.service.translations',
                     'services.products.product',
                     'services.submission',
-                    'assignedWorker'
+                    'assignedWorker',
                 ])
             ));
     }

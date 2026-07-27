@@ -38,9 +38,10 @@ return [
             'not_charged' => 'يجب خصم تكلفة المهمة من المحفظة قبل ردها.',
             'payment_description' => 'دفع تكلفة المهمة رقم :task من المحفظة',
             'refund_description' => 'استرداد تكلفة المهمة رقم :task إلى المحفظة',
+            'price_adjustment_description' => 'تسوية فرق سعر المهمة رقم :task (:amount)',
         ],
     ],
     'tenant' => [
-        'user_does_not_allowed' => 'غير مسموح لك بالتوجد هنا'
-    ]
+        'user_does_not_allowed' => 'غير مسموح لك بالتوجد هنا',
+    ],
 ];

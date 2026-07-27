@@ -21,7 +21,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -55,6 +55,15 @@ class User extends Authenticatable
     public function worker()
     {
         return $this->hasOne(Worker::class);
+    }
+
+    /**
+     * Keep the private notification channel independent from this model's
+     * PHP namespace, so every client subscribes to one stable public contract.
+     */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'App.Models.User.'.$this->getKey();
     }
 
     protected static function newFactory(): UserFactory

@@ -4,21 +4,20 @@ use App\Facades\ApiResponse;
 use App\Http\Middleware\CheckApiKey;
 use App\Http\Middleware\CheckScopedPermission;
 use App\Http\Middleware\CheckScopedRole;
+use App\Http\Middleware\EnsureTenantUser;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetTenant;
-use App\Http\Middleware\SetTenantFromRouteCompany;
-use App\Http\Middleware\EnsureTenantUser;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Validation\UnauthorizedException;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
-use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -30,6 +29,11 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withBroadcasting(
+        __DIR__.'/../routes/channels.php',
+        ['middleware' => ['api', 'auth:sanctum']],
+    )
+    ->withEvents(discover: false)
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'abilities' => CheckAbilities::class,
@@ -61,6 +65,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (AccessDeniedHttpException|AuthorizationException $e, $request) {
             $message = $e->getMessage() ?: 'api.forbidden';
+
             return ApiResponse::forbidden($message);
         });
 
@@ -68,11 +73,11 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::notFound($e->getMessage());
         });
 
-        $exceptions->render(function (\DomainException $e, $request) {
+        $exceptions->render(function (DomainException $e, $request) {
             return ApiResponse::message($e->getMessage(), 400);
         });
 
-        $exceptions->render(function (\InvalidArgumentException $e, $request) {
+        $exceptions->render(function (InvalidArgumentException $e, $request) {
             return ApiResponse::message($e->getMessage(), 422);
         });
 

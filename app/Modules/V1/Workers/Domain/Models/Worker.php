@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[Fillable([
     'user_id',
@@ -24,9 +26,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'last_location_name',
     'location_updated_at',
 ])]
-class Worker extends Model
+class Worker extends Model implements HasMedia
 {
-    use Filterable, SoftDeletes;
+    use Filterable, InteractsWithMedia, SoftDeletes;
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -35,6 +37,11 @@ class Worker extends Model
         'last_longitude' => 'decimal:7',
         'location_updated_at' => 'datetime',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('image')->singleFile();
+    }
 
     public function user(): BelongsTo
     {

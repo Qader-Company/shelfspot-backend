@@ -3,6 +3,7 @@
 return [
     'permissions' => [
         'admin' => [
+            'view_dashboard' => 'View dashboard',
             'view_company' => 'View companies',
             'create_company' => 'Create company',
             'edit_company' => 'Edit company',

@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
+use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
+use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
@@ -20,6 +22,7 @@ use App\Modules\V1\Tasks\Application\UseCases\ExtendStartDeadlineUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\FailExpiredTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\ForceDeleteCompanyDeletedTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\MarkOverdueInProgressTasksUseCase;
+use App\Modules\V1\Tasks\Application\UseCases\PayDraftTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\PurgeCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\ReleaseExpiredStartedTasksUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\RestoreCompanyTaskUseCase;
@@ -62,6 +65,49 @@ class TaskLifecycleUseCaseTest extends TestCase
             '2026-06-29 00:00:00',
             TaskExpiryDate::fromExecutionDate('2026-06-28')->toDateTimeString()
         );
+    }
+
+    public function test_draft_payment_uses_a_valid_saved_date_or_accepts_a_new_date_when_needed(): void
+    {
+        Carbon::setTestNow('2026-06-10 09:00:00');
+        $companyUser = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+
+        [$validDateTask] = $this->pendingTaskAndWorker([
+            'status' => TaskStatusEnum::DRAFT,
+            'payment_status' => TaskPaymentStatusEnum::FAILED,
+            'charged_at' => null,
+        ]);
+        $this->creditWallet($validDateTask, 100);
+
+        $paidTask = app(PayDraftTaskUseCase::class)->execute($validDateTask, $companyUser);
+
+        $this->assertSame(TaskStatusEnum::PENDING, $paidTask->status);
+        $this->assertSame(TaskPaymentStatusEnum::CHARGED, $paidTask->payment_status);
+        $this->assertSame('2026-06-10', $paidTask->date->toDateString());
+
+        [$expiredDateTask] = $this->pendingTaskAndWorker([
+            'status' => TaskStatusEnum::DRAFT,
+            'payment_status' => TaskPaymentStatusEnum::FAILED,
+            'charged_at' => null,
+            'date' => '2026-06-09',
+        ]);
+        $this->creditWallet($expiredDateTask, 100);
+
+        try {
+            app(PayDraftTaskUseCase::class)->execute($expiredDateTask, $companyUser);
+            $this->fail('An expired execution date must be replaced before payment.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('date', $exception->errors());
+        }
+
+        $rescheduledAndPaidTask = app(PayDraftTaskUseCase::class)->execute(
+            $expiredDateTask,
+            $companyUser,
+            '2026-06-11',
+        );
+
+        $this->assertSame(TaskStatusEnum::PENDING, $rescheduledAndPaidTask->status);
+        $this->assertSame('2026-06-11', $rescheduledAndPaidTask->date->toDateString());
     }
 
     public function test_worker_accepts_pending_charged_task_on_execution_date(): void
@@ -722,6 +768,14 @@ class TaskLifecycleUseCaseTest extends TestCase
         ], $taskOverrides));
 
         return [$task, $worker];
+    }
+
+    private function creditWallet(Task $task, float $amount): void
+    {
+        app(CompaniesWalletRepositoryInterface::class)->createTransaction([
+            'company_id' => $task->company_id,
+            'amount' => $amount,
+        ], CompanyWalletTransactionTypeEnum::ADMIN_GRANT);
     }
 
     private function taskServiceWithProduct(Task $task): array

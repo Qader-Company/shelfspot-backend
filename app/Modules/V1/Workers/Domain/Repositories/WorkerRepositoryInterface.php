@@ -21,5 +21,5 @@ interface WorkerRepositoryInterface extends TrashableRepositoryInterface
 
     public function delete(Worker $worker): void;
 
-    public function availableNearTask(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox): Collection;
+    public function availableNearTask(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, ?int $limit = null): Collection;
 }

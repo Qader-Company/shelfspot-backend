@@ -5,6 +5,8 @@ namespace Tests\Unit;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
+use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
+use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
@@ -102,10 +104,138 @@ class UpdateCompanyTaskUseCaseTest extends TestCase
         $this->assertSame(1, TaskService::query()->findOrFail($firstTaskService->id)->media()->count());
     }
 
-    public function test_rejects_configuration_updates_after_task_leaves_draft(): void
+    public function test_allows_pending_configuration_updates_and_refunds_a_price_decrease(): void
+    {
+        [$task, $firstTaskService, $secondTaskService, $product] = $this->draftTaskWithServices();
+        $task->forceFill([
+            'status' => TaskStatusEnum::PENDING,
+            'payment_status' => TaskPaymentStatusEnum::CHARGED,
+        ])->save();
+
+        $updatedTask = app(UpdateCompanyTaskUseCase::class)->execute($task, [
+            'services' => [[
+                'task_service_id' => $firstTaskService->id,
+                'service_key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
+                'service_id' => $firstTaskService->service_id,
+                'products' => [['product_id' => $product->id]],
+            ]],
+        ]);
+
+        $this->assertSame('50.00', $updatedTask->total_price);
+        $this->assertDatabaseMissing('task_services', ['id' => $secondTaskService->id]);
+        $this->assertDatabaseHas('company_wallet_transactions', [
+            'company_id' => $task->company_id,
+            'type' => CompanyWalletTransactionTypeEnum::TASK_REFUND->value,
+            'amount' => 25,
+            'reference_id' => $task->id,
+        ]);
+    }
+
+    public function test_pending_configuration_increase_charges_only_the_price_difference(): void
+    {
+        [$task, $firstTaskService, $secondTaskService, $product] = $this->draftTaskWithServices();
+        $task->forceFill([
+            'status' => TaskStatusEnum::PENDING,
+            'payment_status' => TaskPaymentStatusEnum::CHARGED,
+        ])->save();
+        $firstTaskService->service->update(['price' => 100]);
+
+        app(CompaniesWalletRepositoryInterface::class)->createTransaction([
+            'company_id' => $task->company_id,
+            'amount' => 50,
+        ], CompanyWalletTransactionTypeEnum::ADMIN_GRANT);
+
+        $updatedTask = app(UpdateCompanyTaskUseCase::class)->execute($task, [
+            'services' => [
+                [
+                    'task_service_id' => $firstTaskService->id,
+                    'service_key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
+                    'service_id' => $firstTaskService->service_id,
+                    'products' => [['product_id' => $product->id]],
+                ],
+                [
+                    'task_service_id' => $secondTaskService->id,
+                    'service_key' => ServiceTypeEnum::ON_SHELF_AVAILABILITY->value,
+                    'service_id' => $secondTaskService->service_id,
+                    'products' => [[
+                        'product_id' => $product->id,
+                        'product_details' => ['minimum_quantity' => 1],
+                    ]],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('125.00', $updatedTask->total_price);
+        $this->assertDatabaseHas('company_wallet_transactions', [
+            'company_id' => $task->company_id,
+            'type' => CompanyWalletTransactionTypeEnum::TASK_PAYMENT->value,
+            'amount' => 50,
+            'reference_id' => $task->id,
+        ]);
+    }
+
+    public function test_pending_price_increase_is_rejected_without_changing_the_task_when_wallet_funds_are_insufficient(): void
+    {
+        [$task, $firstTaskService, $secondTaskService, $product] = $this->draftTaskWithServices();
+        $task->forceFill([
+            'status' => TaskStatusEnum::PENDING,
+            'payment_status' => TaskPaymentStatusEnum::CHARGED,
+        ])->save();
+        $firstTaskService->service->update(['price' => 100]);
+
+        try {
+            app(UpdateCompanyTaskUseCase::class)->execute($task, [
+                'services' => [
+                    [
+                        'task_service_id' => $firstTaskService->id,
+                        'service_key' => ServiceTypeEnum::PRIMARY_DISPLAY->value,
+                        'service_id' => $firstTaskService->service_id,
+                        'products' => [['product_id' => $product->id]],
+                    ],
+                    [
+                        'task_service_id' => $secondTaskService->id,
+                        'service_key' => ServiceTypeEnum::ON_SHELF_AVAILABILITY->value,
+                        'service_id' => $secondTaskService->service_id,
+                        'products' => [[
+                            'product_id' => $product->id,
+                            'product_details' => ['minimum_quantity' => 1],
+                        ]],
+                    ],
+                ],
+            ]);
+            $this->fail('The update should require the additional wallet balance.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('wallet', $exception->errors());
+        }
+
+        $this->assertSame('75.00', $task->refresh()->total_price);
+        $this->assertDatabaseCount('company_wallet_transactions', 0);
+    }
+
+    public function test_failed_task_can_be_rescheduled_with_only_a_date(): void
     {
         [$task] = $this->draftTaskWithServices();
-        $task->forceFill(['status' => TaskStatusEnum::PENDING])->save();
+        $task->forceFill([
+            'status' => TaskStatusEnum::FAILED,
+            'payment_status' => TaskPaymentStatusEnum::CHARGED,
+        ])->save();
+
+        $date = now()->addDay()->toDateString();
+        $updatedTask = app(UpdateCompanyTaskUseCase::class)->execute($task, ['date' => $date]);
+
+        $this->assertSame($date, $updatedTask->date->toDateString());
+        $this->assertSame(TaskStatusEnum::PENDING, $updatedTask->status);
+        $this->assertDatabaseHas('task_status_histories', [
+            'task_id' => $task->id,
+            'from_status' => TaskStatusEnum::FAILED->value,
+            'to_status' => TaskStatusEnum::PENDING->value,
+        ]);
+    }
+
+    public function test_failed_task_rejects_any_update_other_than_a_date(): void
+    {
+        [$task] = $this->draftTaskWithServices();
+        $task->forceFill(['status' => TaskStatusEnum::FAILED])->save();
 
         $this->expectException(ValidationException::class);
 

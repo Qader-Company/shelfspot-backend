@@ -37,4 +37,14 @@ enum TaskStatusEnum: string
     {
         return __("enums.task_status.{$this->value}");
     }
+
+    public static function getStatuses(): array
+    {
+        return array_map(
+            fn (self $item) => [
+                'value' => $item->value,
+                'label' => $item->label(),
+            ], self::cases()
+        );
+    }
 }

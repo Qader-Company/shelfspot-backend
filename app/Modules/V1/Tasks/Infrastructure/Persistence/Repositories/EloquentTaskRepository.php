@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 
 class EloquentTaskRepository implements TaskRepositoryInterface
 {
@@ -120,12 +121,28 @@ class EloquentTaskRepository implements TaskRepositoryInterface
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator
     {
-        $query = $this->query($relations, [], $filters)
+        $reassignedToWorker = (bool) ($filters['reassigned_to_me'] ?? false);
+        $taskFilters = Arr::except($filters, ['reassigned_to_me']);
+
+        $query = $this->query($relations, [], $taskFilters)
             ->leftJoin('task_worker_assignments as current_assignments', function ($join) {
                 $join->on('current_assignments.task_id', '=', 'tasks.id')
                     ->whereNull('current_assignments.unassigned_at');
             })
             ->where('tasks.assigned_worker_id', $workerId)
+            ->when(
+                $reassignedToWorker,
+                fn (Builder $query) => $query->whereExists(function ($assignments) use ($workerId) {
+                    $assignments->selectRaw('1')
+                        ->from('task_worker_assignments as worker_reassignments')
+                        ->whereColumn('worker_reassignments.task_id', 'tasks.id')
+                        ->where('worker_reassignments.worker_id', $workerId)
+                        ->whereIn('worker_reassignments.assignment_type', [
+                            TaskWorkerAssignmentTypeEnum::REASSIGNED->value,
+                            TaskWorkerAssignmentTypeEnum::REOPENED_REASSIGNED->value,
+                        ]);
+                })
+            )
             ->select('tasks.*')
             ->selectRaw(
                 'CASE

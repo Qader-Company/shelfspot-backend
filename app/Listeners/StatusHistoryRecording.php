@@ -22,7 +22,7 @@ class StatusHistoryRecording
      */
     public function handle(TaskStatusUpdated $event): void
     {
-        $this->statusHistoryRecorder->record(
+        $event->statusHistoryId = $this->statusHistoryRecorder->record(
             task: $event->task,
             fromStatus: $event->fromStatus,
             toStatus: $event->toStatus,
@@ -31,7 +31,8 @@ class StatusHistoryRecording
                 $event->worker instanceof Worker => $event->worker->user,
                 default => null,
             },
-            meta: $event->meta
-        );
+            meta: $event->meta,
+            eventId: $event->eventId,
+        )->id;
     }
 }

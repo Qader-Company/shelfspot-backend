@@ -4,9 +4,16 @@ namespace Tests\Unit\AccessControl;
 
 use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
+use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
 use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
 use App\Modules\V1\AccessControl\Infrastructure\Persistence\Repositories\EloquentAccessControlRepository;
 use App\Modules\V1\AccessControl\Infrastructure\Persistence\Repositories\EloquentManagedAdminRepository;
+use App\Modules\V1\Companies\Domain\Models\Company;
+use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
+use App\Modules\V1\CompanyAdmins\Domain\Models\CompanyUser;
+use App\Modules\V1\Users\Domain\Models\User;
+use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
+use Database\Seeders\AccessControlPermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -15,6 +22,46 @@ use Tests\TestCase;
 class ProtectedFullAccessRoleTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_permission_seeder_is_idempotent_and_refreshes_full_access_roles(): void
+    {
+        $provisioner = app(FullAccessRoleProvisioner::class);
+        $superAdminRole = $provisioner->ensureSuperAdminRole();
+        $company = Company::query()->create([
+            'name' => 'Permission Seeder Company',
+            'email' => 'permission-seeder@example.com',
+            'phone' => '01000000000',
+            'cr_number' => 'PERMISSION-SEEDER-001',
+            'industry' => CompanyIndustryEnum::INDUSTRY_ONE,
+        ]);
+        $companyOwnerRole = $provisioner->ensureCompanyOwnerRole($company->id);
+        $owner = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+        CompanyUser::query()->create([
+            'company_id' => $company->id,
+            'user_id' => $owner->id,
+            'is_owner' => true,
+        ]);
+
+        $superAdminRole->syncPermissions([]);
+        $companyOwnerRole->syncPermissions([]);
+
+        app(AccessControlPermissionSeeder::class)->run();
+        app(AccessControlPermissionSeeder::class)->run();
+
+        $this->assertDatabaseCount(
+            'permissions',
+            count(AdminPermissionEnum::cases()) + count(CompanyPermissionEnum::cases())
+        );
+        $this->assertEqualsCanonicalizing(
+            PermissionCatalog::names(PermissionCatalog::ADMIN_PORTAL),
+            $superAdminRole->refresh()->permissions()->pluck('name')->all()
+        );
+        $this->assertEqualsCanonicalizing(
+            PermissionCatalog::names(PermissionCatalog::COMPANY_PORTAL),
+            $companyOwnerRole->refresh()->permissions()->pluck('name')->all()
+        );
+        $this->assertTrue($owner->roles()->whereKey($companyOwnerRole)->exists());
+    }
 
     public function test_super_admin_role_cannot_be_created_manually(): void
     {

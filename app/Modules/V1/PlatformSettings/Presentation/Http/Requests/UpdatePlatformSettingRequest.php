@@ -17,7 +17,8 @@ class UpdatePlatformSettingRequest extends FormRequest
             'email' => ['sometimes', 'nullable', 'email', 'max:255'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
             'address' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'description_ar' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'description_en' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];
     }
 }

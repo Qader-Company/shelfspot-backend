@@ -34,19 +34,22 @@ class PlatformSettingsApiTest extends TestCase
             'email' => 'support@shelfspots.test',
             'phone' => '+201001234567',
             'address' => 'Cairo, Egypt',
-            'description' => 'ShelfSpots platform support.',
+            'description_ar' => 'دعم منصة شلف سبوتس.',
+            'description_en' => 'ShelfSpots platform support.',
         ])
             ->assertOk()
             ->assertJsonPath('data.email', 'support@shelfspots.test')
             ->assertJsonPath('data.phone', '+201001234567')
             ->assertJsonPath('data.address', 'Cairo, Egypt')
-            ->assertJsonPath('data.description', 'ShelfSpots platform support.');
+            ->assertJsonPath('data.description_ar', 'دعم منصة شلف سبوتس.')
+            ->assertJsonPath('data.description_en', 'ShelfSpots platform support.');
 
         $this->assertDatabaseHas('platform_settings', [
             'email' => 'support@shelfspots.test',
             'phone' => '+201001234567',
             'address' => 'Cairo, Egypt',
-            'description' => 'ShelfSpots platform support.',
+            'description_ar' => 'دعم منصة شلف سبوتس.',
+            'description_en' => 'ShelfSpots platform support.',
         ]);
     }
 

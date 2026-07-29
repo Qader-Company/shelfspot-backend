@@ -13,7 +13,8 @@ class PlatformSettingResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'address' => $this->address,
-            'description' => $this->description,
+            'description_ar' => $this->description_ar,
+            'description_en' => $this->description_en,
         ];
     }
 }

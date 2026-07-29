@@ -10,6 +10,7 @@ class PlatformSetting extends Model
         'email',
         'phone',
         'address',
-        'description',
+        'description_ar',
+        'description_en',
     ];
 }

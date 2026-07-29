@@ -21,13 +21,6 @@ Route::controller(ProductController::class)
                 ->middleware($catalogPolicy);
         });
 
-        Route::get('/', 'index')->middleware($catalogPolicy);
-        Route::post('/', 'store')->middleware($catalogPolicy);
-        Route::get('/{id}', 'show')->middleware($catalogPolicy);
-        Route::match(['put', 'patch'], '/{id}', 'update')->middleware($catalogPolicy);
-        Route::delete('/{id}', 'destroy')->middleware($catalogPolicy);
-        Route::post('/bulk-delete', 'bulkDelete')->middleware($catalogPolicy);
-
         Route::prefix('trash')->group(function () use ($catalogPolicy) {
             Route::get('/', 'trash')
                 ->middleware($catalogPolicy);
@@ -40,4 +33,12 @@ Route::controller(ProductController::class)
             Route::delete('/{id}', 'forceDelete')
                 ->middleware($catalogPolicy);
         });
+
+        Route::get('/', 'index')->middleware($catalogPolicy);
+        Route::post('/', 'store')->middleware($catalogPolicy);
+        Route::get('/{id}', 'show')->middleware($catalogPolicy);
+        Route::match(['put', 'patch'], '/{id}', 'update')->middleware($catalogPolicy);
+        Route::delete('/{id}', 'destroy')->middleware($catalogPolicy);
+        Route::post('/bulk-delete', 'bulkDelete')->middleware($catalogPolicy);
+
     });

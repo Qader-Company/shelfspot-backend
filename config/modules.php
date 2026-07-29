@@ -37,6 +37,7 @@ return [
         'admin' => [
             ['prefix' => 'admin/notifications',                       'file' => 'notifications.php',           'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/dashboard',                          'file' => 'dashboard.php',              'middlewares' => $adminAuthMiddlewares],
+            ['prefix' => 'admin/platform-settings',                  'file' => 'platform-settings.php',      'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/profile',                            'file' => 'profile.php',                'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/services',                           'file' => 'services.php',               'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/companies',                          'file' => 'companies.php',              'middlewares' => $adminAuthMiddlewares],

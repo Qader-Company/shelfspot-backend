@@ -4,6 +4,8 @@ return [
     'permissions' => [
         'admin' => [
             'view_dashboard' => 'View dashboard',
+            'view_platform_settings' => 'View platform settings',
+            'edit_platform_settings' => 'Edit platform settings',
             'view_company' => 'View companies',
             'create_company' => 'Create company',
             'edit_company' => 'Edit company',

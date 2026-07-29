@@ -3,6 +3,8 @@
 return [
     'permissions' => [
         'admin' => [
+            'view_platform_settings' => 'عرض إعدادات المنصة',
+            'edit_platform_settings' => 'تعديل إعدادات المنصة',
             'view_dashboard' => 'عرض لوحة التحكم',
             'view_company' => 'عرض الشركات',
             'create_company' => 'إنشاء شركة',

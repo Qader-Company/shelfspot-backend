@@ -208,8 +208,32 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
           chmod 600 ~/.ssh/testing_key
 
+          echo "===== CHECK PRIVATE KEY ====="
+          ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
+          echo "Private key OK"
+
+          echo "===== CHECK SSH PORT ====="
+          nc -vz -w 10 "$SSH_HOST" 22
+
+          echo "===== SCAN HOST KEY ====="
           ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
           chmod 600 ~/.ssh/known_hosts
+
+          echo "SSH configuration OK"
+#      - name: Configure SSH
+#        env:
+#          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
+#          SSH_HOST: ${{ secrets.TESTING_HOST }}
+#        run: |
+#          mkdir -p ~/.ssh
+#          chmod 700 ~/.ssh
+#
+#          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
+#          chmod 600 ~/.ssh/testing_key
+#
+#          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+#          chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy to Testing VPS
         env:

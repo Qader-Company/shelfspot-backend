@@ -197,47 +197,10 @@ jobs:
       cancel-in-progress: false
 
     steps:
-#      - name: Configure SSH
-#        env:
-#          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
-#          SSH_HOST: ${{ secrets.TESTING_HOST }}
-#        run: |
-#          mkdir -p ~/.ssh
-#          chmod 700 ~/.ssh
-#
-#          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
-#          chmod 600 ~/.ssh/testing_key
-#
-#          echo "===== CHECK PRIVATE KEY ====="
-#          ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
-#          echo "Private key OK"
-#
-#          echo "===== CHECK SSH PORT ====="
-#          nc -vz -w 10 "$SSH_HOST" 22
-#
-#          echo "===== SCAN HOST KEY ====="
-#          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
-#
-#          chmod 600 ~/.ssh/known_hosts
-#
-#          echo "SSH configuration OK"
-#      - name: Configure SSH
-#        env:
-#          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
-#          SSH_HOST: ${{ secrets.TESTING_HOST }}
-#        run: |
-#          mkdir -p ~/.ssh
-#          chmod 700 ~/.ssh
-#
-#          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
-#          chmod 600 ~/.ssh/testing_key
-#
-#          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
-#          chmod 600 ~/.ssh/known_hosts
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
-          SSH_HOST: ${{ secrets.TESTING_HOST }}
+          SSH_KNOWN_HOSTS: ${{ secrets.TESTING_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -245,15 +208,13 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
           chmod 600 ~/.ssh/testing_key
 
-          echo "===== CHECK PRIVATE KEY ====="
-          ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
-          echo "Private key OK"
-
-          echo "===== SCAN HOST KEY ====="
-          ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+          ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
+
           echo "SSH configuration OK"
+
       - name: Deploy to Testing VPS
         env:
           SSH_HOST: ${{ secrets.TESTING_HOST }}

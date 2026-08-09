@@ -13,6 +13,7 @@ use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminReopenTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AdminTaskIndexRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\AvailableTaskWorkersRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskListResource;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
@@ -29,11 +30,12 @@ class AdminTaskController extends Controller
     {
         $tasks = $this->taskRepository->getAll(
             relations: $this->adminListRelations(),
+            relationsCount: $this->taskRepository->listRelationsCount(),
             filters: $request->filters()
         );
 
         return ApiResponse::success(
-            TaskResource::collection($tasks)
+            TaskListResource::collection($tasks)
                 ->response()
                 ->getData(true)
         );
@@ -43,11 +45,12 @@ class AdminTaskController extends Controller
     {
         $tasks = $this->taskRepository->getCompanyDeletedForAdmin(
             relations: $this->adminListRelations(),
+            relationsCount: $this->taskRepository->listRelationsCount(),
             filters: $request->filters()
         );
 
         return ApiResponse::success(
-            TaskResource::collection($tasks)
+            TaskListResource::collection($tasks)
                 ->response()
                 ->getData(true)
         );

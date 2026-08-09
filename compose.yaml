@@ -1,0 +1,131 @@
+x-laravel-service: &laravel-service
+    image: shelfspot-php:dev
+    build:
+        context: .
+        dockerfile: docker/php/Dockerfile
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /var/www/html
+    volumes:
+        - .:/var/www/html
+    depends_on:
+        mysql:
+            condition: service_healthy
+        redis:
+            condition: service_started
+    networks:
+        - shelfspot
+    restart: unless-stopped
+
+
+services:
+    app:
+        <<: *laravel-service
+        container_name: shelfspot_app
+        command: php-fpm
+
+
+    queue:
+        <<: *laravel-service
+        container_name: shelfspot_queue
+        command: php artisan queue:work
+
+
+    scheduler:
+        <<: *laravel-service
+        container_name: shelfspot_scheduler
+        command: php artisan schedule:work
+
+
+    reverb:
+        <<: *laravel-service
+        container_name: shelfspot_reverb
+        command: php artisan reverb:start --host=0.0.0.0 --port=8080
+        ports:
+            - "8080:8080"
+
+
+    nginx:
+        image: nginx:alpine
+        container_name: shelfspot_nginx
+        restart: unless-stopped
+        ports:
+            - "8000:80"
+        volumes:
+            - .:/var/www/html:ro
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+        depends_on:
+            - app
+        networks:
+            - shelfspot
+
+
+    mysql:
+        image: mysql:8.4
+        container_name: shelfspot_mysql
+        restart: unless-stopped
+        ports:
+            - "3307:3306"
+        environment:
+            MYSQL_DATABASE: shelfspot
+            MYSQL_USER: shelfspot
+            MYSQL_PASSWORD: secret
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - mysql_data:/var/lib/mysql
+        healthcheck:
+            test:
+              [
+                  "CMD-SHELL",
+                  "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"
+              ]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        networks:
+            - shelfspot
+
+
+    redis:
+        image: redis:alpine
+        container_name: shelfspot_redis
+        restart: unless-stopped
+        ports:
+            - "6380:6379"
+        volumes:
+            - redis_data:/data
+        networks:
+            - shelfspot
+
+
+    phpmyadmin:
+        image: phpmyadmin:latest
+        container_name: shelfspot_phpmyadmin
+        restart: unless-stopped
+        ports:
+            - "8081:80"
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+        depends_on:
+            mysql:
+                condition: service_healthy
+        networks:
+            - shelfspot
+
+
+    node:
+        image: node:22-alpine
+        container_name: shelfspot_node
+        user: "${UID:-1000}:${GID:-1000}"
+        working_dir: /var/www/html
+        volumes:
+            - .:/var/www/html
+
+
+networks:
+    shelfspot:
+        driver: bridge
+
+volumes:
+    mysql_data:
+    redis_data:

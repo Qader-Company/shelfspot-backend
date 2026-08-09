@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Reports\Application\Services;
 
+use App\Modules\V1\Reports\Application\Caching\CompanyDashboardCache;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use Carbon\CarbonImmutable;
@@ -19,36 +20,45 @@ class CompanyDashboardReportService
         TaskStatusEnum::REOPENED,
     ];
 
+    public function __construct(private readonly CompanyDashboardCache $cache) {}
+
     public function dashboard(int $companyId, ?string $period = null): array
     {
         $selectedPeriod = $period ?: self::DEFAULT_PERIOD;
-        $now = CarbonImmutable::now();
-        $range = $this->rangeFor($selectedPeriod, $now);
-        $previousRange = $this->previousRangeFor($selectedPeriod, $range['from']);
 
-        $activeRequests = $this->activeRequests($companyId);
-        $previousActiveRequests = $this->activeRequests($companyId, $previousRange['from'], $previousRange['to']);
-        $completedRequests = $this->completedRequests($companyId, $range['from'], $range['to']);
-        $previousCompletedRequests = $this->completedRequests($companyId, $previousRange['from'], $previousRange['to']);
-        $delayedRequests = $this->delayedRequests($companyId, $now);
-        $previousDelayedRequests = $this->delayedRequests($companyId, $previousRange['to']);
-        $acceptanceRate = $this->acceptanceRate($companyId, $range['from'], $range['to']);
-        $previousAcceptanceRate = $this->acceptanceRate($companyId, $previousRange['from'], $previousRange['to']);
+        return $this->cache->remember(
+            $companyId,
+            $selectedPeriod,
+            function () use ($companyId, $selectedPeriod): array {
+                $now = CarbonImmutable::now();
+                $range = $this->rangeFor($selectedPeriod, $now);
+                $previousRange = $this->previousRangeFor($selectedPeriod, $range['from']);
 
-        return [
-            'period' => $selectedPeriod,
-            'range' => $this->serializeRange($range),
-            'cards' => [
-                'active_requests' => $this->metric($activeRequests, $previousActiveRequests),
-                'completed_this_period' => $this->metric($completedRequests, $previousCompletedRequests),
-                'delayed_requests' => $this->metric($delayedRequests, $previousDelayedRequests),
-                'acceptance_rate' => $this->metric($acceptanceRate, $previousAcceptanceRate, true),
-            ],
-            'charts' => [
-                'requests_over_time' => $this->requestsOverTime($companyId, $now),
-                'status_distribution' => $this->statusDistribution($companyId),
-            ],
-        ];
+                $activeRequests = $this->activeRequests($companyId);
+                $previousActiveRequests = $this->activeRequests($companyId, $previousRange['from'], $previousRange['to']);
+                $completedRequests = $this->completedRequests($companyId, $range['from'], $range['to']);
+                $previousCompletedRequests = $this->completedRequests($companyId, $previousRange['from'], $previousRange['to']);
+                $delayedRequests = $this->delayedRequests($companyId, $now);
+                $previousDelayedRequests = $this->delayedRequests($companyId, $previousRange['to']);
+                $acceptanceRate = $this->acceptanceRate($companyId, $range['from'], $range['to']);
+                $previousAcceptanceRate = $this->acceptanceRate($companyId, $previousRange['from'], $previousRange['to']);
+
+                return [
+                    'period' => $selectedPeriod,
+                    'range' => $this->serializeRange($range),
+                    'cards' => [
+                        'active_requests' => $this->metric($activeRequests, $previousActiveRequests),
+                        'completed_this_period' => $this->metric($completedRequests, $previousCompletedRequests),
+                        'delayed_requests' => $this->metric($delayedRequests, $previousDelayedRequests),
+                        'acceptance_rate' => $this->metric($acceptanceRate, $previousAcceptanceRate, true),
+                    ],
+                    'charts' => [
+                        'requests_over_time' => $this->requestsOverTime($companyId, $now),
+                        'status_distribution' => $this->statusDistribution($companyId),
+                    ],
+                ];
+            },
+        );
     }
 
     private function activeRequests(int $companyId, ?CarbonImmutable $from = null, ?CarbonImmutable $to = null): int
@@ -98,10 +108,14 @@ class CompanyDashboardReportService
 
     private function requestsOverTime(int $companyId, CarbonImmutable $now): array
     {
+        $monthExpression = DB::getDriverName() === 'sqlite'
+            ? "CAST(strftime('%m', date) AS INTEGER)"
+            : 'MONTH(date)';
+
         $totalsByMonth = $this->baseQuery($companyId)
-            ->selectRaw('MONTH(date) as month_number, COUNT(*) as total')
+            ->selectRaw("{$monthExpression} as month_number, COUNT(*) as total")
             ->whereYear('date', $now->year)
-            ->groupBy(DB::raw('MONTH(date)'))
+            ->groupBy(DB::raw($monthExpression))
             ->pluck('total', 'month_number');
 
         return collect(range(1, 12))

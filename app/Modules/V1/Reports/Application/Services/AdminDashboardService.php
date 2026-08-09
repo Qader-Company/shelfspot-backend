@@ -4,27 +4,28 @@ namespace App\Modules\V1\Reports\Application\Services;
 
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
+use App\Modules\V1\Reports\Application\Caching\AdminDashboardCache;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardService
 {
     private const DEFAULT_PERIOD = 'week';
 
+    public function __construct(private readonly AdminDashboardCache $cache) {}
+
     public function dashboard(?string $period = null): array
     {
         $period ??= self::DEFAULT_PERIOD;
 
-        return Cache::remember(
-            AdminDashboardCache::key($period),
-            now()->addMinute(),
-            fn (): array => $this->buildDashboard($period)
+        return $this->cache->remember(
+            $period,
+            fn (): array => $this->buildDashboard($period),
         );
     }
 

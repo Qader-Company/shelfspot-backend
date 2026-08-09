@@ -19,6 +19,7 @@ use App\Modules\V1\Tasks\Presentation\Http\Requests\SubmitTaskServiceRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\WorkerCancelTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\WorkerMyTasksRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskListResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskServiceSubmissionResource;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use App\Modules\V1\Workers\Domain\Models\Worker;
@@ -57,7 +58,7 @@ class WorkerTaskController extends Controller
         return ApiResponse::success(
             [
                 'radius_km' => $radius ?? NearbyTaskRequest::DEFAULT_RADIUS_KM,
-                'tasks' => TaskResource::collection($tasks)
+                'tasks' => TaskListResource::collection($tasks)
                     ->response()
                     ->getData(true),
             ]
@@ -69,11 +70,12 @@ class WorkerTaskController extends Controller
         $tasks = $this->taskRepository->assignedToWorker(
             workerId: $this->worker($request)->id,
             filters: $request->filters(),
-            relations: ['services.service.translations', 'assignedWorker', 'currentWorkerAssignment']
+            relations: ['assignedWorker.user', 'currentWorkerAssignment'],
+            relationsCount: $this->taskRepository->listRelationsCount(),
         );
 
         return ApiResponse::success(
-            TaskResource::collection($tasks)
+            TaskListResource::collection($tasks)
                 ->response()
                 ->getData(true)
         );

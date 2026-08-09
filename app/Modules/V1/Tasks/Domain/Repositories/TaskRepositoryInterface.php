@@ -22,9 +22,9 @@ interface TaskRepositoryInterface
 
     public function delete(Task $task): void;
 
-    public function getCompanyTrash(int $companyId, array $relations = [], array $filters = []): LengthAwarePaginator;
+    public function getCompanyTrash(int $companyId, array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator;
 
-    public function getCompanyDeletedForAdmin(array $relations = [], array $filters = []): LengthAwarePaginator;
+    public function getCompanyDeletedForAdmin(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator;
 
     public function getCompanyDeletedById(int $id, array $relations = [], bool $includePurged = false): ?Task;
 
@@ -36,7 +36,7 @@ interface TaskRepositoryInterface
 
     public function tasksByCoordinates(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, array $filters = []): CursorPaginator;
 
-    public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator;
+    public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], array $relationsCount = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator;
 
     public function assignedTaskForWorker(int $taskId, int $workerId, array $relations = []): ?Task;
 
@@ -53,6 +53,8 @@ interface TaskRepositoryInterface
     public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null): float;
 
     public function listRelations(): array;
+
+    public function listRelationsCount(): array;
 
     public function detailRelations(): array;
 

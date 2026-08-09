@@ -9,10 +9,6 @@ class TaskServiceSubmissionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $attachments = $this->relationLoaded('media')
-            ? $this->media
-            : $this->media()->get();
-
         return [
             'id' => $this->id,
             'task_service_id' => $this->task_service_id,
@@ -20,7 +16,7 @@ class TaskServiceSubmissionResource extends JsonResource
             'form_data' => $this->form_data,
             'status' => $this->status,
             'completed_at' => $this->completed_at?->toDateTimeString(),
-            'attachments' => $attachments->map(fn ($media) => [
+            'attachments' => $this->whenLoaded('media', fn () => $this->media->map(fn ($media) => [
                 'id' => $media->id,
                 'field' => $media->getCustomProperty('field'),
                 'collection' => $media->collection_name,
@@ -29,7 +25,7 @@ class TaskServiceSubmissionResource extends JsonResource
                 'mime_type' => $media->mime_type,
                 'size' => $media->size,
                 'url' => $media->getUrl(),
-            ]),
+            ])),
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];

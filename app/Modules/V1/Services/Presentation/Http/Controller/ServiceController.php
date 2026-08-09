@@ -5,6 +5,7 @@ namespace App\Modules\V1\Services\Presentation\Http\Controller;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Services\Application\Services\ServiceCatalogService;
 use App\Modules\V1\Services\Domain\Repositories\ServiceRepositoryInterface;
 use App\Modules\V1\Services\Presentation\Http\Requests\UpdateServiceRequest;
 use App\Modules\V1\Services\Presentation\Http\Resources\ServiceResource;
@@ -17,24 +18,23 @@ class ServiceController extends Controller
 {
     use Filterable;
 
-    public function __construct(private readonly ServiceRepositoryInterface $serviceRepository)
-    {
-    }
+    public function __construct(
+        private readonly ServiceRepositoryInterface $serviceRepository,
+        private readonly ServiceCatalogService $serviceCatalogService,
+    ) {}
 
     public function index(Request $request)
     {
         $filters = $this->acceptedFilters($request, ['active']);
         $this->ifUserNotAdmin($filters);
-        $services = $this->serviceRepository->getAll(
-            relations: ['translations'],
-            filters: $filters,
-        );
-        return ApiResponse::success(ServiceResource::collection($services));
+
+        return ApiResponse::success($this->serviceCatalogService->list($filters));
     }
 
     public function show(string $key)
     {
         $service = $this->getServiceByKey($key, ['translations']);
+
         return ApiResponse::success(ServiceResource::withTranslations($service));
     }
 
@@ -42,22 +42,30 @@ class ServiceController extends Controller
     {
         $service = $this->getService($id);
         $this->serviceRepository->update($service, $request->validated());
+
         return ApiResponse::message(__('api.updated'));
     }
 
     private function getService(string $id, $relations = [], $relationsCount = [])
     {
         $service = $this->serviceRepository->getById($id, $relations, $relationsCount);
-        if(is_null($service)) throw new ModelNotFoundException(__('api.not_found'));
+        if (is_null($service)) {
+            throw new ModelNotFoundException(__('api.not_found'));
+        }
+
         return $service;
     }
 
     private function getServiceByKey(string $key, $relations = [], $relationsCount = [])
     {
         $service = $this->serviceRepository->getByKey($key, $relations, $relationsCount);
-        if(is_null($service)) throw new ModelNotFoundException(__('api.not_found'));
+        if (is_null($service)) {
+            throw new ModelNotFoundException(__('api.not_found'));
+        }
+
         return $service;
     }
+
     private function ifUserNotAdmin(&$filters)
     {
         if (Auth::user()->type !== PortalTypeEnum::ADMIN) {

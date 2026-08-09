@@ -8,6 +8,8 @@ use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
 use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
 use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
+use App\Modules\V1\Reports\Application\Caching\AdminDashboardCache;
+use App\Modules\V1\Reports\Application\Services\AdminDashboardService;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskWorkerAssignment;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
@@ -17,7 +19,9 @@ use App\Modules\V1\Workers\Domain\Models\Worker;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
+use RuntimeException;
 use Tests\TestCase;
 
 class AdminDashboardApiTest extends TestCase
@@ -30,6 +34,9 @@ class AdminDashboardApiTest extends TestCase
 
         $this->withoutMiddleware([CheckApiKey::class]);
         CarbonImmutable::setTestNow('2026-07-25 12:00:00');
+        config()->set('shelfspot_cache.enabled', true);
+        config()->set('shelfspot_cache.groups.reports', true);
+        config()->set('shelfspot_cache.store', 'array');
         Cache::flush();
     }
 
@@ -96,16 +103,55 @@ class AdminDashboardApiTest extends TestCase
     {
         $this->authenticateAdmin();
         $company = $this->company('Cache company');
+        $cacheKey = AdminDashboardCache::key('week', 'en');
 
         $this->task($company, TaskStatusEnum::PENDING, $this->current());
 
         $this->getJson('/api/v1/admin/dashboard?period=week')
             ->assertJsonPath('data.cards.requests_today', 1);
+        $this->assertTrue(Cache::store('array')->has($cacheKey));
 
         $this->task($company, TaskStatusEnum::PENDING, $this->current());
+        $this->assertFalse(Cache::store('array')->has($cacheKey));
 
         $this->getJson('/api/v1/admin/dashboard?period=week')
             ->assertJsonPath('data.cards.requests_today', 2);
+    }
+
+    public function test_dashboard_reuses_the_cached_payload_without_rerunning_aggregate_queries(): void
+    {
+        $service = app(AdminDashboardService::class);
+
+        DB::enableQueryLog();
+        $service->dashboard('week');
+        $this->assertNotEmpty(DB::getQueryLog());
+
+        DB::flushQueryLog();
+        $service->dashboard('week');
+
+        $this->assertSame([], DB::getQueryLog());
+    }
+
+    public function test_rolled_back_task_change_does_not_invalidate_the_dashboard_cache(): void
+    {
+        $company = $this->company('Rollback company');
+        $service = app(AdminDashboardService::class);
+        $cacheKey = AdminDashboardCache::key('week', 'en');
+
+        $service->dashboard('week');
+        $this->assertTrue(Cache::store('array')->has($cacheKey));
+
+        try {
+            DB::transaction(function () use ($company): void {
+                $this->task($company, TaskStatusEnum::PENDING, $this->current());
+
+                throw new RuntimeException('Rollback the task write.');
+            });
+        } catch (RuntimeException) {
+            // The transaction is intentionally rolled back.
+        }
+
+        $this->assertTrue(Cache::store('array')->has($cacheKey));
     }
 
     public function test_admin_without_dashboard_permission_is_forbidden(): void

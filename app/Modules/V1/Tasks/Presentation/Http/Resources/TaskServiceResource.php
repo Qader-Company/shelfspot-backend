@@ -10,10 +10,6 @@ class TaskServiceResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $attachments = $this->relationLoaded('media')
-            ? $this->media
-            : $this->media()->get();
-
         return [
             'id' => $this->id,
             'execution_instructions' => $this->execution_instructions,
@@ -24,7 +20,7 @@ class TaskServiceResource extends JsonResource
             'service' => $this->whenLoaded('service', fn () => new ServiceResource($this->service)),
             'products' => TaskServiceProductResource::collection($this->whenLoaded('products')),
             'submission' => $this->whenLoaded('submission', fn () => new TaskServiceSubmissionResource($this->submission)),
-            'attachments' => $attachments->map(fn ($media) => [
+            'attachments' => $this->whenLoaded('media', fn () => $this->media->map(fn ($media) => [
                 'id' => $media->id,
                 'field' => $media->getCustomProperty('field'),
                 'collection' => $media->collection_name,
@@ -33,7 +29,7 @@ class TaskServiceResource extends JsonResource
                 'mime_type' => $media->mime_type,
                 'size' => $media->size,
                 'url' => $media->getUrl(),
-            ]),
+            ])),
         ];
     }
 }

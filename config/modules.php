@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Shared\Infrastructure\Caching\Providers\CachingServiceProvider;
 use App\Modules\V1\AccessControl\Infrastructure\Providers\AccessControlModuleServiceProvider;
 use App\Modules\V1\Admins\Infrastructure\Providers\AdminsModuleServiceProvider;
 use App\Modules\V1\Authentication\Infrastructure\Providers\AuthenticationModuleServiceProvider;
@@ -10,6 +11,8 @@ use App\Modules\V1\CompaniesWallets\Infrastructure\Providers\CompaniesWalletsMod
 use App\Modules\V1\CompanyAdmins\Infrastructure\Providers\CompanyUsersModuleServiceProvider;
 use App\Modules\V1\Coupons\Infrastructure\Providers\CouponsModuleServiceProvider;
 use App\Modules\V1\Products\Infrastructure\Providers\ProductsModuleServiceProvider;
+use App\Modules\V1\PlatformSettings\Infrastructure\Providers\PlatformSettingsModuleServiceProvider;
+use App\Modules\V1\Reports\Infrastructure\Providers\ReportsModuleServiceProvider;
 use App\Modules\V1\Services\Infrastructure\Providers\ServicesModuleServiceProvider;
 use App\Modules\V1\SubBrands\Infrastructure\Providers\SubBrandsModuleServiceProvider;
 use App\Modules\V1\SubCategories\Infrastructure\Providers\SubCategoriesModuleServiceProvider;
@@ -76,6 +79,7 @@ return [
     ],
 
     'providers' => [
+        CachingServiceProvider::class,
         AuthenticationModuleServiceProvider::class,
         AccessControlModuleServiceProvider::class,
         BrandsModuleServiceProvider::class,
@@ -85,6 +89,8 @@ return [
         CategoriesModuleServiceProvider::class,
         SubCategoriesModuleServiceProvider::class,
         ProductsModuleServiceProvider::class,
+        PlatformSettingsModuleServiceProvider::class,
+        ReportsModuleServiceProvider::class,
         ServicesModuleServiceProvider::class,
         AdminsModuleServiceProvider::class,
         CompaniesWalletsModuleServiceProvider::class,

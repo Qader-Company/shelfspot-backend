@@ -6,12 +6,6 @@ use App\Facades\ApiResponse;
 use App\Facades\FacadesLogic\ApiResponseLogic;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Infrastructure\Tenant\TenantContext;
-use App\Modules\V1\Companies\Domain\Models\Company;
-use App\Modules\V1\CompaniesWallets\Domain\Models\CompanyWalletTransaction;
-use App\Modules\V1\Reports\Application\Services\AdminDashboardCache;
-use App\Modules\V1\Tasks\Domain\Models\Task;
-use App\Modules\V1\Tasks\Domain\Models\TaskWorkerAssignment;
-use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Log;
@@ -46,7 +40,6 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading();
 
         $this->registerRoutes();
-        $this->registerAdminDashboardCacheInvalidation();
         $this->registerNotificationQueueFailureLogging();
     }
 
@@ -63,23 +56,6 @@ class AppServiceProvider extends ServiceProvider
                     ->group(base_path('routes/V1/'.$key.'/'.($route['file'] ?? '')));
             }
         }
-    }
-
-    private function registerAdminDashboardCacheInvalidation(): void
-    {
-        foreach ([
-            Company::class,
-            CompanyWalletTransaction::class,
-            Task::class,
-            TaskWorkerAssignment::class,
-            Worker::class,
-        ] as $model) {
-            $model::saved(fn () => AdminDashboardCache::forget());
-            $model::deleted(fn () => AdminDashboardCache::forget());
-        }
-
-        Company::restored(fn () => AdminDashboardCache::forget());
-        Worker::restored(fn () => AdminDashboardCache::forget());
     }
 
     private function registerNotificationQueueFailureLogging(): void

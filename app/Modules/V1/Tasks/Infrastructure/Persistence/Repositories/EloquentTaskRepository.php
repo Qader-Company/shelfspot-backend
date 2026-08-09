@@ -56,16 +56,16 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         $task->delete();
     }
 
-    public function getCompanyTrash(int $companyId, array $relations = [], array $filters = []): LengthAwarePaginator
+    public function getCompanyTrash(int $companyId, array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
-        return $this->companyDeletedQuery($relations, $filters)
+        return $this->companyDeletedQuery($relations, $relationsCount, $filters)
             ->where('company_id', $companyId)
             ->paginate();
     }
 
-    public function getCompanyDeletedForAdmin(array $relations = [], array $filters = []): LengthAwarePaginator
+    public function getCompanyDeletedForAdmin(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
-        return $this->companyDeletedQuery($relations, $filters, includePurged: true)
+        return $this->companyDeletedQuery($relations, $relationsCount, $filters, includePurged: true)
             ->paginate();
     }
 
@@ -105,7 +105,8 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         $distanceSql = $this->haversineSql();
 
         return $this->query(
-            relations: ['company', 'services'],
+            relations: ['company'],
+            relationsCount: $this->listRelationsCount(),
             filters: $filters
         )->where('status', TaskStatusEnum::PENDING->value)
             ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
@@ -119,12 +120,12 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->cursorPaginate();
     }
 
-    public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator
+    public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], array $relationsCount = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator
     {
         $reassignedToWorker = (bool) ($filters['reassigned_to_me'] ?? false);
         $taskFilters = Arr::except($filters, ['reassigned_to_me']);
 
-        $query = $this->query($relations, [], $taskFilters)
+        $query = $this->query($relations, $relationsCount, $taskFilters)
             ->leftJoin('task_worker_assignments as current_assignments', function ($join) {
                 $join->on('current_assignments.task_id', '=', 'tasks.id')
                     ->whereNull('current_assignments.unassigned_at');
@@ -252,25 +253,27 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
     }
 
-    private function companyDeletedQuery(array $relations = [], array $filters = [], bool $includePurged = false): Builder
+    private function companyDeletedQuery(array $relations = [], array $relationsCount = [], array $filters = [], bool $includePurged = false): Builder
     {
         return Task::query()
             ->whereNotNull('company_deleted_at')
             ->when(! $includePurged, fn (Builder $query) => $query->whereNull('company_purged_at'))
             ->when($filters, fn (Builder $query) => $query->filter($filters))
-            ->when($relations, fn (Builder $query) => $query->with($relations));
+            ->when($relations, fn (Builder $query) => $query->with($relations))
+            ->when($relationsCount, fn (Builder $query) => $query->withCount($relationsCount));
     }
 
     public function listRelations(): array
     {
         return [
-            'services.service.translations',
-            'services.media',
-            'services.submission',
-            'services.submission.media',
             'company',
             'assignedWorker.user',
         ];
+    }
+
+    public function listRelationsCount(): array
+    {
+        return ['services'];
     }
 
     public function detailRelations(): array

@@ -4,6 +4,7 @@ namespace App\Modules\V1\Products\Application\Services;
 
 use App\Modules\V1\Brands\Domain\Models\Brand;
 use App\Modules\V1\Categories\Domain\Models\Category;
+use App\Modules\V1\Products\Application\Caching\ProductFilterOptionsCache;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,7 +12,14 @@ use Illuminate\Support\Collection;
 
 class ProductFilterOptionsService
 {
+    public function __construct(private readonly ProductFilterOptionsCache $cache) {}
+
     public function resolve(array $filters): array
+    {
+        return $this->cache->remember($filters, fn (): array => $this->buildResponse($filters));
+    }
+
+    private function buildResponse(array $filters): array
     {
         $brandId = (int) $filters['brand_id'];
         $subBrandId = $filters['sub_brand_id'] ?? null;

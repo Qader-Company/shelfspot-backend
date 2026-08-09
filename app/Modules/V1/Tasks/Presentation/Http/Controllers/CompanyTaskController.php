@@ -23,6 +23,7 @@ use App\Modules\V1\Tasks\Presentation\Http\Requests\PayDraftTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\UpdateCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskListResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
@@ -41,11 +42,12 @@ class CompanyTaskController extends Controller
         $tasks = $this->taskRepository
             ->getAll(
                 relations: $this->taskRepository->listRelations(),
+                relationsCount: $this->taskRepository->listRelationsCount(),
                 filters: $filters
             );
 
         return ApiResponse::success(
-            TaskResource::collection($tasks)
+            TaskListResource::collection($tasks)
                 ->response()->getData(true)
         );
     }
@@ -56,10 +58,11 @@ class CompanyTaskController extends Controller
         $tasks = $this->taskRepository->getCompanyTrash(
             companyId: $this->tenantContext->getCompanyId(),
             relations: $this->taskRepository->listRelations(),
+            relationsCount: $this->taskRepository->listRelationsCount(),
             filters: $filters
         );
 
-        return ApiResponse::success(TaskResource::collection($tasks)->response()->getData(true));
+        return ApiResponse::success(TaskListResource::collection($tasks)->response()->getData(true));
     }
 
     public function restore(int $id, RestoreCompanyTaskUseCase $restoreCompanyTaskUseCase)

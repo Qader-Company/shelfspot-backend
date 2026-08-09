@@ -238,3 +238,31 @@ jobs:
               echo "===== DONE ====="
               echo "SSH connection successful"
             '
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
+          SSH_HOST: ${{ secrets.TESTING_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
+          chmod 600 ~/.ssh/testing_key
+
+          echo "===== CHECK SECRET ====="
+          test -n "$SSH_HOST" && echo "SSH_HOST exists"
+          test -n "$SSH_PRIVATE_KEY" && echo "SSH_PRIVATE_KEY exists"
+
+          echo "===== CHECK PRIVATE KEY ====="
+          ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
+          echo "Private key is valid"
+
+          echo "===== CHECK SSH PORT ====="
+          nc -vz -w 10 "$SSH_HOST" 22
+
+          echo "===== SCAN HOST KEY ====="
+          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+          chmod 600 ~/.ssh/known_hosts
+
+          echo "SSH configuration successful"

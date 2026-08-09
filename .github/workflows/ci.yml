@@ -226,28 +226,49 @@ jobs:
 
               cd /opt/shelfspot/testing
 
-              echo "===== UPDATE DEPLOYMENT CONFIG ====="
-              git fetch origin
-              git checkout develop
-              git pull --ff-only origin develop
-
-              echo "===== DEPLOY IMAGE ====="
-              echo "Image tag: $IMAGE_TAG"
-
               COMPOSE="docker compose \
                 -p shelfspot-testing \
                 -f compose.yaml \
                 -f compose.testing.yaml"
 
-              echo "===== PULL IMAGES ====="
+              echo "===== CURRENT DEPLOYMENT ====="
+
+              CURRENT_APP_IMAGE=$(docker inspect shelfspot-testing-app-1 \
+                --format '{{.Config.Image}}' 2>/dev/null || true)
+
+              CURRENT_TAG=""
+
+              if [ -n "$CURRENT_APP_IMAGE" ]; then
+                CURRENT_TAG="${CURRENT_APP_IMAGE##*:}"
+              fi
+
+              echo "Current image: ${CURRENT_APP_IMAGE:-none}"
+              echo "Current tag:   ${CURRENT_TAG:-none}"
+              echo "New tag:       $IMAGE_TAG"
+
+              echo "===== UPDATE DEPLOYMENT CONFIG ====="
+
+              git fetch origin
+              git checkout develop
+              git pull --ff-only origin develop
+
+              echo "===== PULL NEW IMAGES ====="
+
               IMAGE_TAG="$IMAGE_TAG" $COMPOSE pull
 
               echo "===== RUN MIGRATIONS ====="
+
               IMAGE_TAG="$IMAGE_TAG" $COMPOSE run --rm app \
                 php artisan migrate --force
 
-              echo "===== START SERVICES ====="
+              echo "===== START NEW VERSION ====="
+
               IMAGE_TAG="$IMAGE_TAG" $COMPOSE up -d --remove-orphans
+
+              echo "===== CLEAR CACHE ====="
+
+              IMAGE_TAG="$IMAGE_TAG" $COMPOSE exec -T app \
+                php artisan optimize:clear
 
               echo "===== VERIFY DEPLOYED IMAGE ====="
 
@@ -255,10 +276,10 @@ jobs:
               EXPECTED_NGINX_IMAGE="ghcr.io/qader-company/shelfspot-backend-nginx:$IMAGE_TAG"
 
               ACTUAL_APP_IMAGE=$(docker inspect shelfspot-testing-app-1 \
-              --format '{{.Config.Image}}')
+                --format '{{.Config.Image}}')
 
               ACTUAL_NGINX_IMAGE=$(docker inspect shelfspot-testing-nginx-1 \
-              --format '{{.Config.Image}}')
+                --format '{{.Config.Image}}')
 
               echo "Expected app:   $EXPECTED_APP_IMAGE"
               echo "Running app:    $ACTUAL_APP_IMAGE"
@@ -269,27 +290,66 @@ jobs:
               test "$ACTUAL_APP_IMAGE" = "$EXPECTED_APP_IMAGE"
               test "$ACTUAL_NGINX_IMAGE" = "$EXPECTED_NGINX_IMAGE"
 
-              echo "Deployed images match commit SHA"
-
-              echo "===== CLEAR LARAVEL CACHE ====="
-              IMAGE_TAG="$IMAGE_TAG" $COMPOSE exec -T app \
-                php artisan optimize:clear
-
-              echo "===== CONTAINERS ====="
-              IMAGE_TAG="$IMAGE_TAG" $COMPOSE ps
-
               echo "===== HEALTH CHECK ====="
+
+              HEALTHY=false
+
               for i in 1 2 3 4 5 6; do
                 if curl --fail --silent --show-error \
                   https://testing.api.shelfspots.com/ > /dev/null; then
-                  echo "Testing deployment healthy"
-                  exit 0
+
+                  HEALTHY=true
+                  break
                 fi
 
-                echo "Health check attempt $i failed; retrying..."
+                echo "Health check attempt $i failed"
                 sleep 5
               done
 
-              echo "Deployment health check failed"
-              exit 1
+              if [ "$HEALTHY" = true ]; then
+                echo "Testing deployment healthy"
+              else
+                echo "===== DEPLOYMENT FAILED ====="
+
+                if [ -z "$CURRENT_TAG" ]; then
+                  echo "No previous deployment found. Cannot rollback."
+                  exit 1
+                fi
+
+                echo "Rolling back to: $CURRENT_TAG"
+
+                IMAGE_TAG="$CURRENT_TAG" $COMPOSE pull
+
+                IMAGE_TAG="$CURRENT_TAG" $COMPOSE up -d --remove-orphans
+
+                IMAGE_TAG="$CURRENT_TAG" $COMPOSE exec -T app \
+                  php artisan optimize:clear
+
+                echo "===== VERIFY ROLLBACK ====="
+
+                ROLLED_BACK_IMAGE=$(docker inspect shelfspot-testing-app-1 \
+                  --format '{{.Config.Image}}')
+
+                echo "Running image: $ROLLED_BACK_IMAGE"
+
+                if curl --fail --silent --show-error \
+                  https://testing.api.shelfspots.com/ > /dev/null; then
+
+                  echo "Rollback successful"
+                else
+                  echo "Rollback completed but health check still fails"
+                fi
+
+                exit 1
+              fi
+
+              echo "===== CONTAINERS ====="
+
+              IMAGE_TAG="$IMAGE_TAG" $COMPOSE ps
+
+              echo "===== CLEAN UNUSED IMAGES ====="
+
+              docker image prune -f
+
+              echo "===== DEPLOYMENT COMPLETE ====="
           REMOTE

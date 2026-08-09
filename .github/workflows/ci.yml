@@ -223,9 +223,14 @@ jobs:
         run: |
           ssh \
             -i ~/.ssh/testing_key \
+            -o IdentitiesOnly=yes \
             -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile=~/.ssh/known_hosts \
+            -o ConnectTimeout=20 \
             "$SSH_USER@$SSH_HOST" \
             "IMAGE_TAG='$IMAGE_TAG' bash -s" <<'REMOTE'
+
               set -euo pipefail
 
               cd /opt/shelfspot/testing
@@ -263,7 +268,7 @@ jobs:
               echo "===== RUN MIGRATIONS ====="
 
               IMAGE_TAG="$IMAGE_TAG" $COMPOSE run --rm -T app \
-              php artisan migrate --force </dev/null
+                php artisan migrate --force </dev/null
 
               echo "===== START NEW VERSION ====="
 
@@ -338,7 +343,6 @@ jobs:
 
                 if curl --fail --silent --show-error \
                   https://testing.api.shelfspots.com/ > /dev/null; then
-
                   echo "Rollback successful"
                 else
                   echo "Rollback completed but health check still fails"
@@ -356,4 +360,5 @@ jobs:
               docker image prune -f
 
               echo "===== DEPLOYMENT COMPLETE ====="
+
           REMOTE

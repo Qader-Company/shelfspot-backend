@@ -11,7 +11,19 @@ on:
       - develop
       - main
 
+# GitHub Actions needs:
+# - read access to repository code
+# - write access to GHCR packages
+permissions:
+  contents: read
+  packages: write
+
+
 jobs:
+
+  # ==========================================================
+  # 1. Laravel Tests
+  # ==========================================================
   tests:
     name: Laravel Tests
     runs-on: ubuntu-latest
@@ -28,7 +40,11 @@ jobs:
           coverage: none
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+        run: |
+          composer install \
+            --prefer-dist \
+            --no-interaction \
+            --no-progress
 
       - name: Prepare Laravel environment
         run: |
@@ -39,6 +55,9 @@ jobs:
         run: composer test
 
 
+  # ==========================================================
+  # 2. Frontend Build
+  # ==========================================================
   frontend:
     name: Frontend Build
     runs-on: ubuntu-latest
@@ -60,6 +79,9 @@ jobs:
         run: npm run build
 
 
+  # ==========================================================
+  # 3. Docker Build + Verify + GHCR Push
+  # ==========================================================
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
@@ -69,8 +91,32 @@ jobs:
       - frontend
 
     steps:
+
+      # ------------------------------------------------------
+      # Checkout
+      # ------------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
+
+
+      # ------------------------------------------------------
+      # Login to GitHub Container Registry
+      #
+      # Only login when this is a direct push to develop.
+      # Pull Requests only build/test images.
+      # ------------------------------------------------------
+      - name: Login to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      # ======================================================
+      # Laravel / PHP Image
+      # ======================================================
 
       - name: Build Laravel image
         run: |
@@ -78,6 +124,7 @@ jobs:
             --target app \
             -t shelfspot-app:ci \
             -f docker/php/Dockerfile .
+
 
       - name: Verify Laravel image
         run: |
@@ -87,6 +134,11 @@ jobs:
                    test -f public/build/manifest.json && \
                    echo "APP IMAGE OK"'
 
+
+      # ======================================================
+      # Nginx Image
+      # ======================================================
+
       - name: Build Nginx image
         run: |
           docker build \
@@ -94,9 +146,50 @@ jobs:
             -t shelfspot-nginx:ci \
             -f docker/php/Dockerfile .
 
+
       - name: Verify Nginx image
         run: |
           docker run --rm shelfspot-nginx:ci \
             sh -c 'test -f /var/www/html/public/index.php && \
                    test -f /var/www/html/public/build/manifest.json && \
                    echo "NGINX IMAGE OK"'
+
+
+      # ======================================================
+      # Tag Images
+      # ======================================================
+
+      - name: Tag Docker images
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        run: |
+          docker tag shelfspot-app:ci \
+            ghcr.io/qader-company/shelfspot-backend-app:${{ github.sha }}
+
+          docker tag shelfspot-app:ci \
+            ghcr.io/qader-company/shelfspot-backend-app:develop
+
+          docker tag shelfspot-nginx:ci \
+            ghcr.io/qader-company/shelfspot-backend-nginx:${{ github.sha }}
+
+          docker tag shelfspot-nginx:ci \
+            ghcr.io/qader-company/shelfspot-backend-nginx:develop
+
+
+      # ======================================================
+      # Push Images to GHCR
+      # ======================================================
+
+      - name: Push Docker images
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        run: |
+          docker push \
+            ghcr.io/qader-company/shelfspot-backend-app:${{ github.sha }}
+
+          docker push \
+            ghcr.io/qader-company/shelfspot-backend-app:develop
+
+          docker push \
+            ghcr.io/qader-company/shelfspot-backend-nginx:${{ github.sha }}
+
+          docker push \
+            ghcr.io/qader-company/shelfspot-backend-nginx:develop

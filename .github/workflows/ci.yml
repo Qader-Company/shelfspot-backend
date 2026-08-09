@@ -197,6 +197,43 @@ jobs:
       cancel-in-progress: false
 
     steps:
+#      - name: Configure SSH
+#        env:
+#          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
+#          SSH_HOST: ${{ secrets.TESTING_HOST }}
+#        run: |
+#          mkdir -p ~/.ssh
+#          chmod 700 ~/.ssh
+#
+#          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
+#          chmod 600 ~/.ssh/testing_key
+#
+#          echo "===== CHECK PRIVATE KEY ====="
+#          ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
+#          echo "Private key OK"
+#
+#          echo "===== CHECK SSH PORT ====="
+#          nc -vz -w 10 "$SSH_HOST" 22
+#
+#          echo "===== SCAN HOST KEY ====="
+#          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+#
+#          chmod 600 ~/.ssh/known_hosts
+#
+#          echo "SSH configuration OK"
+#      - name: Configure SSH
+#        env:
+#          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
+#          SSH_HOST: ${{ secrets.TESTING_HOST }}
+#        run: |
+#          mkdir -p ~/.ssh
+#          chmod 700 ~/.ssh
+#
+#          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
+#          chmod 600 ~/.ssh/testing_key
+#
+#          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+#          chmod 600 ~/.ssh/known_hosts
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
@@ -212,29 +249,11 @@ jobs:
           ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
           echo "Private key OK"
 
-          echo "===== CHECK SSH PORT ====="
-          nc -vz -w 10 "$SSH_HOST" 22
-
           echo "===== SCAN HOST KEY ====="
-          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
-
+          ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
           echo "SSH configuration OK"
-#      - name: Configure SSH
-#        env:
-#          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
-#          SSH_HOST: ${{ secrets.TESTING_HOST }}
-#        run: |
-#          mkdir -p ~/.ssh
-#          chmod 700 ~/.ssh
-#
-#          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
-#          chmod 600 ~/.ssh/testing_key
-#
-#          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
-#          chmod 600 ~/.ssh/known_hosts
-
       - name: Deploy to Testing VPS
         env:
           SSH_HOST: ${{ secrets.TESTING_HOST }}
@@ -282,7 +301,7 @@ jobs:
 
               echo "===== RUN MIGRATIONS ====="
 
-              IMAGE_TAG="$IMAGE_TAG" $COMPOSE run --rm -t app \
+              IMAGE_TAG="$IMAGE_TAG" $COMPOSE run --rm -T app \
                 php artisan migrate --force
 
               echo "===== START NEW VERSION ====="

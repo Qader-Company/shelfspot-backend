@@ -178,11 +178,11 @@ jobs:
 
 
   # ==========================================================
-  # 4. Test GitHub Actions -> Testing VPS connection
+  # 4. Deploy Testing
   # ==========================================================
 
-  test-vps-connection:
-    name: Test VPS Connection
+  deploy-testing:
+    name: Deploy Testing
     runs-on: ubuntu-latest
 
     needs:
@@ -191,6 +191,10 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
 
     environment: testing
+
+    concurrency:
+      group: shelfspot-testing
+      cancel-in-progress: false
 
     steps:
       - name: Configure SSH
@@ -204,65 +208,66 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
           chmod 600 ~/.ssh/testing_key
 
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Test SSH connection
+      - name: Deploy to Testing VPS
         env:
           SSH_HOST: ${{ secrets.TESTING_HOST }}
           SSH_USER: ${{ secrets.TESTING_USER }}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           ssh \
             -i ~/.ssh/testing_key \
             -o BatchMode=yes \
             "$SSH_USER@$SSH_HOST" \
-            '
-              set -e
+            "IMAGE_TAG='$IMAGE_TAG' bash -s" <<'REMOTE'
+              set -euo pipefail
 
-              echo "===== USER ====="
-              whoami
-
-              echo "===== HOST ====="
-              hostname
-
-              echo "===== DOCKER ====="
-              docker --version
-
-              echo "===== DOCKER COMPOSE ====="
-              docker compose version
-
-              echo "===== PROJECT ====="
               cd /opt/shelfspot/testing
-              pwd
 
-              echo "===== DONE ====="
-              echo "SSH connection successful"
-            '
-      - name: Configure SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
-          SSH_HOST: ${{ secrets.TESTING_HOST }}
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
+              echo "===== UPDATE DEPLOYMENT CONFIG ====="
+              git fetch origin
+              git checkout develop
+              git pull --ff-only origin develop
 
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
-          chmod 600 ~/.ssh/testing_key
+              echo "===== DEPLOY IMAGE ====="
+              echo "Image tag: $IMAGE_TAG"
 
-          echo "===== CHECK SECRET ====="
-          test -n "$SSH_HOST" && echo "SSH_HOST exists"
-          test -n "$SSH_PRIVATE_KEY" && echo "SSH_PRIVATE_KEY exists"
+              COMPOSE="docker compose \
+                -p shelfspot-testing \
+                -f compose.yaml \
+                -f compose.testing.yaml"
 
-          echo "===== CHECK PRIVATE KEY ====="
-          ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
-          echo "Private key is valid"
+              echo "===== PULL IMAGES ====="
+              IMAGE_TAG="$IMAGE_TAG" $COMPOSE pull
 
-          echo "===== CHECK SSH PORT ====="
-          nc -vz -w 10 "$SSH_HOST" 22
+              echo "===== RUN MIGRATIONS ====="
+              IMAGE_TAG="$IMAGE_TAG" $COMPOSE run --rm app \
+                php artisan migrate --force
 
-          echo "===== SCAN HOST KEY ====="
-          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+              echo "===== START SERVICES ====="
+              IMAGE_TAG="$IMAGE_TAG" $COMPOSE up -d --remove-orphans
 
-          chmod 600 ~/.ssh/known_hosts
+              echo "===== CLEAR LARAVEL CACHE ====="
+              IMAGE_TAG="$IMAGE_TAG" $COMPOSE exec -T app \
+                php artisan optimize:clear
 
-          echo "SSH configuration successful"
+              echo "===== CONTAINERS ====="
+              IMAGE_TAG="$IMAGE_TAG" $COMPOSE ps
+
+              echo "===== HEALTH CHECK ====="
+              for i in 1 2 3 4 5 6; do
+                if curl --fail --silent --show-error \
+                  https://testing.api.shelfspots.com/ > /dev/null; then
+                  echo "Testing deployment healthy"
+                  exit 0
+                fi
+
+                echo "Health check attempt $i failed; retrying..."
+                sleep 5
+              done
+
+              echo "Deployment health check failed"
+              exit 1
+          REMOTE

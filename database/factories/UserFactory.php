@@ -3,10 +3,7 @@
 namespace Database\Factories;
 
 use App\Modules\V1\Users\Domain\Models\User;
-use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>

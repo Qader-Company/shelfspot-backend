@@ -249,6 +249,28 @@ jobs:
               echo "===== START SERVICES ====="
               IMAGE_TAG="$IMAGE_TAG" $COMPOSE up -d --remove-orphans
 
+              echo "===== VERIFY DEPLOYED IMAGE ====="
+
+              EXPECTED_APP_IMAGE="ghcr.io/qader-company/shelfspot-backend-app:$IMAGE_TAG"
+              EXPECTED_NGINX_IMAGE="ghcr.io/qader-company/shelfspot-backend-nginx:$IMAGE_TAG"
+
+              ACTUAL_APP_IMAGE=$(docker inspect shelfspot-testing-app-1 \
+              --format '{{.Config.Image}}')
+
+              ACTUAL_NGINX_IMAGE=$(docker inspect shelfspot-testing-nginx-1 \
+              --format '{{.Config.Image}}')
+
+              echo "Expected app:   $EXPECTED_APP_IMAGE"
+              echo "Running app:    $ACTUAL_APP_IMAGE"
+
+              echo "Expected nginx: $EXPECTED_NGINX_IMAGE"
+              echo "Running nginx:  $ACTUAL_NGINX_IMAGE"
+
+              test "$ACTUAL_APP_IMAGE" = "$EXPECTED_APP_IMAGE"
+              test "$ACTUAL_NGINX_IMAGE" = "$EXPECTED_NGINX_IMAGE"
+
+              echo "Deployed images match commit SHA"
+
               echo "===== CLEAR LARAVEL CACHE ====="
               IMAGE_TAG="$IMAGE_TAG" $COMPOSE exec -T app \
                 php artisan optimize:clear

@@ -263,7 +263,7 @@ jobs:
               echo "===== RUN MIGRATIONS ====="
 
               IMAGE_TAG="$IMAGE_TAG" $COMPOSE run --rm -T app \
-                php artisan migrate --force
+              php artisan migrate --force </dev/null
 
               echo "===== START NEW VERSION ====="
 

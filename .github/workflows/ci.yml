@@ -197,6 +197,11 @@ jobs:
       cancel-in-progress: false
 
     steps:
+
+      # ------------------------------------------------------
+      # Configure SSH
+      # ------------------------------------------------------
+
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
@@ -215,21 +220,28 @@ jobs:
 
           echo "SSH configuration OK"
 
+      # ------------------------------------------------------
+      # Deploy to VPS
+      # ------------------------------------------------------
+
       - name: Deploy to Testing VPS
         env:
           SSH_HOST: ${{ secrets.TESTING_HOST }}
           SSH_USER: ${{ secrets.TESTING_USER }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          ssh \
-            -i ~/.ssh/testing_key \
-            -o IdentitiesOnly=yes \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            -o UserKnownHostsFile=~/.ssh/known_hosts \
-            -o ConnectTimeout=20 \
-            "$SSH_USER@$SSH_HOST" \
-            "IMAGE_TAG='$IMAGE_TAG' bash -s" <<'REMOTE'
+          for attempt in 1 2; do
+            echo "===== SSH DEPLOY ATTEMPT $attempt/2 ====="
+
+            if ssh \
+              -i ~/.ssh/testing_key \
+              -o IdentitiesOnly=yes \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile=~/.ssh/known_hosts \
+              -o ConnectTimeout=20 \
+              "$SSH_USER@$SSH_HOST" \
+              "IMAGE_TAG='$IMAGE_TAG' bash -s" <<'REMOTE'
 
               set -euo pipefail
 
@@ -304,7 +316,10 @@ jobs:
               HEALTHY=false
 
               for i in 1 2 3 4 5 6; do
-                if curl --fail --silent --show-error \
+                if curl \
+                  --fail \
+                  --silent \
+                  --show-error \
                   https://testing.api.shelfspots.com/ > /dev/null; then
 
                   HEALTHY=true
@@ -329,7 +344,9 @@ jobs:
 
                 IMAGE_TAG="$CURRENT_TAG" $COMPOSE pull
 
-                IMAGE_TAG="$CURRENT_TAG" $COMPOSE up -d --remove-orphans
+                IMAGE_TAG="$CURRENT_TAG" $COMPOSE up \
+                  -d \
+                  --remove-orphans
 
                 IMAGE_TAG="$CURRENT_TAG" $COMPOSE exec -T app \
                   php artisan optimize:clear
@@ -339,10 +356,14 @@ jobs:
                 ROLLED_BACK_IMAGE=$(docker inspect shelfspot-testing-app-1 \
                   --format '{{.Config.Image}}')
 
-                echo "Running image: $ROLLED_BACK_IMAGE"
+                echo "Running image after rollback: $ROLLED_BACK_IMAGE"
 
-                if curl --fail --silent --show-error \
+                if curl \
+                  --fail \
+                  --silent \
+                  --show-error \
                   https://testing.api.shelfspots.com/ > /dev/null; then
+
                   echo "Rollback successful"
                 else
                   echo "Rollback completed but health check still fails"
@@ -362,3 +383,18 @@ jobs:
               echo "===== DEPLOYMENT COMPLETE ====="
 
           REMOTE
+            then
+            echo "SSH deployment succeeded on attempt $attempt"
+            exit 0
+            fi
+
+            echo "SSH deployment attempt $attempt failed"
+
+            if [ "$attempt" -lt 2 ]; then
+            echo "Waiting 15 seconds before retry..."
+            sleep 15
+            fi
+            done
+
+            echo "SSH deployment failed after 2 attempts"
+            exit 1

@@ -1,0 +1,102 @@
+name: ShelfSpot CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  tests:
+    name: Laravel Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, intl, pdo_sqlite, gd, zip
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Laravel environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Laravel tests
+        run: composer test
+
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+
+    needs:
+      - tests
+      - frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Laravel image
+        run: |
+          docker build \
+            --target app \
+            -t shelfspot-app:ci \
+            -f docker/php/Dockerfile .
+
+      - name: Verify Laravel image
+        run: |
+          docker run --rm shelfspot-app:ci \
+            sh -c 'test -f artisan && \
+                   test -f vendor/autoload.php && \
+                   test -f public/build/manifest.json && \
+                   echo "APP IMAGE OK"'
+
+      - name: Build Nginx image
+        run: |
+          docker build \
+            --target nginx \
+            -t shelfspot-nginx:ci \
+            -f docker/php/Dockerfile .
+
+      - name: Verify Nginx image
+        run: |
+          docker run --rm shelfspot-nginx:ci \
+            sh -c 'test -f /var/www/html/public/index.php && \
+                   test -f /var/www/html/public/build/manifest.json && \
+                   echo "NGINX IMAGE OK"'

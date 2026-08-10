@@ -21,7 +21,14 @@ services:
 
     queue:
         <<: *laravel-service
-        command: php artisan queue:work
+        command:
+            - php
+            - artisan
+            - queue:work
+            - redis
+            - --queue=notifications-high,notifications-normal,broadcasts,default
+            - --tries=3
+            - --timeout=90
 
     scheduler:
         <<: *laravel-service

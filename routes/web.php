@@ -7,3 +7,7 @@ Route::get('/', function () {
 });
 
 Route::view('/notification-lab', 'notification-lab');
+
+if (config('notification_lab.sending_enabled')) {
+    require __DIR__.'/notification-lab.php';
+}

@@ -137,3 +137,78 @@ byId('read-all').addEventListener('click', async () => {
         apiOutput.textContent = error.message;
     }
 });
+
+const sender = byId('test-sender');
+
+if (sender) {
+    const sendButton = byId('send-test');
+    const sendStatus = byId('send-test-status');
+    const sendOutput = byId('send-test-output');
+
+    sender.querySelectorAll('.target-enabled').forEach((checkbox) => {
+        checkbox.addEventListener('change', () => {
+            const input = sender.querySelector(`.target-user-id[data-portal="${checkbox.dataset.portal}"]`);
+            input.disabled = !checkbox.checked;
+            if (checkbox.checked) input.focus();
+        });
+    });
+
+    sendButton.addEventListener('click', async () => {
+        try {
+            const targets = [...sender.querySelectorAll('.target-enabled:checked')].map((checkbox) => ({
+                portal: checkbox.dataset.portal,
+                user_id: Number(sender.querySelector(`.target-user-id[data-portal="${checkbox.dataset.portal}"]`).value),
+            }));
+
+            if (!targets.length || targets.some((target) => !target.user_id)) {
+                throw new Error('Select at least one portal and enter a valid user ID for every selection.');
+            }
+
+            let meta;
+            try {
+                meta = JSON.parse(byId('test-meta').value || '{}');
+            } catch {
+                throw new Error('Extra meta must be a valid JSON object.');
+            }
+            if (!meta || Array.isArray(meta) || typeof meta !== 'object') {
+                throw new Error('Extra meta must be a JSON object.');
+            }
+
+            sendButton.disabled = true;
+            sendStatus.textContent = 'Queueing test notification…';
+            const response = await fetch('/notification-lab/send', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    targets,
+                    event: byId('test-preset').value,
+                    category: byId('test-preset').value.startsWith('task.') ? 'task' : 'test',
+                    priority: byId('test-priority').value,
+                    title: byId('test-title').value,
+                    message: byId('test-message').value,
+                    meta,
+                }),
+            });
+            const body = await response.json();
+
+            if (!response.ok) {
+                const validationMessage = Object.values(body.errors ?? {}).flat().join(' ');
+                throw new Error(body.message || validationMessage || `Request failed with ${response.status}.`);
+            }
+
+            sendStatus.textContent = `Queued for ${body.data.queued} recipient(s).`;
+            sendOutput.textContent = JSON.stringify(body, null, 2);
+            sendOutput.classList.remove('hidden');
+        } catch (error) {
+            sendStatus.textContent = error.message;
+            sendOutput.textContent = error.message;
+            sendOutput.classList.remove('hidden');
+        } finally {
+            sendButton.disabled = false;
+        }
+    });
+}

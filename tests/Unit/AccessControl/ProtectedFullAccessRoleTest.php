@@ -200,6 +200,27 @@ class ProtectedFullAccessRoleTest extends TestCase
         );
     }
 
+    public function test_roles_expose_only_the_permissions_that_are_not_assigned_as_available(): void
+    {
+        $assignedPermission = CompanyPermissionEnum::VIEW_BRAND->value;
+        $repository = app(EloquentAccessControlRepository::class);
+
+        $repository->createRole(
+            PermissionCatalog::COMPANY_PORTAL,
+            10,
+            ['name' => 'catalog_manager', 'permissions' => [$assignedPermission]]
+        );
+
+        $role = $repository->roles(PermissionCatalog::COMPANY_PORTAL, 10)->first();
+
+        $this->assertSame([$assignedPermission], $role->permissions->pluck('name')->all());
+        $this->assertNotContains($assignedPermission, $role->availablePermissions->pluck('name')->all());
+        $this->assertEqualsCanonicalizing(
+            array_values(array_diff(PermissionCatalog::names(PermissionCatalog::COMPANY_PORTAL), [$assignedPermission])),
+            $role->availablePermissions->pluck('name')->all()
+        );
+    }
+
     public function test_super_admin_user_cannot_be_deleted(): void
     {
         $admin = app(EloquentManagedAdminRepository::class)->createShelfSpotAdmin([

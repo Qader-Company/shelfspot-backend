@@ -7,8 +7,8 @@ use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Models\Permission;
 use App\Modules\V1\AccessControl\Domain\Models\Role;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Collection;
 use Spatie\Permission\PermissionRegistrar;
 
 class EloquentAccessControlRepository implements AccessControlRepositoryInterface
@@ -22,7 +22,9 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
     public function roles(string $portal, ?int $companyId = null): Collection
     {
         PermissionCatalog::sync($portal);
-        return $this->roleQuery($portal, $companyId)->with('permissions')->get();
+        $roles = $this->roleQuery($portal, $companyId)->with('permissions')->get();
+
+        return $this->loadAvailablePermissions($roles, $portal);
     }
 
     public function createRole(string $portal, ?int $companyId, array $attributes): Role
@@ -32,7 +34,8 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
         $role = Role::firstOrCreate(['name' => $attributes['name'], 'guard_name' => 'web', 'portal' => $portal, 'company_id' => $companyId]);
         $this->syncRolePermissions($role, $portal, $attributes['permissions'] ?? []);
         $this->forgetCachedPermissions();
-        return $role->load('permissions');
+
+        return $this->loadAvailablePermissions(new Collection([$role->load('permissions')]), $portal)->first();
     }
 
     public function updateRole(string $portal, ?int $companyId, int $roleId, array $attributes): Role
@@ -45,7 +48,8 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
             $this->syncRolePermissions($role, $portal, $attributes['permissions']);
         }
         $this->forgetCachedPermissions();
-        return $role->load('permissions');
+
+        return $this->loadAvailablePermissions(new Collection([$role->load('permissions')]), $portal)->first();
     }
 
     public function deleteRole(string $portal, ?int $companyId, int $roleId): void
@@ -114,5 +118,19 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
     private function permissionQuery(string $portal)
     {
         return Permission::query()->where('portal', $portal);
+    }
+
+    private function loadAvailablePermissions(Collection $roles, string $portal): Collection
+    {
+        $permissions = $this->permissionQuery($portal)->get();
+
+        return $roles->each(function (Role $role) use ($permissions): void {
+            $assignedPermissionIds = $role->permissions->modelKeys();
+
+            $role->setRelation(
+                'availablePermissions',
+                $permissions->whereNotIn('id', $assignedPermissionIds)->values()
+            );
+        });
     }
 }

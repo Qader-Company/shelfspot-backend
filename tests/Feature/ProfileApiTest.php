@@ -4,6 +4,10 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\CheckApiKey;
 use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
+use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
+use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
+use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
+use App\Modules\V1\AccessControl\Infrastructure\Persistence\Repositories\EloquentAccessControlRepository;
 use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
@@ -45,6 +49,52 @@ class ProfileApiTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Updated Admin']);
     }
 
+    public function test_admin_login_and_profile_include_assigned_and_available_permissions(): void
+    {
+        $assignedPermission = AdminPermissionEnum::VIEW_DASHBOARD->value;
+        $user = User::factory()->create([
+            'type' => PortalTypeEnum::ADMIN,
+            'password' => 'password123',
+            'email_verified_at' => now(),
+        ]);
+        ShelfSpotAdmin::query()->create(['user_id' => $user->id, 'is_active' => true]);
+        $role = app(EloquentAccessControlRepository::class)->createRole(
+            PermissionCatalog::ADMIN_PORTAL,
+            null,
+            ['name' => 'dashboard_viewer', 'permissions' => [$assignedPermission]]
+        );
+        $user->assignRole($role);
+
+        $login = $this->postJson('/api/v1/auth/admin/login', [
+            'email' => $user->email,
+            'password' => 'password123',
+        ])->assertOk();
+        $this->assertSame(
+            [$assignedPermission],
+            collect($login->json('data.user.permissions'))->pluck('name')->all()
+        );
+        $this->assertNotContains(
+            $assignedPermission,
+            collect($login->json('data.user.available_permissions'))->pluck('name')->all()
+        );
+
+        Sanctum::actingAs($user, ['admin', 'access']);
+
+        $profile = $this->getJson('/api/v1/admin/profile')->assertOk();
+        $this->assertSame(
+            [$assignedPermission],
+            collect($profile->json('data.permissions'))->pluck('name')->all()
+        );
+        $this->assertNotContains(
+            $assignedPermission,
+            collect($profile->json('data.available_permissions'))->pluck('name')->all()
+        );
+        $this->assertCount(
+            count(AdminPermissionEnum::cases()) - 1,
+            $profile->json('data.available_permissions')
+        );
+    }
+
     public function test_company_user_can_retrieve_and_update_its_profile(): void
     {
         $company = $this->company();
@@ -62,7 +112,9 @@ class ProfileApiTest extends TestCase
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.type', 'company')
             ->assertJsonPath('data.company_id', $company->id)
-            ->assertJsonPath('data.company_name', $company->name);
+            ->assertJsonPath('data.company_name', $company->name)
+            ->assertJsonCount(0, 'data.permissions')
+            ->assertJsonCount(count(CompanyPermissionEnum::cases()), 'data.available_permissions');
 
         $this->patchJson('/api/v1/company/profile', ['name' => 'Updated Company User'], [
             'X-Company-id' => $company->id,

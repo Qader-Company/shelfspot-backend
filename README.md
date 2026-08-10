@@ -13,6 +13,8 @@ ShelfSpot connects companies that need retail execution services with workers wh
 
 ## Links
 
+- [Frontend permissions guide](docs/frontend-permissions-guide.md)
+
 ## Architecture
 ShelfSpot is organized as a versioned Laravel API with most domain code under `app/Modules/V1`. Modules commonly follow layered boundaries for Presentation controllers, requests, and resources; Application use cases, services, validation, and Excel handling; Domain models, repositories, enums, and value objects; and Infrastructure repositories and service providers. API entry points are split by portal rather than kept directly in `routes/api.php`, with `routes/V1/public`, `routes/V1/admin`, `routes/V1/company`, and `routes/V1/worker` loaded through module configuration.
 

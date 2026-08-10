@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\CheckApiKey;
 use App\Modules\V1\AccessControl\Application\Services\FullAccessRoleProvisioner;
+use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
@@ -31,12 +32,25 @@ class ProfileApiTest extends TestCase
     {
         $user = User::factory()->create(['type' => PortalTypeEnum::ADMIN]);
         ShelfSpotAdmin::query()->create(['user_id' => $user->id, 'is_active' => true]);
+        app(FullAccessRoleProvisioner::class)->assignSuperAdminRole($user);
+        $expectedPermissions = PermissionCatalog::names(PermissionCatalog::ADMIN_PORTAL);
+        sort($expectedPermissions);
+
+        $this->postJson('/api/v1/auth/admin/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertOk()
+            ->assertJsonPath('data.user.roles', ['super_admin'])
+            ->assertJsonPath('data.user.permissions', $expectedPermissions);
+
         Sanctum::actingAs($user, ['admin', 'access']);
 
         $this->getJson('/api/v1/admin/profile')
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
-            ->assertJsonPath('data.type', 'admin');
+            ->assertJsonPath('data.type', 'admin')
+            ->assertJsonPath('data.roles', ['super_admin'])
+            ->assertJsonPath('data.permissions', $expectedPermissions);
 
         $this->patchJson('/api/v1/admin/profile', ['name' => 'Updated Admin'])
             ->assertOk()
@@ -55,6 +69,9 @@ class ProfileApiTest extends TestCase
             'is_active' => true,
             'is_owner' => true,
         ]);
+        app(FullAccessRoleProvisioner::class)->assignCompanyOwnerRole($user, $company->id);
+        $expectedPermissions = PermissionCatalog::names(PermissionCatalog::COMPANY_PORTAL);
+        sort($expectedPermissions);
         Sanctum::actingAs($user, ['company', 'access']);
 
         $this->getJson('/api/v1/company/profile', ['X-Company-id' => $company->id])
@@ -62,13 +79,38 @@ class ProfileApiTest extends TestCase
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.type', 'company')
             ->assertJsonPath('data.company_id', $company->id)
-            ->assertJsonPath('data.company_name', $company->name);
+            ->assertJsonPath('data.company_name', $company->name)
+            ->assertJsonPath('data.roles', ['owner'])
+            ->assertJsonPath('data.permissions', $expectedPermissions);
 
         $this->patchJson('/api/v1/company/profile', ['name' => 'Updated Company User'], [
             'X-Company-id' => $company->id,
         ])
             ->assertOk()
             ->assertJsonPath('data.name', 'Updated Company User');
+    }
+
+    public function test_login_returns_the_company_users_permissions(): void
+    {
+        $company = $this->company();
+        $user = User::factory()->create(['type' => PortalTypeEnum::COMPANY]);
+        CompanyUser::query()->create([
+            'company_id' => $company->id,
+            'user_id' => $user->id,
+            'is_active' => true,
+            'is_owner' => true,
+        ]);
+        app(FullAccessRoleProvisioner::class)->assignCompanyOwnerRole($user, $company->id);
+        $expectedPermissions = PermissionCatalog::names(PermissionCatalog::COMPANY_PORTAL);
+        sort($expectedPermissions);
+
+        $this->postJson('/api/v1/auth/company/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertOk()
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user.roles', ['owner'])
+            ->assertJsonPath('data.user.permissions', $expectedPermissions);
     }
 
     public function test_company_owner_can_update_its_company_when_it_has_the_edit_permission(): void

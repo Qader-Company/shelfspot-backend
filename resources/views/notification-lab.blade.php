@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Notification Lab</title>
     @vite(['resources/css/app.css', 'resources/js/notification-lab.js'])
 </head>
@@ -56,6 +57,14 @@
         </div>
         <p class="mt-3 text-xs text-slate-500">The Bearer token and platform API key are used only in this browser tab and are never stored by this page.</p>
     </section>
+
+    @if (config('notification_lab.sending_enabled'))
+        @include('notification-lab.sender')
+    @else
+        <section class="mt-6 rounded-2xl border border-amber-700/40 bg-amber-950/30 p-5 text-sm text-amber-200">
+            Test sending is disabled. Set <code class="rounded bg-slate-950 px-2 py-1">NOTIFICATION_LAB_SEND_ENABLED=true</code> only in an isolated development or testing environment.
+        </section>
+    @endif
 
     <section class="mt-6 grid gap-6 lg:grid-cols-2">
         <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">

@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Workers\Presentation\Http\Resources;
 
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
+use App\Modules\V1\Users\Application\Services\UserPermissionsResolver;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Http\Request;
@@ -29,6 +30,7 @@ class WorkerResource extends JsonResource
             'deleted_at' => $worker?->deleted_at?->toISOString(),
             'type' => $user?->type?->value,
             'is_active' => (bool) $worker?->is_active,
+            'permissions' => UserPermissionsResolver::resolve($user),
             'distance_km' => $this->when(isset($worker->distance_km), fn () => round((float) $worker->distance_km, 3)),
             'last_location' => [
                 'latitude' => $worker?->last_latitude,

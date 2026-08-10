@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Users\Application\Services;
 
+use App\Modules\V1\AccessControl\Application\Services\UserPermissionLoader;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use App\Modules\V1\Users\Presentation\Http\Resources\AdminUserResource;
@@ -18,6 +19,8 @@ class UserResourceResolver
             PortalTypeEnum::WORKER => ['worker'],
             PortalTypeEnum::COMPANY => ['companyUser.company'],
         });
+
+        UserPermissionLoader::load($user, $userType);
 
         return match ($userType) {
             PortalTypeEnum::ADMIN => new AdminUserResource($user),

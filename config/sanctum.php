@@ -56,6 +56,7 @@ return [
     'reset_password_token_TTL' => (int) env('SANCTUM_RESET_PASSWORD_TOKEN_TTL', 60),
     'verification_token_TTL' => (int) env('SANCTUM_VERIFICATION_TOKEN_TTL', 60),
     'OTP_TTL' => (int) env('OTP_TTL', 60),
+
     /*
     |--------------------------------------------------------------------------
     | Token Prefix

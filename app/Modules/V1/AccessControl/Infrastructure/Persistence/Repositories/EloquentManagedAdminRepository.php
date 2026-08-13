@@ -53,6 +53,9 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
     public function updateShelfSpotAdmin(User $user, array $attributes): User
     {
         abort_unless($user->type === PortalTypeEnum::ADMIN, 404);
+        $user->loadMissing('roles');
+        $this->ensureProtectedAccountCannotBeUpdated($user);
+
         return DB::transaction(function () use ($user, $attributes) {
             $user->fill(collect($attributes)->only(['name', 'email', 'password'])->all())->save();
             if (array_key_exists('is_active', $attributes)) {
@@ -96,6 +99,9 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
     public function updateCompanyAdmin(int $companyId, User $user, array $attributes): User
     {
         $companyUser = CompanyUser::where('company_id', $companyId)->where('user_id', $user->id)->firstOrFail();
+        $user->loadMissing('roles');
+        $this->ensureProtectedAccountCannotBeUpdated($user, $companyUser);
+
         return DB::transaction(function () use ($companyId, $user, $companyUser, $attributes) {
             $user->fill(collect($attributes)->only(['name', 'email', 'password'])->all())->save();
             if (array_key_exists('is_active', $attributes)) {
@@ -165,6 +171,26 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         }
 
         throw new AuthorizationException('The company owner cannot be deleted.');
+    }
+
+    /**
+     * Protected full-access accounts are provisioned and maintained by the
+     * system. They cannot be renamed, disabled, have their email/password
+     * changed, or have their protected roles replaced through access control.
+     *
+     * @throws AuthorizationException
+     */
+    private function ensureProtectedAccountCannotBeUpdated(
+        User $user,
+        ?CompanyUser $companyUser = null,
+    ): void {
+        $isSuperAdmin = $user->roles->contains('name', FullAccessRoleProvisioner::SUPER_ADMIN_ROLE);
+        $isCompanyOwner = $companyUser?->is_owner
+            || $user->roles->contains('name', FullAccessRoleProvisioner::COMPANY_OWNER_ROLE);
+
+        if ($isSuperAdmin || $isCompanyOwner) {
+            throw new AuthorizationException('The super admin and company owner accounts cannot be modified.');
+        }
     }
 
     private function protectedRoleNames(string $portal): array

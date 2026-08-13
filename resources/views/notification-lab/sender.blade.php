@@ -18,30 +18,16 @@
     </div>
 
     <div class="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <label class="text-sm text-slate-300">Preset
+        <label class="text-sm text-slate-300 md:col-span-2 lg:col-span-4">Event type
             <select id="test-preset" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white">
-                <option value="lab.test">Generic test</option>
-                <option value="task.published">Task published</option>
-                <option value="task.completed">Task completed</option>
-                <option value="task.failed">Task failed</option>
-                <option value="task.rejected">Task rejected</option>
-                <option value="task.reopened">Task reopened</option>
-                <option value="task.reassigned">Task reassigned</option>
-                <option value="task.worker_cancelled">Worker cancelled</option>
+                @foreach (config('notification_lab.events') as $event => $definition)
+                    <option value="{{ $event }}">{{ $definition['label'] }}</option>
+                @endforeach
             </select>
         </label>
-        <label class="text-sm text-slate-300">Priority
-            <select id="test-priority" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white"><option value="normal">normal</option><option value="high">high</option></select>
-        </label>
-        <label class="text-sm text-slate-300 md:col-span-2">Title
-            <input id="test-title" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" value="Notification Lab Test">
-        </label>
-        <label class="text-sm text-slate-300 md:col-span-2 lg:col-span-4">Message
-            <input id="test-message" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white" value="This is a test notification from Notification Lab.">
-        </label>
-        <label class="text-sm text-slate-300 md:col-span-2 lg:col-span-4">Extra meta (JSON object)
-            <textarea id="test-meta" rows="3" class="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-white">{}</textarea>
-        </label>
+        <p class="md:col-span-2 lg:col-span-4 rounded-lg border border-slate-700 bg-slate-950 p-3 text-sm text-slate-400">
+            The title, description, priority, action, and task fixture data are fixed by the selected event, so the test payload matches a real notification type.
+        </p>
     </div>
 
     <div class="mt-4 flex flex-wrap items-center gap-3">

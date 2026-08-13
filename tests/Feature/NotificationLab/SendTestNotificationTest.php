@@ -24,12 +24,7 @@ class SendTestNotificationTest extends TestCase
                 ['portal' => 'admin', 'user_id' => $admin->id],
                 ['portal' => 'worker', 'user_id' => $worker->id],
             ],
-            'event' => 'lab.test',
-            'category' => 'test',
-            'priority' => 'normal',
-            'title' => 'Lab test',
-            'message' => 'Testing all selected portals.',
-            'meta' => ['scenario' => 'feature-test'],
+            'event' => 'task.completed',
         ]);
 
         $response
@@ -38,7 +33,18 @@ class SendTestNotificationTest extends TestCase
             ->assertJsonPath('data.recipients.0.portal', 'admin')
             ->assertJsonPath('data.recipients.1.portal', 'worker');
 
-        Notification::assertSentTo($admin, RealtimeNotification::class);
+        Notification::assertSentTo($admin, RealtimeNotification::class, function (RealtimeNotification $notification) use ($admin) {
+            $payload = $notification->toArray($admin);
+
+            return $payload['event'] === 'task.completed'
+                && $payload['category'] === 'task'
+                && $payload['priority'] === 'high'
+                && $payload['title'] === 'Task completed'
+                && $payload['description'] === 'Task #1001 has been completed and is ready for review.'
+                && $payload['task_id'] === 1001
+                && $payload['action'] === ['resource' => 'task', 'id' => 1001]
+                && $payload['meta']['is_test'] === true;
+        });
         Notification::assertSentTo($worker, RealtimeNotification::class);
     }
 
@@ -49,12 +55,21 @@ class SendTestNotificationTest extends TestCase
 
         $this->postJson('/notification-lab/send', [
             'targets' => [['portal' => 'admin', 'user_id' => $worker->id]],
-            'event' => 'lab.test',
-            'category' => 'test',
-            'priority' => 'normal',
-            'title' => 'Lab test',
-            'message' => 'This should not be sent.',
+            'event' => 'task.completed',
         ])->assertUnprocessable()->assertJsonValidationErrors('targets.0.portal');
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_it_rejects_an_event_without_a_fixed_fixture(): void
+    {
+        Notification::fake();
+        $admin = $this->user(PortalTypeEnum::ADMIN, 'admin@example.test');
+
+        $this->postJson('/notification-lab/send', [
+            'targets' => [['portal' => 'admin', 'user_id' => $admin->id]],
+            'event' => 'custom.event',
+        ])->assertUnprocessable()->assertJsonValidationErrors('event');
 
         Notification::assertNothingSent();
     }

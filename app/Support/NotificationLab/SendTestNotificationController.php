@@ -22,14 +22,7 @@ class SendTestNotificationController extends Controller
             'targets' => ['required', 'array', 'min:1', 'max:3'],
             'targets.*.portal' => ['required', Rule::enum(PortalTypeEnum::class)],
             'targets.*.user_id' => ['required', 'integer', 'distinct', 'min:1'],
-            'event' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_.-]+$/'],
-            'category' => ['required', 'string', 'max:50'],
-            'priority' => ['required', Rule::in(['normal', 'high'])],
-            'title' => ['required', 'string', 'max:160'],
-            'message' => ['required', 'string', 'max:1000'],
-            'action_resource' => ['nullable', 'string', 'max:100'],
-            'action_id' => ['nullable', 'integer', 'min:1'],
-            'meta' => ['nullable', 'array'],
+            'event' => ['required', Rule::in(array_keys(config('notification_lab.events')))],
         ]);
 
         $targetsById = collect($validated['targets'])->keyBy('user_id');
@@ -51,23 +44,7 @@ class SendTestNotificationController extends Controller
         }
 
         $testRunId = (string) Str::uuid();
-        $payload = [
-            'event' => $validated['event'],
-            'category' => $validated['category'],
-            'priority' => $validated['priority'],
-            'title' => $validated['title'],
-            'message' => $validated['message'],
-            'action' => [
-                'resource' => $validated['action_resource'] ?? null,
-                'id' => $validated['action_id'] ?? null,
-            ],
-            'meta' => array_merge($validated['meta'] ?? [], [
-                'is_test' => true,
-                'source' => 'notification-lab',
-                'test_run_id' => $testRunId,
-            ]),
-            'occurred_at' => now()->toIso8601String(),
-        ];
+        $payload = $this->payload($validated['event'], $testRunId);
 
         $users->each(fn (User $user) => $user->notify(new RealtimeNotification(
             $payload,
@@ -77,6 +54,8 @@ class SendTestNotificationController extends Controller
         return response()->json([
             'data' => [
                 'test_run_id' => $testRunId,
+                'event' => $validated['event'],
+                'payload' => $payload,
                 'queued' => $users->count(),
                 'recipients' => $users->map(fn (User $user) => [
                     'user_id' => $user->id,
@@ -85,5 +64,32 @@ class SendTestNotificationController extends Controller
                 ])->values(),
             ],
         ], 202);
+    }
+
+    private function payload(string $event, string $testRunId): array
+    {
+        $eventDefinition = config('notification_lab.events')[$event];
+        $taskId = config('notification_lab.fixtures.task_id');
+        $translationKey = 'notifications.'.str_replace('.', '_', $event);
+
+        return [
+            'event' => $event,
+            'category' => 'task',
+            'priority' => $eventDefinition['priority'],
+            'title' => __($translationKey.'.title'),
+            'description' => __($translationKey.'.description', ['task' => $taskId]),
+            'task_id' => $taskId,
+            'company_id' => config('notification_lab.fixtures.company_id'),
+            'status' => $eventDefinition['status'],
+            'actor_id' => null,
+            'action' => ['resource' => 'task', 'id' => $taskId],
+            'meta' => [
+                'is_test' => true,
+                'source' => 'notification-lab',
+                'test_run_id' => $testRunId,
+                'status_history_id' => config('notification_lab.fixtures.status_history_id'),
+            ],
+            'occurred_at' => now()->toIso8601String(),
+        ];
     }
 }

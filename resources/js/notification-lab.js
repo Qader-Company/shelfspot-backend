@@ -164,16 +164,6 @@ if (sender) {
                 throw new Error('Select at least one portal and enter a valid user ID for every selection.');
             }
 
-            let meta;
-            try {
-                meta = JSON.parse(byId('test-meta').value || '{}');
-            } catch {
-                throw new Error('Extra meta must be a valid JSON object.');
-            }
-            if (!meta || Array.isArray(meta) || typeof meta !== 'object') {
-                throw new Error('Extra meta must be a JSON object.');
-            }
-
             sendButton.disabled = true;
             sendStatus.textContent = 'Queueing test notification…';
             const response = await fetch('/notification-lab/send', {
@@ -186,11 +176,6 @@ if (sender) {
                 body: JSON.stringify({
                     targets,
                     event: byId('test-preset').value,
-                    category: byId('test-preset').value.startsWith('task.') ? 'task' : 'test',
-                    priority: byId('test-priority').value,
-                    title: byId('test-title').value,
-                    message: byId('test-message').value,
-                    meta,
                 }),
             });
             const body = await response.json();

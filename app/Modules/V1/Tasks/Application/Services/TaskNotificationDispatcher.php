@@ -105,6 +105,7 @@ class TaskNotificationDispatcher
             'event' => $snapshot->event,
             'category' => 'task',
             'priority' => $snapshot->priority,
+            ...$this->contentFor($snapshot->event, $snapshot->taskId),
             'task_id' => $snapshot->taskId,
             'company_id' => $snapshot->companyId,
             'status' => $snapshot->toStatus,
@@ -227,6 +228,19 @@ class TaskNotificationDispatcher
         return in_array($event, [
             'task.completed', 'task.rejected', 'task.reopened', 'task.reassigned', 'task.worker_cancelled', 'task.failed',
         ], true) ? 'high' : 'normal';
+    }
+
+    /**
+     * @return array{title: string, description: string}
+     */
+    private function contentFor(string $event, int $taskId): array
+    {
+        $translationKey = 'notifications.'.str_replace('.', '_', $event);
+
+        return [
+            'title' => __($translationKey.'.title'),
+            'description' => __($translationKey.'.description', ['task' => $taskId]),
+        ];
     }
 
     private function notificationKey(?int $statusHistoryId, string $event, User $recipient): ?string

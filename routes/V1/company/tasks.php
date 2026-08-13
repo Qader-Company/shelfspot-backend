@@ -8,8 +8,8 @@ Route::controller(CompanyTaskController::class)
         Route::get('/', 'index')
             ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
 
-        Route::post('/', 'store');
-//            ->middleware('permission:'.CompanyPermissionEnum::CREATE_TASK->value);
+        Route::post('/', 'store')
+            ->middleware('permission:'.CompanyPermissionEnum::CREATE_TASK->value);
 
         Route::patch('/{id}', 'update')
             ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
@@ -21,10 +21,10 @@ Route::controller(CompanyTaskController::class)
             ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
 
         Route::patch('/{id}/accept', 'accept')
-            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+            ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
 
         Route::post('/{id}/reject', 'reject')
-            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+            ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
 
         Route::get('/trash', 'trash')
             ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);

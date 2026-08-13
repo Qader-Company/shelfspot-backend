@@ -14,8 +14,8 @@ class RoleResource extends JsonResource
             'name' => $this->name,
             'portal' => $this->portal,
             'company_id' => $this->when($this->company_id, $this->company_id),
-            'available_permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
-            'not_available_permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
+            'permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
+//            'available_permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
         ];
     }
 }

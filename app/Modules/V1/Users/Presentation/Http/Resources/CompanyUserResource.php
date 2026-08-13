@@ -27,8 +27,8 @@ class CompanyUserResource extends JsonResource
             'company_name' => $this->companyUser->company->name,
             'is_owner' => (bool) $this->companyUser->is_owner,
             'is_active' => (bool) $this->companyUser->is_active,
-            'permissions' => PermissionResource::collection($this->whenLoaded('assignedPermissions')),
-            'available_permissions' => PermissionResource::collection($this->whenLoaded('availablePermissions')),
+            'available_permissions' => PermissionResource::collection($this->whenLoaded('assignedPermissions')),
+            'not_available_permissions' => PermissionResource::collection($this->whenLoaded('availablePermissions')),
         ];
     }
 }

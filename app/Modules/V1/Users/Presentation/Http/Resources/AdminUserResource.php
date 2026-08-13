@@ -25,8 +25,8 @@ class AdminUserResource extends JsonResource
             'email' => $this->email,
             'type' => $this->type?->value,
             'is_active' => (bool) $this->admin->is_active,
-            'permissions' => PermissionResource::collection($this->whenLoaded('assignedPermissions')),
-            'available_permissions' => PermissionResource::collection($this->whenLoaded('availablePermissions')),
+            'available_permissions' => PermissionResource::collection($this->whenLoaded('assignedPermissions')),
+            'not_available_permissions' => PermissionResource::collection($this->whenLoaded('availablePermissions')),
         ];
     }
 }

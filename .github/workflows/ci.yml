@@ -161,6 +161,28 @@ jobs:
       # Push images
       # ------------------------------------------------------
 
+      - name: Tag Docker images
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+        run: |
+          BRANCH_TAG="${GITHUB_REF_NAME}"
+
+          echo "Branch tag: $BRANCH_TAG"
+
+          docker tag shelfspot-app:ci \
+            ghcr.io/qader-company/shelfspot-backend-app:${{ github.sha }}
+
+          docker tag shelfspot-app:ci \
+            ghcr.io/qader-company/shelfspot-backend-app:$BRANCH_TAG
+
+          docker tag shelfspot-nginx:ci \
+            ghcr.io/qader-company/shelfspot-backend-nginx:${{ github.sha }}
+
+          docker tag shelfspot-nginx:ci \
+            ghcr.io/qader-company/shelfspot-backend-nginx:$BRANCH_TAG
+
+          echo "===== LOCAL TAGS ====="
+          docker images | grep shelfspot-backend
+
       - name: Push Docker images
         if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
         run: |
@@ -176,23 +198,6 @@ jobs:
             ghcr.io/qader-company/shelfspot-backend-nginx:${{ github.sha }}
 
           docker push \
-            ghcr.io/qader-company/shelfspot-backend-nginx:$BRANCH_TAG
-
-      - name: Tag Docker images
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
-        run: |
-          BRANCH_TAG="${GITHUB_REF_NAME}"
-
-          docker tag shelfspot-app:ci \
-            ghcr.io/qader-company/shelfspot-backend-app:${{ github.sha }}
-
-          docker tag shelfspot-app:ci \
-            ghcr.io/qader-company/shelfspot-backend-app:$BRANCH_TAG
-
-          docker tag shelfspot-nginx:ci \
-            ghcr.io/qader-company/shelfspot-backend-nginx:${{ github.sha }}
-
-          docker tag shelfspot-nginx:ci \
             ghcr.io/qader-company/shelfspot-backend-nginx:$BRANCH_TAG
   # ==========================================================
   # 4. Deploy Testing

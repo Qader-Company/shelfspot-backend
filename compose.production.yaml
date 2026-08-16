@@ -1,9 +1,19 @@
 services:
-  nginx:
-    ports:
-      - "127.0.0.1:9101:80"
+  app:
+    image: "ghcr.io/qader-company/shelfspot-backend-app:${IMAGE_TAG:-main}"
 
+  queue:
+    image: "ghcr.io/qader-company/shelfspot-backend-app:${IMAGE_TAG:-main}"
+
+  scheduler:
+    image: "ghcr.io/qader-company/shelfspot-backend-app:${IMAGE_TAG:-main}"
 
   reverb:
+    image: "ghcr.io/qader-company/shelfspot-backend-app:${IMAGE_TAG:-main}"
     ports:
       - "127.0.0.1:9102:8080"
+
+  nginx:
+    image: "ghcr.io/qader-company/shelfspot-backend-nginx:${IMAGE_TAG:-main}"
+    ports:
+      - "127.0.0.1:9101:80"

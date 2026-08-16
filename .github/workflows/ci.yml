@@ -570,22 +570,20 @@ jobs:
               echo "===== CLEAN UNUSED IMAGES ====="
 
               docker image prune -f
-
               echo "===== DEPLOYMENT COMPLETE ====="
 
             REMOTE
-            then
-            echo "SSH deployment succeeded on attempt $attempt"
-            exit 0
-            fi
+              then
+                echo "SSH deployment succeeded on attempt $attempt"
+                exit 0
+              fi
 
-            echo "SSH deployment attempt $attempt failed"
+              echo "SSH deployment attempt $attempt failed"
 
-            if [ "$attempt" -lt 2 ]; then
-            echo "Waiting 20 seconds before retry..."
-            sleep 20
-            fi
-            done
-
-            echo "SSH deployment failed after 2 attempts"
-            exit 1
+              if [ "$attempt" -lt 2 ]; then
+                echo "Waiting 20 seconds before retry..."
+                sleep 20
+              fi
+          done
+          echo "SSH deployment failed after 2 attempts"
+          exit 1

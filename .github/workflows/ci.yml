@@ -90,26 +90,8 @@ jobs:
       - frontend
 
     steps:
-      # ------------------------------------------------------
-      # Checkout
-      # ------------------------------------------------------
-
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # ------------------------------------------------------
-      # Docker Buildx
-      # ------------------------------------------------------
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # ------------------------------------------------------
-      # Login GHCR
-      #
-      # Only direct pushes need registry login.
-      # Pull Requests only build and verify.
-      # ------------------------------------------------------
 
       - name: Login to GHCR
         if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
@@ -119,20 +101,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # ======================================================
-      # Laravel / PHP Image
-      # ======================================================
+      # ------------------------------------------------------
+      # Laravel / PHP image
+      # ------------------------------------------------------
 
       - name: Build Laravel image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/php/Dockerfile
-          target: app
-          load: true
-          tags: shelfspot-app:ci
-          cache-from: type=gha,scope=shelfspot-app
-          cache-to: type=gha,mode=max,scope=shelfspot-app
+        run: |
+          docker build \
+            --target app \
+            -t shelfspot-app:ci \
+            -f docker/php/Dockerfile .
 
       - name: Verify Laravel image
         run: |
@@ -142,20 +120,16 @@ jobs:
                    test -f public/build/manifest.json && \
                    echo "APP IMAGE OK"'
 
-      # ======================================================
-      # Nginx Image
-      # ======================================================
+      # ------------------------------------------------------
+      # Nginx image
+      # ------------------------------------------------------
 
       - name: Build Nginx image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/php/Dockerfile
-          target: nginx
-          load: true
-          tags: shelfspot-nginx:ci
-          cache-from: type=gha,scope=shelfspot-nginx
-          cache-to: type=gha,mode=max,scope=shelfspot-nginx
+        run: |
+          docker build \
+            --target nginx \
+            -t shelfspot-nginx:ci \
+            -f docker/php/Dockerfile .
 
       - name: Verify Nginx image
         run: |
@@ -164,9 +138,28 @@ jobs:
                    test -f /var/www/html/public/build/manifest.json && \
                    echo "NGINX IMAGE OK"'
 
-      # ======================================================
-      # Tag Images
-      # ======================================================
+      # ------------------------------------------------------
+      # Tag images
+      # ------------------------------------------------------
+
+      - name: Tag Docker images
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+        run: |
+          docker tag shelfspot-app:ci \
+            ghcr.io/qader-company/shelfspot-backend-app:${{ github.sha }}
+
+          docker tag shelfspot-app:ci \
+            ghcr.io/qader-company/shelfspot-backend-app:develop
+
+          docker tag shelfspot-nginx:ci \
+            ghcr.io/qader-company/shelfspot-backend-nginx:${{ github.sha }}
+
+          docker tag shelfspot-nginx:ci \
+            ghcr.io/qader-company/shelfspot-backend-nginx:develop
+
+      # ------------------------------------------------------
+      # Push images
+      # ------------------------------------------------------
 
       - name: Tag Docker images
         if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
@@ -174,7 +167,6 @@ jobs:
           BRANCH_TAG="${GITHUB_REF_NAME}"
 
           echo "Branch tag: $BRANCH_TAG"
-          echo "Commit SHA: ${{ github.sha }}"
 
           docker tag shelfspot-app:ci \
             ghcr.io/qader-company/shelfspot-backend-app:${{ github.sha }}
@@ -188,12 +180,8 @@ jobs:
           docker tag shelfspot-nginx:ci \
             ghcr.io/qader-company/shelfspot-backend-nginx:$BRANCH_TAG
 
-          echo "===== LOCAL DOCKER TAGS ====="
+          echo "===== LOCAL TAGS ====="
           docker images | grep shelfspot-backend
-
-      # ======================================================
-      # Push Images
-      # ======================================================
 
       - name: Push Docker images
         if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
@@ -211,196 +199,6 @@ jobs:
 
           docker push \
             ghcr.io/qader-company/shelfspot-backend-nginx:$BRANCH_TAG
-
-
-  # ==========================================================
-  # 4. Deploy Testing
-  # ==========================================================
-
-  deploy-testing:
-    name: Deploy Testing
-    runs-on: ubuntu-latest
-
-    needs:
-      - docker
-
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-
-    environment: testing
-
-    concurrency:
-      group: shelfspot-testing
-      cancel-in-progress: false
-
-    steps:
-      - name: Configure SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.TESTING_SSH_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.TESTING_KNOWN_HOSTS }}
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/testing_key
-          chmod 600 ~/.ssh/testing_key
-
-          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-
-          ssh-keygen -y -f ~/.ssh/testing_key > /dev/null
-
-          echo "SSH configuration OK"
-
-      - name: Deploy to Testing VPS
-        env:
-          SSH_HOST: ${{ secrets.TESTING_HOST }}
-          SSH_USER: ${{ secrets.TESTING_USER }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          ssh \
-            -i ~/.ssh/testing_key \
-            -o IdentitiesOnly=yes \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            -o UserKnownHostsFile=~/.ssh/known_hosts \
-            -o ConnectTimeout=150 \
-            "$SSH_USER@$SSH_HOST" \
-            "IMAGE_TAG='$IMAGE_TAG' bash -s" <<'REMOTE'
-
-              set -euo pipefail
-
-              cd /opt/shelfspot/testing
-
-              COMPOSE="docker compose \
-                -p shelfspot-testing \
-                -f compose.yaml \
-                -f compose.testing.yaml"
-
-              echo "===== CURRENT DEPLOYMENT ====="
-
-              CURRENT_APP_IMAGE=$(docker inspect shelfspot-testing-app-1 \
-                --format '{{.Config.Image}}' 2>/dev/null || true)
-
-              CURRENT_TAG=""
-
-              if [ -n "$CURRENT_APP_IMAGE" ]; then
-                CURRENT_TAG="${CURRENT_APP_IMAGE##*:}"
-              fi
-
-              echo "Current image: ${CURRENT_APP_IMAGE:-none}"
-              echo "Current tag:   ${CURRENT_TAG:-none}"
-              echo "New tag:       $IMAGE_TAG"
-
-              echo "===== UPDATE DEPLOYMENT CONFIG ====="
-
-              git fetch origin
-              git checkout develop
-              git pull --ff-only origin develop
-
-              echo "===== PULL NEW IMAGES ====="
-
-              IMAGE_TAG="$IMAGE_TAG" $COMPOSE pull
-
-              echo "===== RUN MIGRATIONS ====="
-
-              IMAGE_TAG="$IMAGE_TAG" $COMPOSE run --rm -T app \
-                php artisan migrate --force </dev/null
-
-              echo "===== START NEW VERSION ====="
-
-              IMAGE_TAG="$IMAGE_TAG" $COMPOSE up -d --remove-orphans
-
-              echo "===== CLEAR CACHE ====="
-
-              IMAGE_TAG="$IMAGE_TAG" $COMPOSE exec -T app \
-                php artisan optimize:clear
-
-              echo "===== VERIFY DEPLOYED IMAGE ====="
-
-              EXPECTED_APP_IMAGE="ghcr.io/qader-company/shelfspot-backend-app:$IMAGE_TAG"
-              EXPECTED_NGINX_IMAGE="ghcr.io/qader-company/shelfspot-backend-nginx:$IMAGE_TAG"
-
-              ACTUAL_APP_IMAGE=$(docker inspect shelfspot-testing-app-1 \
-                --format '{{.Config.Image}}')
-
-              ACTUAL_NGINX_IMAGE=$(docker inspect shelfspot-testing-nginx-1 \
-                --format '{{.Config.Image}}')
-
-              echo "Expected app:   $EXPECTED_APP_IMAGE"
-              echo "Running app:    $ACTUAL_APP_IMAGE"
-
-              echo "Expected nginx: $EXPECTED_NGINX_IMAGE"
-              echo "Running nginx:  $ACTUAL_NGINX_IMAGE"
-
-              test "$ACTUAL_APP_IMAGE" = "$EXPECTED_APP_IMAGE"
-              test "$ACTUAL_NGINX_IMAGE" = "$EXPECTED_NGINX_IMAGE"
-
-              echo "===== HEALTH CHECK ====="
-
-              HEALTHY=false
-
-              for i in 1 2 3 4 5 6; do
-                if curl --fail --silent --show-error \
-                  https://testing.api.shelfspots.com/ > /dev/null; then
-
-                  HEALTHY=true
-                  break
-                fi
-
-                echo "Health check attempt $i failed"
-                sleep 5
-              done
-
-              if [ "$HEALTHY" = true ]; then
-                echo "Testing deployment healthy"
-              else
-                echo "===== DEPLOYMENT FAILED ====="
-
-                if [ -z "$CURRENT_TAG" ]; then
-                  echo "No previous deployment found. Cannot rollback."
-                  exit 1
-                fi
-
-                echo "Rolling back to: $CURRENT_TAG"
-
-                IMAGE_TAG="$CURRENT_TAG" $COMPOSE pull
-
-                IMAGE_TAG="$CURRENT_TAG" $COMPOSE up -d --remove-orphans
-
-                IMAGE_TAG="$CURRENT_TAG" $COMPOSE exec -T app \
-                  php artisan optimize:clear
-
-                echo "===== VERIFY ROLLBACK ====="
-
-                ROLLED_BACK_IMAGE=$(docker inspect shelfspot-testing-app-1 \
-                  --format '{{.Config.Image}}')
-
-                echo "Running image: $ROLLED_BACK_IMAGE"
-
-                if curl --fail --silent --show-error \
-                  https://testing.api.shelfspots.com/ > /dev/null; then
-
-                  echo "Rollback successful"
-                else
-                  echo "Rollback completed but health check still fails"
-                fi
-
-                exit 1
-              fi
-
-              echo "===== CONTAINERS ====="
-
-              IMAGE_TAG="$IMAGE_TAG" $COMPOSE ps
-
-              echo "===== CLEAN UNUSED IMAGES ====="
-
-              docker image prune -f
-
-              echo "===== DEPLOYMENT COMPLETE ====="
-
-          REMOTE
-
-
   # ==========================================================
   # 5. Deploy Production
   # ==========================================================
@@ -421,6 +219,7 @@ jobs:
       cancel-in-progress: false
 
     steps:
+
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
@@ -567,7 +366,6 @@ jobs:
 
                 if curl --fail --silent --show-error \
                   https://api.shelfspots.com/ > /dev/null; then
-
                   echo "Rollback successful"
                 else
                   echo "Rollback completed but health check still fails"

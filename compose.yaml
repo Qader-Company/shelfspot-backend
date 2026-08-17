@@ -5,19 +5,26 @@ x-laravel-service: &laravel-service
     env_file:
         - .env
 
+    volumes:
+        - uploads:/var/www/html/storage/app/public
+
     depends_on:
         mysql:
             condition: service_healthy
         redis:
             condition: service_started
+
     networks:
         - shelfspot
+
     restart: unless-stopped
+
 
 services:
     app:
         <<: *laravel-service
         command: php-fpm
+
 
     queue:
         <<: *laravel-service
@@ -30,32 +37,44 @@ services:
             - --tries=3
             - --timeout=90
 
+
     scheduler:
         <<: *laravel-service
         command: php artisan schedule:work
+
 
     reverb:
         <<: *laravel-service
         command: php artisan reverb:start --host=0.0.0.0 --port=8080
 
+
     nginx:
         image: "${NGINX_IMAGE}"
         restart: unless-stopped
+
+        volumes:
+            - uploads:/var/www/html/public/storage:ro
+
         depends_on:
             - app
+
         networks:
             - shelfspot
+
 
     mysql:
         image: mysql:8.4
         restart: unless-stopped
+
         environment:
             MYSQL_DATABASE: "${DB_DATABASE}"
             MYSQL_USER: "${DB_USERNAME}"
             MYSQL_PASSWORD: "${DB_PASSWORD}"
             MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+
         volumes:
             - mysql_data:/var/lib/mysql
+
         healthcheck:
             test:
               [
@@ -65,14 +84,18 @@ services:
             interval: 5s
             timeout: 5s
             retries: 20
+
         networks:
             - shelfspot
+
 
     redis:
         image: redis:alpine
         restart: unless-stopped
+
         volumes:
             - redis_data:/data
+
         networks:
             - shelfspot
 
@@ -80,6 +103,8 @@ networks:
     shelfspot:
         driver: bridge
 
+
 volumes:
     mysql_data:
     redis_data:
+    uploads:

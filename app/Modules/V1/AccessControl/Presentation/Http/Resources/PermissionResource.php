@@ -10,15 +10,11 @@ class PermissionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $group = PermissionCatalog::group($this->portal, $this->name);
-
         return [
             'id' => $this->id,
             'name' => $this->name,
             'label' => PermissionCatalog::label($this->portal, $this->name),
             'portal' => $this->portal,
-            'group' => $group->value,
-            'group_label' => $group->label(),
         ];
     }
 }

@@ -9,6 +9,7 @@ use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInte
 use App\Modules\V1\AccessControl\Presentation\Http\Requests\StoreRoleRequest;
 use App\Modules\V1\AccessControl\Presentation\Http\Requests\UpdateRoleRequest;
 use App\Modules\V1\AccessControl\Presentation\Http\Resources\PermissionGroupResource;
+use App\Modules\V1\AccessControl\Presentation\Http\Resources\PermissionResource;
 use App\Modules\V1\AccessControl\Presentation\Http\Resources\RoleResource;
 
 abstract class AccessControlController extends Controller
@@ -18,11 +19,17 @@ abstract class AccessControlController extends Controller
     protected function listPermissions(string $portal, ?int $companyId = null)
     {
         return ApiResponse::success(
+            PermissionResource::collection(
+                $this->accessControlRepository->permissions($portal, $companyId)
+            )
+        );
+    }
+
+    protected function listGroupedPermissions(string $portal, ?int $companyId = null)
+    {
+        return ApiResponse::success(
             PermissionGroupResource::collection(
-                PermissionCatalog::grouped(
-                    $portal,
-                    $this->accessControlRepository->permissions($portal, $companyId)
-                )
+                PermissionCatalog::grouped($portal, $this->accessControlRepository->permissions($portal, $companyId))
             )
         );
     }

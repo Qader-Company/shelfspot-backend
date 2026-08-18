@@ -4,7 +4,12 @@ This document is the frontend contract for ShelfSpot permissions. Permission nam
 
 ## Response contract
 
-The permissions catalog endpoints return permissions grouped by frontend feature:
+The grouped permissions catalog is exposed only through these versioned endpoints, so the existing V1 permissions response remains unchanged:
+
+- `GET /api/v2/admin/access-control/permission-groups`
+- `GET /api/v2/company/access-control/permission-groups`
+
+The V2 endpoints return permissions grouped by frontend feature:
 
 ```json
 {
@@ -17,9 +22,7 @@ The permissions catalog endpoints return permissions grouped by frontend feature
           "id": 1,
           "name": "view_company",
           "label": "View companies",
-          "portal": "admin",
-          "group": "companies",
-          "group_label": "Companies"
+          "portal": "admin"
         }
       ]
     }
@@ -27,8 +30,8 @@ The permissions catalog endpoints return permissions grouped by frontend feature
 }
 ```
 
-- `key` and each permission's `group` are stable machine-readable group names.
-- Group `label`, permission `label`, and `group_label` are localized using the request locale.
+- Group `key` is a stable machine-readable group name.
+- Group and permission `label` values are localized using the request locale.
 - The admin and company catalogs contain different groups and permissions; clients must use the catalog for the current portal.
 - Grouping is presentational only. Role create/update requests continue to submit a flat array of permission `name` values.
 
@@ -41,9 +44,7 @@ Admin and company users receive these arrays inside the `user` object returned b
       "id": 1,
       "name": "view_dashboard",
       "label": "View dashboard",
-      "portal": "admin",
-      "group": "dashboard",
-      "group_label": "Dashboard"
+      "portal": "admin"
     }
   ],
   "available_permissions": [
@@ -51,9 +52,7 @@ Admin and company users receive these arrays inside the `user` object returned b
       "id": 2,
       "name": "edit_platform_settings",
       "label": "Edit platform settings",
-      "portal": "admin",
-      "group": "platform_settings",
-      "group_label": "Platform settings"
+      "portal": "admin"
     }
   ]
 }
@@ -76,8 +75,6 @@ type Permission = {
   name: string;
   label: string;
   portal: 'admin' | 'company';
-  group: string;
-  group_label: string;
 };
 
 const grantedPermissions = new Set(

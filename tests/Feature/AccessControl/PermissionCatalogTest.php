@@ -6,11 +6,22 @@ use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Models\Permission;
 use App\Modules\V1\AccessControl\Domain\ValueObjects\PermissionGroupEnum;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class PermissionCatalogTest extends TestCase
 {
+    public function test_grouped_permissions_use_separate_v2_routes_while_v1_routes_remain_available(): void
+    {
+        $routes = collect(Route::getRoutes()->getRoutes());
+
+        foreach (['admin', 'company'] as $portal) {
+            $this->assertTrue($routes->contains(fn ($route) => $route->uri() === "api/v1/{$portal}/access-control/permissions"));
+            $this->assertTrue($routes->contains(fn ($route) => $route->uri() === "api/v2/{$portal}/access-control/permission-groups"));
+        }
+    }
+
     #[DataProvider('portals')]
     public function test_every_permission_belongs_to_one_translated_group(string $portal): void
     {

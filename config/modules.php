@@ -49,6 +49,7 @@ return [
             ['prefix' => 'admin/workers',                            'file' => 'workers.php',                'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/tasks',                              'file' => 'tasks.php',                  'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/access-control',                     'file' => 'access-control.php',         'middlewares' => $adminAuthMiddlewares],
+            ['prefix' => 'admin/access-control',                     'file' => 'access-control.php',         'middlewares' => $adminAuthMiddlewares, 'version' => 'v2', 'directory' => 'V2/admin'],
             ['prefix' => 'admin/companies/{company}/brands',         'file' => 'catalog-brands.php',         'middlewares' => $adminManageCompaniesMiddlewares],
             ['prefix' => 'admin/companies/{company}/sub-brands',     'file' => 'catalog-sub-brands.php',     'middlewares' => $adminManageCompaniesMiddlewares],
             ['prefix' => 'admin/companies/{company}/categories',     'file' => 'catalog-categories.php',     'middlewares' => $adminManageCompaniesMiddlewares],
@@ -75,6 +76,7 @@ return [
             ['prefix' => 'company/tasks',          'file' => 'tasks.php',          'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/reports',        'file' => 'reports.php',        'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/access-control', 'file' => 'access-control.php', 'middlewares' => $companyMiddlewares],
+            ['prefix' => 'company/access-control', 'file' => 'access-control.php', 'middlewares' => $companyMiddlewares, 'version' => 'v2', 'directory' => 'V2/company'],
         ],
     ],
 

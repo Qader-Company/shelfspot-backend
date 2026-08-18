@@ -41,4 +41,21 @@ enum AdminPermissionEnum: string
     {
         return __('access_control.permissions.admin.'.$this->value);
     }
+
+    public function group(): PermissionGroupEnum
+    {
+        return match ($this) {
+            self::VIEW_DASHBOARD => PermissionGroupEnum::DASHBOARD,
+            self::VIEW_PLATFORM_SETTINGS, self::EDIT_PLATFORM_SETTINGS => PermissionGroupEnum::PLATFORM_SETTINGS,
+            self::VIEW_COMPANY, self::CREATE_COMPANY, self::EDIT_COMPANY, self::DELETE_COMPANY => PermissionGroupEnum::COMPANIES,
+            self::MANAGE_COMPANY_CATALOG => PermissionGroupEnum::COMPANY_CATALOG,
+            self::VIEW_SERVICE, self::CREATE_SERVICE, self::EDIT_SERVICE, self::DELETE_SERVICE => PermissionGroupEnum::SERVICES,
+            self::VIEW_WORKER, self::CREATE_WORKER, self::EDIT_WORKER, self::DELETE_WORKER => PermissionGroupEnum::WORKERS,
+            self::VIEW_TASK, self::DELETE_TASK, self::REASSIGN_TASK => PermissionGroupEnum::TASKS,
+            self::VIEW_PAYMENT => PermissionGroupEnum::PAYMENTS,
+            self::VIEW_WALLET_COUPON, self::CREATE_WALLET_COUPON, self::EDIT_WALLET_COUPON, self::DELETE_WALLET_COUPON => PermissionGroupEnum::WALLET_COUPONS,
+            self::VIEW_ROLE, self::CREATE_ROLE, self::EDIT_ROLE, self::DELETE_ROLE => PermissionGroupEnum::ROLES,
+            self::VIEW_ADMIN, self::CREATE_ADMIN, self::EDIT_ADMIN, self::DELETE_ADMIN => PermissionGroupEnum::ADMINS,
+        };
+    }
 }

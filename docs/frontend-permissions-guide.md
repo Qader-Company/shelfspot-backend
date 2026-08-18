@@ -4,6 +4,34 @@ This document is the frontend contract for ShelfSpot permissions. Permission nam
 
 ## Response contract
 
+The permissions catalog endpoints return permissions grouped by frontend feature:
+
+```json
+{
+  "data": [
+    {
+      "key": "companies",
+      "label": "Companies",
+      "permissions": [
+        {
+          "id": 1,
+          "name": "view_company",
+          "label": "View companies",
+          "portal": "admin",
+          "group": "companies",
+          "group_label": "Companies"
+        }
+      ]
+    }
+  ]
+}
+```
+
+- `key` and each permission's `group` are stable machine-readable group names.
+- Group `label`, permission `label`, and `group_label` are localized using the request locale.
+- The admin and company catalogs contain different groups and permissions; clients must use the catalog for the current portal.
+- Grouping is presentational only. Role create/update requests continue to submit a flat array of permission `name` values.
+
 Admin and company users receive these arrays inside the `user` object returned by login and inside the profile response:
 
 ```json
@@ -13,7 +41,9 @@ Admin and company users receive these arrays inside the `user` object returned b
       "id": 1,
       "name": "view_dashboard",
       "label": "View dashboard",
-      "portal": "admin"
+      "portal": "admin",
+      "group": "dashboard",
+      "group_label": "Dashboard"
     }
   ],
   "available_permissions": [
@@ -21,7 +51,9 @@ Admin and company users receive these arrays inside the `user` object returned b
       "id": 2,
       "name": "edit_platform_settings",
       "label": "Edit platform settings",
-      "portal": "admin"
+      "portal": "admin",
+      "group": "platform_settings",
+      "group_label": "Platform settings"
     }
   ]
 }
@@ -44,6 +76,8 @@ type Permission = {
   name: string;
   label: string;
   portal: 'admin' | 'company';
+  group: string;
+  group_label: string;
 };
 
 const grantedPermissions = new Set(

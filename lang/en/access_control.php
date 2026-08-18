@@ -1,6 +1,26 @@
 <?php
 
 return [
+    'groups' => [
+        'dashboard' => 'Dashboard',
+        'platform_settings' => 'Platform settings',
+        'companies' => 'Companies',
+        'company_catalog' => 'Company catalogs',
+        'company_profile' => 'Company profile',
+        'services' => 'Services',
+        'workers' => 'Workers',
+        'tasks' => 'Tasks',
+        'payments' => 'Payments',
+        'wallet_coupons' => 'Wallet coupons',
+        'brands' => 'Brands',
+        'sub_brands' => 'Sub-brands',
+        'categories' => 'Categories',
+        'sub_categories' => 'Sub-categories',
+        'products' => 'Products',
+        'wallet' => 'Wallet',
+        'roles' => 'Roles and permissions',
+        'admins' => 'Administrators',
+    ],
     'permissions' => [
         'admin' => [
             'view_dashboard' => 'View dashboard',

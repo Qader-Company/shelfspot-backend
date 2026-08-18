@@ -5,6 +5,8 @@ namespace App\Modules\V1\AccessControl\Application\Services;
 use App\Modules\V1\AccessControl\Domain\Models\Permission;
 use App\Modules\V1\AccessControl\Domain\ValueObjects\AdminPermissionEnum;
 use App\Modules\V1\AccessControl\Domain\ValueObjects\CompanyPermissionEnum;
+use App\Modules\V1\AccessControl\Domain\ValueObjects\PermissionGroupEnum;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
 class PermissionCatalog
@@ -43,6 +45,38 @@ class PermissionCatalog
         }
 
         return $permission;
+    }
+
+    public static function group(string $portal, string $permission): PermissionGroupEnum
+    {
+        foreach (self::cases($portal) as $case) {
+            if ($case->value === $permission) {
+                return $case->group();
+            }
+        }
+
+        throw new InvalidArgumentException("Unsupported permission [{$permission}] for portal [{$portal}].");
+    }
+
+    public static function grouped(string $portal, Collection $permissions): Collection
+    {
+        $permissionsByName = $permissions->keyBy('name');
+
+        return collect(self::cases($portal))
+            ->groupBy(fn ($permission) => $permission->group()->value)
+            ->map(function (Collection $cases) use ($permissionsByName): array {
+                $group = $cases->first()->group();
+
+                return [
+                    'key' => $group->value,
+                    'label' => $group->label(),
+                    'permissions' => $cases
+                        ->map(fn ($permission) => $permissionsByName->get($permission->value))
+                        ->filter()
+                        ->values(),
+                ];
+            })
+            ->values();
     }
 
     public static function sync(string $portal): void

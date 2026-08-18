@@ -34,6 +34,12 @@ class ShelfSpotAdminManagementController extends AccessControlController
     {
         return $this->listPermissions(self::PORTAL);
     }
+
+    public function groupedPermissions()
+    {
+        return $this->listGroupedPermissions(self::PORTAL);
+    }
+
     public function roles()
     {
         return $this->listRoles(self::PORTAL);

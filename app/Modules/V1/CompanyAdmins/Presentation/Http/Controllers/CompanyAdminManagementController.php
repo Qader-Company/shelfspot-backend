@@ -36,6 +36,14 @@ class CompanyAdminManagementController extends AccessControlController
         );
     }
 
+    public function groupedPermissions()
+    {
+        return $this->listGroupedPermissions(
+            self::PORTAL,
+            $this->companyId()
+        );
+    }
+
     public function roles()
     {
         return $this->listRoles(

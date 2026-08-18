@@ -4,6 +4,37 @@ This document is the frontend contract for ShelfSpot permissions. Permission nam
 
 ## Response contract
 
+The grouped permissions catalog is exposed only through these versioned endpoints, so the existing V1 permissions response remains unchanged:
+
+- `GET /api/v2/admin/access-control/permission-groups`
+- `GET /api/v2/company/access-control/permission-groups`
+
+The V2 endpoints return permissions grouped by frontend feature:
+
+```json
+{
+  "data": [
+    {
+      "key": "companies",
+      "label": "Companies",
+      "permissions": [
+        {
+          "id": 1,
+          "name": "view_company",
+          "label": "View companies",
+          "portal": "admin"
+        }
+      ]
+    }
+  ]
+}
+```
+
+- Group `key` is a stable machine-readable group name.
+- Group and permission `label` values are localized using the request locale.
+- The admin and company catalogs contain different groups and permissions; clients must use the catalog for the current portal.
+- Grouping is presentational only. Role create/update requests continue to submit a flat array of permission `name` values.
+
 Admin and company users receive these arrays inside the `user` object returned by login and inside the profile response:
 
 ```json

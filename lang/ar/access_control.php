@@ -1,6 +1,26 @@
 <?php
 
 return [
+    'groups' => [
+        'dashboard' => 'لوحة التحكم',
+        'platform_settings' => 'إعدادات المنصة',
+        'companies' => 'الشركات',
+        'company_catalog' => 'كتالوجات الشركات',
+        'company_profile' => 'بيانات الشركة',
+        'services' => 'الخدمات',
+        'workers' => 'العاملون',
+        'tasks' => 'المهام',
+        'payments' => 'المدفوعات',
+        'wallet_coupons' => 'كوبونات المحفظة',
+        'brands' => 'العلامات التجارية',
+        'sub_brands' => 'العلامات التجارية الفرعية',
+        'categories' => 'التصنيفات',
+        'sub_categories' => 'التصنيفات الفرعية',
+        'products' => 'المنتجات',
+        'wallet' => 'المحفظة',
+        'roles' => 'الأدوار والصلاحيات',
+        'admins' => 'المسؤولون',
+    ],
     'permissions' => [
         'admin' => [
             'view_platform_settings' => 'عرض إعدادات المنصة',
@@ -37,6 +57,8 @@ return [
             'delete_admin' => 'حذف أدمن',
         ],
         'company' => [
+            'view_company' => 'عرض بيانات الشركة',
+            'edit_company' => 'تعديل بيانات الشركة',
             'view_brand' => 'عرض العلامات التجارية',
             'create_brand' => 'إنشاء علامة تجارية',
             'edit_brand' => 'تعديل علامة تجارية',

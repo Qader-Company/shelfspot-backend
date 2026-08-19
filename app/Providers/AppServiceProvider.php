@@ -53,7 +53,7 @@ class AppServiceProvider extends ServiceProvider
                 );
                 Route::middleware($middlewares)
                     ->prefix('api/'.($route['version'] ?? 'v1').'/'.($route['prefix'] ?? ''))
-                    ->group(base_path('routes/'.($route['directory'] ?? 'V1/'.$key).'/'.($route['file'] ?? '')));
+                    ->group(base_path('routes/'.ucfirst($route['version']).$key.'/'.($route['file'] ?? '')));
             }
         }
     }

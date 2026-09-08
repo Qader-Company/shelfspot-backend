@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::controller(ShelfSpotAdminManagementController::class)
     ->group(function () {
-        Route::get('/permissions', 'permissions')
-            ->middleware('permission:'.AdminPermissionEnum::VIEW_ROLE->value);
-        Route::get('/permission-groups', 'groupedPermissions')
+        Route::get('/permissions', 'groupedPermissions')
             ->middleware('permission:'.AdminPermissionEnum::VIEW_ROLE->value);
         Route::get('/roles', 'roles')
             ->middleware('permission:'.AdminPermissionEnum::VIEW_ROLE->value);

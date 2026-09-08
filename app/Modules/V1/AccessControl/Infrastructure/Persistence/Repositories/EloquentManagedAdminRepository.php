@@ -89,7 +89,11 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
     public function createCompanyAdmin(int $companyId, array $attributes): User
     {
         return DB::transaction(function () use ($companyId, $attributes) {
-            $user = User::create([...collect($attributes)->only(['name', 'email', 'password'])->all(), 'type' => PortalTypeEnum::COMPANY]);
+            $user = User::create([
+                ...collect($attributes)->only(['name', 'email', 'password'])->all(),
+                'type' => PortalTypeEnum::COMPANY,
+                'email_verified_at' => now(),
+            ]);
             CompanyUser::create(['company_id' => $companyId, 'user_id' => $user->id, 'is_owner' => false, 'is_active' => $attributes['is_active'] ?? true]);
             $this->syncRoles($user, PermissionCatalog::COMPANY_PORTAL, $companyId, $attributes['roles'] ?? []);
             return $user->load(['companyUser', 'roles']);

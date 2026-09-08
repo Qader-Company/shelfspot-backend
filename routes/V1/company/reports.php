@@ -5,6 +5,5 @@ use App\Modules\V1\Reports\Presentation\Http\Controllers\CompanyDashboardReportC
 
 Route::controller(CompanyDashboardReportController::class)
     ->group(function () {
-        Route::get('/dashboard', 'dashboard')
-            ->middleware('permission:'.CompanyPermissionEnum::VIEW_TASK->value);
+        Route::get('/dashboard', 'dashboard');
     });

@@ -25,6 +25,7 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'sku' => $this->sku,
             'barcode' => $this->barcode,
+            'min_quantity' => (int) $this->min_quantity,
             'image' => $this->getMedia('image')->first()?->getUrl(),
             'active' => (bool) $this->is_active,
             'brand' => $this->whenLoaded(

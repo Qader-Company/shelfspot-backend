@@ -139,7 +139,12 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
                 continue;
             }
 
-            $attributes[$field] = $row[$field] ?? null;
+            $value = $row[$field] ?? null;
+            if (($value === null || $value === '') && array_key_exists($field, $this->config['defaults'] ?? [])) {
+                continue;
+            }
+
+            $attributes[$field] = $value;
         }
 
         $attributes['translations'] = [
@@ -208,7 +213,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
             $rules[$parent['attribute']] = [$parent['required'] ? 'required' : 'nullable', 'integer'];
         }
 
-        return $rules;
+        return array_replace($rules, $this->config['validation_rules'] ?? []);
     }
 
     private function booleanValue(mixed $value): ?bool
@@ -346,6 +351,7 @@ abstract class AbstractCatalogImport implements ToCollection, WithHeadingRow, Wi
         }
 
         $translations = Arr::pull($attributes, 'translations', []);
+        $attributes = array_replace($this->config['defaults'] ?? [], $attributes);
         $model = $modelClass::query()->create($attributes);
         foreach ($translations as $locale => $fields) {
             $model->translateOrNew($locale)->fill($fields);

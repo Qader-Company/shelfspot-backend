@@ -32,6 +32,7 @@ class StoreProductRequest extends FormRequest
                 'max:255',
                 Rule::unique('products', 'sku')->where('company_id', $this->companyId()),
             ],
+            'min_quantity' => ['sometimes', 'integer', 'min:1'],
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'is_active' => 'required|boolean',
         ];

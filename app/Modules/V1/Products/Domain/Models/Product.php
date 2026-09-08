@@ -18,12 +18,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[Fillable(['company_id', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id', 'sku', 'barcode', 'is_active'])]
+#[Fillable(['company_id', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id', 'sku', 'barcode', 'min_quantity', 'is_active'])]
 class Product extends Model implements HasMedia
 {
     use Translatable, BelongsToCompany, InteractsWithMedia, DeletesMediaOnForceDelete, Filterable, SoftDeletes;
 
     public $translatedAttributes = ['name', 'description'];
+
+    protected $casts = [
+        'min_quantity' => 'integer',
+    ];
 
 
     public function registerMediaCollections(): void

@@ -36,6 +36,7 @@ class UpdateProductRequest extends FormRequest
                     ->where('company_id', $this->companyId())
                     ->ignore($this->route('id')),
             ],
+            'min_quantity' => ['sometimes', 'integer', 'min:1'],
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ...$this->singleMediaActionRules('image_action'),
             'is_active' => 'sometimes|boolean',

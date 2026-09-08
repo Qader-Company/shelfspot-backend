@@ -163,6 +163,10 @@ These permissions apply to `/api/v1/company/*` and are evaluated for the authent
 | `create_product` | Create products and import product data. |
 | `edit_product` | Edit and restore products. |
 | `delete_product` | Soft-delete, bulk-delete, permanently delete, or bulk permanently delete products. |
+| `view_store` | List stores, open store details, load store options, and view deleted stores. |
+| `create_store` | Create stores. Users with `create_task` can load active store options without this permission. |
+| `edit_store` | Edit stores and restore deleted stores. |
+| `delete_store` | Soft-delete, bulk-delete, permanently delete, or bulk permanently delete stores. |
 | `view_service` | Show the platform services available to a company. |
 | `view_wallet` | Open the company wallet, list wallet activity, and view transaction details. |
 | `recharge_wallet` | Recharge the wallet or redeem a wallet coupon. |
@@ -216,6 +220,8 @@ export const ADMIN_PERMISSION = {
 export const COMPANY_PERMISSION = {
   VIEW_BRAND: 'view_brand',
   CREATE_PRODUCT: 'create_product',
+  VIEW_STORE: 'view_store',
+  CREATE_STORE: 'create_store',
   VIEW_TASK: 'view_task',
   RECHARGE_WALLET: 'recharge_wallet',
 } as const;

@@ -6,7 +6,9 @@ use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Validator;
 
@@ -68,11 +70,18 @@ class UpdateCompanyTaskRequest extends FormRequest
     {
         return [
             'date' => ['sometimes', 'required', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:tomorrow'],
-            'location' => ['sometimes', 'required', 'array'],
-            'location.latitude' => ['required_with:location', 'numeric', 'between:-90,90'],
-            'location.longitude' => ['required_with:location', 'numeric', 'between:-180,180'],
-            'location.location_name' => ['required', 'string', 'max:255'],
-            'location.address' => ['nullable', 'string', 'max:2000'],
+            'store_id' => [
+                'sometimes',
+                'required',
+                'integer',
+                Rule::exists('stores', 'id')->where(
+                    fn (Builder $query) => $query
+                        ->where('company_id', app(TenantContextInterface::class)->getCompanyId())
+                        ->where('is_active', true)
+                        ->whereNull('deleted_at')
+                ),
+            ],
+            'location' => ['prohibited'],
             'notes' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'services' => ['sometimes', 'required', 'array', 'min:1'],
             'services.*.task_service_id' => ['nullable', 'integer', 'distinct'],

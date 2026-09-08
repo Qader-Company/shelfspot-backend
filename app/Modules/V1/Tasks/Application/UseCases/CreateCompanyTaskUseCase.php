@@ -5,6 +5,7 @@ namespace App\Modules\V1\Tasks\Application\UseCases;
 use App\Events\TaskStatusUpdated;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\Services\Domain\Models\Service;
+use App\Modules\V1\Stores\Domain\Repositories\StoreRepositoryInterface;
 use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
@@ -18,6 +19,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -29,23 +31,32 @@ class CreateCompanyTaskUseCase
         private readonly TenantContextInterface $tenantContext,
         private readonly ChargeTaskWalletUseCase $chargeTaskWalletUseCase,
         private readonly TaskRepositoryInterface $taskRepository,
+        private readonly StoreRepositoryInterface $storeRepository,
     ) {}
 
     public function execute(array $data, User $actor, array $files = []): Task
     {
         return DB::transaction(function () use ($data, $actor, $files) {
+            $store = $this->storeRepository->getActiveById((int) $data['store_id']);
+
+            if ($store === null) {
+                throw ValidationException::withMessages(['store_id' => __('api.not_found')]);
+            }
+
             $taskServices = $this->withCatalogPrices($data['services']);
             $totalPrice = collect($taskServices)->sum(fn (array $service) => (float) $service['price']);
 
             $task = $this->taskRepository->create([
                 'company_id' => $this->tenantContext->getCompanyId(),
+                'store_id' => $store->id,
                 'date' => $data['date'],
                 'execution_time' => self::FIXED_EXECUTION_TIME,
                 'expires_at' => TaskExpiryDate::fromExecutionDate($data['date']),
-                'latitude' => $data['location']['latitude'],
-                'longitude' => $data['location']['longitude'],
-                'location_name' => $data['location']['location_name'] ?? null,
-                'address' => $data['location']['address'] ?? null,
+                'latitude' => $store->latitude,
+                'longitude' => $store->longitude,
+                'location_name' => $store->name,
+                'address' => $store->address,
+                'store_number' => $store->number,
                 'total_price' => $totalPrice,
                 'notes' => $data['notes'] ?? null,
                 'status' => TaskStatusEnum::DRAFT,

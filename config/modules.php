@@ -10,10 +10,11 @@ use App\Modules\V1\Companies\Infrastructure\Providers\CompaniesModuleServiceProv
 use App\Modules\V1\CompaniesWallets\Infrastructure\Providers\CompaniesWalletsModuleServiceProvider;
 use App\Modules\V1\CompanyAdmins\Infrastructure\Providers\CompanyUsersModuleServiceProvider;
 use App\Modules\V1\Coupons\Infrastructure\Providers\CouponsModuleServiceProvider;
-use App\Modules\V1\Products\Infrastructure\Providers\ProductsModuleServiceProvider;
 use App\Modules\V1\PlatformSettings\Infrastructure\Providers\PlatformSettingsModuleServiceProvider;
+use App\Modules\V1\Products\Infrastructure\Providers\ProductsModuleServiceProvider;
 use App\Modules\V1\Reports\Infrastructure\Providers\ReportsModuleServiceProvider;
 use App\Modules\V1\Services\Infrastructure\Providers\ServicesModuleServiceProvider;
+use App\Modules\V1\Stores\Infrastructure\Providers\StoresModuleServiceProvider;
 use App\Modules\V1\SubBrands\Infrastructure\Providers\SubBrandsModuleServiceProvider;
 use App\Modules\V1\SubCategories\Infrastructure\Providers\SubCategoriesModuleServiceProvider;
 use App\Modules\V1\Tasks\Infrastructure\Providers\TasksModuleServiceProvider;
@@ -71,6 +72,7 @@ return [
             ['prefix' => 'company/categories',     'file' => 'categories.php',     'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/sub-categories', 'file' => 'sub-categories.php', 'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/products',       'file' => 'products.php',       'middlewares' => $companyMiddlewares],
+            ['prefix' => 'company/stores',         'file' => 'stores.php',         'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/wallets',        'file' => 'wallets.php',        'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/tasks',          'file' => 'tasks.php',          'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/reports',        'file' => 'reports.php',        'middlewares' => $companyMiddlewares],
@@ -92,6 +94,7 @@ return [
         PlatformSettingsModuleServiceProvider::class,
         ReportsModuleServiceProvider::class,
         ServicesModuleServiceProvider::class,
+        StoresModuleServiceProvider::class,
         AdminsModuleServiceProvider::class,
         CompaniesWalletsModuleServiceProvider::class,
         WorkersModuleServiceProvider::class,

@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Domain\Models;
 
 use App\Modules\Shared\Support\Traits\BelongsToCompany;
+use App\Modules\V1\Stores\Domain\Models\Store;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskFailureReasonEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'company_id',
+    'store_id',
     'date',
     'execution_time',
     'estimated_duration_minutes',
@@ -24,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'latitude',
     'location_name',
     'address',
+    'store_number',
     'total_price',
     'rescheduled_from_task_id',
     'notes',
@@ -89,6 +92,11 @@ class Task extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class)->withTrashed();
     }
 
     public function assignedWorker(): BelongsTo

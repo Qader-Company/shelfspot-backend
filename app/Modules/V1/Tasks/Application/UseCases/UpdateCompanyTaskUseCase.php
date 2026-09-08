@@ -6,6 +6,7 @@ use App\Events\TaskStatusUpdated;
 use App\Modules\V1\CompaniesWallets\Domain\Repositories\CompaniesWalletRepositoryInterface;
 use App\Modules\V1\CompaniesWallets\Domain\ValueObjects\CompanyWalletTransactionTypeEnum;
 use App\Modules\V1\Services\Domain\Models\Service;
+use App\Modules\V1\Stores\Domain\Repositories\StoreRepositoryInterface;
 use App\Modules\V1\Tasks\Application\Services\TaskActionsRules\CanUpdateTaskRule;
 use App\Modules\V1\Tasks\Application\Services\TaskStatusHistoryRecorder;
 use App\Modules\V1\Tasks\Application\Support\TaskExpiryDate;
@@ -33,6 +34,7 @@ class UpdateCompanyTaskUseCase
         private readonly TaskServiceValidationGenerator $taskServiceValidationGenerator,
         private readonly CompaniesWalletRepositoryInterface $walletRepository,
         private readonly TaskStatusHistoryRecorder $statusHistoryRecorder,
+        private readonly StoreRepositoryInterface $storeRepository,
     ) {}
 
     public function execute(Task $task, array $data, array $files = [], ?User $actor = null): Task
@@ -145,11 +147,19 @@ class UpdateCompanyTaskUseCase
             $attributes['expires_at'] = TaskExpiryDate::fromExecutionDate($data['date']);
         }
 
-        if (array_key_exists('location', $data)) {
-            $attributes['latitude'] = $data['location']['latitude'];
-            $attributes['longitude'] = $data['location']['longitude'];
-            $attributes['location_name'] = $data['location']['location_name'] ?? null;
-            $attributes['address'] = $data['location']['address'] ?? null;
+        if (array_key_exists('store_id', $data)) {
+            $store = $this->storeRepository->getActiveById((int) $data['store_id']);
+
+            if ($store === null) {
+                throw ValidationException::withMessages(['store_id' => __('api.not_found')]);
+            }
+
+            $attributes['store_id'] = $store->id;
+            $attributes['latitude'] = $store->latitude;
+            $attributes['longitude'] = $store->longitude;
+            $attributes['location_name'] = $store->name;
+            $attributes['address'] = $store->address;
+            $attributes['store_number'] = $store->number;
         }
 
         if (array_key_exists('notes', $data)) {

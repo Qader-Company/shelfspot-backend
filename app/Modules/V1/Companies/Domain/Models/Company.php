@@ -7,6 +7,7 @@ use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Companies\Domain\ValueObjects\CompanyIndustryEnum;
 use App\Modules\V1\CompanyAdmins\Domain\Models\CompanyUser;
 use App\Modules\V1\Products\Domain\Models\Product;
+use App\Modules\V1\Stores\Domain\Models\Store;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use EloquentFilter\Filterable;
@@ -14,10 +15,11 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[fillable(['name','email','phone','cr_number','industry', 'is_active'])]
+#[Fillable(['name', 'email', 'phone', 'cr_number', 'industry', 'is_active'])]
 class Company extends Model
 {
     use Filterable, SoftDeletes;
+
     protected $casts = [
         'industry' => CompanyIndustryEnum::class,
     ];
@@ -37,6 +39,11 @@ class Company extends Model
         return $this->hasMany(Brand::class);
     }
 
+    public function stores()
+    {
+        return $this->hasMany(Store::class);
+    }
+
     public function subBrands()
     {
         return $this->hasMany(SubBrand::class);
@@ -51,5 +58,4 @@ class Company extends Model
     {
         return $this->hasMany(SubCategory::class);
     }
-
 }

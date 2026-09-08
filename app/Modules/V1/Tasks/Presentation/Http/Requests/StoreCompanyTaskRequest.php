@@ -8,8 +8,10 @@ use App\Modules\V1\Services\Domain\Models\Service;
 use App\Modules\V1\Services\Domain\ValueObjects\ServiceTypeEnum;
 use App\Modules\V1\Tasks\Application\Validation\TaskServiceValidationGenerator;
 use App\Modules\V1\Tasks\Domain\Models\Task;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Validator;
 
@@ -75,11 +77,17 @@ class StoreCompanyTaskRequest extends FormRequest
         return [
             'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:tomorrow'],
             'execution_time' => ['prohibited'],
-            'location' => ['required', 'array'],
-            'location.latitude' => ['required', 'numeric', 'between:-90,90'],
-            'location.longitude' => ['required', 'numeric', 'between:-180,180'],
-            'location.location_name' => ['nullable', 'string', 'max:255'],
-            'location.address' => ['nullable', 'string', 'max:2000'],
+            'store_id' => [
+                'required',
+                'integer',
+                Rule::exists('stores', 'id')->where(
+                    fn (Builder $query) => $query
+                        ->where('company_id', app(TenantContextInterface::class)->getCompanyId())
+                        ->where('is_active', true)
+                        ->whereNull('deleted_at')
+                ),
+            ],
+            'location' => ['prohibited'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'repeat_task_id' => ['nullable', 'integer', 'exists:tasks,id'],
             'services' => ['required', 'array', 'min:1'],

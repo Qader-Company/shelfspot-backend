@@ -19,6 +19,7 @@ enum PermissionGroupEnum: string
     case CATEGORIES = 'categories';
     case SUB_CATEGORIES = 'sub_categories';
     case PRODUCTS = 'products';
+    case STORES = 'stores';
     case WALLET = 'wallet';
     case ROLES = 'roles';
     case ADMINS = 'admins';

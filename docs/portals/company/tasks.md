@@ -15,12 +15,13 @@ This flow belongs to the company portal Tasks module. Endpoints are under `/api/
 - Client sends `X-Company-Slug` for tenant context.
 - The acting company user has the required permission: `view_task`, `create_task`, `edit_task`, or `delete_task`.
 - Task date must be today or tomorrow in `Y-m-d` format.
+- The task must select an active store belonging to the current company through `store_id`; manually submitted `location` data is rejected.
 - Each service must use an active service `service_key` and include at least one current-company product. Its price is read from the service catalog.
 - Request files, when sent, must be `jpg`, `jpeg`, `png`, `webp`, or `pdf`, max `10240 KB`.
 
 ## Walkthrough
 1. Call `List Tasks` to display company task history with optional filters.
-2. Call `Create Task` with date, location, notes, services, products, and service request details.
+2. Load active stores from `GET /api/v1/company/stores/options`, then call `Create Task` with the selected `store_id`, date, notes, services, products, and service request details.
 3. Call `Pay Task` when a draft task should be charged from the company wallet.
 4. Call `Show Task` to display task details, assigned worker, progress, services, and status timestamps.
 5. Call `Update Task` only while the task is still editable.
@@ -61,6 +62,14 @@ X-Company-Slug: {{company_slug}}
           "latitude": "25.2854",
           "longitude": "51.5310",
           "location_name": "Main Branch",
+          "address": "Doha"
+        },
+        "store": {
+          "id": 12,
+          "name": "Main Branch",
+          "number": "BR-001",
+          "latitude": 25.2854,
+          "longitude": 51.531,
           "address": "Doha"
         },
         "total_price": 300,
@@ -134,12 +143,7 @@ X-Company-Slug: {{company_slug}}
 ```json
 {
   "date": "string (required, format:Y-m-d, today or tomorrow)",
-  "location": {
-    "latitude": "number (required, between:-90,90)",
-    "longitude": "number (required, between:-180,180)",
-    "location_name": "string (optional nullable, max:255)",
-    "address": "string (optional nullable, max:2000)"
-  },
+  "store_id": "integer (required, active store in the current company)",
   "notes": "string (optional nullable, max:5000)",
   "services": [
     {
@@ -200,12 +204,7 @@ Request:
 ```json
 {
   "date": "2026-07-04",
-  "location": {
-    "latitude": 25.2854,
-    "longitude": 51.5310,
-    "location_name": "Main Branch",
-    "address": "Doha"
-  },
+  "store_id": 12,
   "notes": "Visit before noon.",
   "services": [
     {
@@ -233,7 +232,7 @@ Response:
 ```
 
 ### Notes
-`execution_time` is prohibited at the top level. Total task price is derived from the selected services' catalog prices. Service-specific dynamic validation may require additional fields based on each `service_key`.
+`execution_time` and `location` are prohibited at the top level. The backend copies the selected store's name, number, address, and coordinates into the task as a snapshot. Total task price is derived from the selected services' catalog prices. Service-specific dynamic validation may require additional fields based on each `service_key`.
 
 For `on_shelf_availability`, every selected product must include `product_details.minimum_quantity` as a positive integer. The worker receives this value with the task product and uses it when deciding whether the product is available.
 
@@ -334,12 +333,7 @@ X-Company-Slug: {{company_slug}}
 ```json
 {
   "date": "string (optional, format:Y-m-d, today or tomorrow)",
-  "location": {
-    "latitude": "number (required when location is sent, between:-90,90)",
-    "longitude": "number (required when location is sent, between:-180,180)",
-    "location_name": "string (optional nullable, max:255)",
-    "address": "string (optional nullable, max:2000)"
-  },
+  "store_id": "integer (optional, active store in the current company)",
   "notes": "string (optional nullable, max:5000)",
   "services": [
     {
@@ -413,7 +407,7 @@ Response:
 ```
 
 ### Notes
-Tasks in `draft` and `pending` can be updated. Scalar fields that are not sent remain unchanged. When a `pending` task service change changes the catalog total, the wallet is atomically charged for an increase or credited for a decrease; an insufficient balance rejects the whole update. A `failed` task accepts only `{ "date": "Y-m-d" }`, and is returned to `pending` after being rescheduled. When `services` is not sent, existing services remain unchanged. When `services` is sent, it is the complete desired service list: an existing service omitted from the list is deleted; an item with `task_service_id` is updated in place; and an item without it is created. Within each submitted service, `products` and the combination of `keep_attachment_ids` plus newly uploaded `request_files` are also the final desired state. Required service files are validated against both retained and newly uploaded attachments.
+Tasks in `draft` and `pending` can be updated. Scalar fields that are not sent remain unchanged. Sending `store_id` refreshes the task's store snapshot; manually submitted `location` is rejected. When a `pending` task service change changes the catalog total, the wallet is atomically charged for an increase or credited for a decrease; an insufficient balance rejects the whole update. A `failed` task accepts only `{ "date": "Y-m-d" }`, and is returned to `pending` after being rescheduled. When `services` is not sent, existing services remain unchanged. When `services` is sent, it is the complete desired service list: an existing service omitted from the list is deleted; an item with `task_service_id` is updated in place; and an item without it is created. Within each submitted service, `products` and the combination of `keep_attachment_ids` plus newly uploaded `request_files` are also the final desired state. Required service files are validated against both retained and newly uploaded attachments.
 
 ## Endpoint: Pay Task
 - **Method:** POST

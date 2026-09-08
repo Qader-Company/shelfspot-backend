@@ -26,6 +26,10 @@ enum CompanyPermissionEnum: string
     case CREATE_PRODUCT = 'create_product';
     case EDIT_PRODUCT = 'edit_product';
     case DELETE_PRODUCT = 'delete_product';
+    case VIEW_STORE = 'view_store';
+    case CREATE_STORE = 'create_store';
+    case EDIT_STORE = 'edit_store';
+    case DELETE_STORE = 'delete_store';
     case VIEW_SERVICE = 'view_service';
     case VIEW_WALLET = 'view_wallet';
     case RECHARGE_WALLET = 'recharge_wallet';
@@ -56,6 +60,7 @@ enum CompanyPermissionEnum: string
             self::VIEW_CATEGORY, self::CREATE_CATEGORY, self::EDIT_CATEGORY, self::DELETE_CATEGORY => PermissionGroupEnum::CATEGORIES,
             self::VIEW_SUB_CATEGORY, self::CREATE_SUB_CATEGORY, self::EDIT_SUB_CATEGORY, self::DELETE_SUB_CATEGORY => PermissionGroupEnum::SUB_CATEGORIES,
             self::VIEW_PRODUCT, self::CREATE_PRODUCT, self::EDIT_PRODUCT, self::DELETE_PRODUCT => PermissionGroupEnum::PRODUCTS,
+            self::VIEW_STORE, self::CREATE_STORE, self::EDIT_STORE, self::DELETE_STORE => PermissionGroupEnum::STORES,
             self::VIEW_SERVICE => PermissionGroupEnum::SERVICES,
             self::VIEW_WALLET, self::RECHARGE_WALLET => PermissionGroupEnum::WALLET,
             self::VIEW_TASK, self::CREATE_TASK, self::EDIT_TASK, self::DELETE_TASK => PermissionGroupEnum::TASKS,

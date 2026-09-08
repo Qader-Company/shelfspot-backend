@@ -33,8 +33,6 @@ class Worker extends Model implements HasMedia
     protected $casts = [
         'is_active' => 'boolean',
         'wallet_balance' => 'decimal:2',
-        'last_latitude' => 'decimal:7',
-        'last_longitude' => 'decimal:7',
         'location_updated_at' => 'datetime',
     ];
 

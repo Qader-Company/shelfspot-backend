@@ -4,12 +4,12 @@ This document is the frontend contract for ShelfSpot permissions. Permission nam
 
 ## Response contract
 
-The grouped permissions catalog is exposed only through these versioned endpoints, so the existing V1 permissions response remains unchanged:
+The grouped permissions catalog is exposed through these V1 endpoints:
 
-- `GET /api/v2/admin/access-control/permission-groups`
-- `GET /api/v2/company/access-control/permission-groups`
+- `GET /api/v1/admin/access-control/permission-groups`
+- `GET /api/v1/company/access-control/permissions`
 
-The V2 endpoints return permissions grouped by frontend feature:
+These endpoints return permissions grouped by frontend feature:
 
 ```json
 {

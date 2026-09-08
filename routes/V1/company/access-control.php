@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::controller(CompanyAdminManagementController::class)
     ->group(function () {
-        Route::get('/permissions', 'permissions')->middleware('permission:'.CompanyPermissionEnum::VIEW_ROLE->value);
+        Route::get('/permissions', 'groupedPermissions')->middleware('permission:'.CompanyPermissionEnum::VIEW_ROLE->value);
         Route::get('/roles', 'roles')->middleware('permission:'.CompanyPermissionEnum::VIEW_ROLE->value);
         Route::post('/roles', 'storeRole')->middleware('permission:'.CompanyPermissionEnum::CREATE_ROLE->value);
         Route::match(['put', 'patch'], '/roles/{roleId}', 'updateRole')->middleware('permission:'.CompanyPermissionEnum::EDIT_ROLE->value);

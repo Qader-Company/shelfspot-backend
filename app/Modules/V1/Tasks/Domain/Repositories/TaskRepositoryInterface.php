@@ -14,6 +14,7 @@ interface TaskRepositoryInterface
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator;
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?Task;
+
     public function getByIdAndLockedForUpdate(int $id, array $relations = [], array $relationsCount = []): ?Task;
 
     public function create(array $attributes): Task;
@@ -48,9 +49,9 @@ interface TaskRepositoryInterface
 
     public function latestForCompany(int $companyId, int $limit = 15, array $relations = []): Collection;
 
-    public function countForCompany(int $companyId, ?TaskStatusEnum $status = null): int;
+    public function countForCompany(int $companyId, ?TaskStatusEnum $status = null, array $filters = []): int;
 
-    public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null): float;
+    public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null, array $filters = []): float;
 
     public function listRelations(): array;
 
@@ -59,5 +60,4 @@ interface TaskRepositoryInterface
     public function detailRelations(): array;
 
     public function relations(): array;
-
 }

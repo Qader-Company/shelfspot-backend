@@ -10,45 +10,52 @@ use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Companies\Application\UseCases\CreateCompanyWithOwnerUseCase;
 use App\Modules\V1\Companies\Application\UseCases\GetCompanyDetailsUseCase;
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
+use App\Modules\V1\Companies\Presentation\Http\Requests\AdminCompanyDetailsRequest;
 use App\Modules\V1\Companies\Presentation\Http\Requests\RegisterCompanyRequest;
 use App\Modules\V1\Companies\Presentation\Http\Requests\UpdateCompanyRequest;
 use App\Modules\V1\Companies\Presentation\Http\Resources\CompanyResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class CompanyController extends Controller
 {
     use Filterable, ManagesTrash;
 
-    public function __construct(private readonly CompanyRepositoryInterface $companyRepository)
-    {
-    }
+    public function __construct(private readonly CompanyRepositoryInterface $companyRepository) {}
 
     public function index(Request $request)
     {
         $filters = $this->acceptedFilters(request(), ['search', 'active', 'industry']);
         $companies = $this->companyRepository->getAll(filters: $filters);
+
         return ApiResponse::success(
             CompanyResource::collection($companies)
                 ->response()
                 ->getData(true)
         );
     }
-    public function show(string $id, GetCompanyDetailsUseCase $getCompanyDetailsUseCase)
-    {
+
+    public function show(
+        AdminCompanyDetailsRequest $request,
+        string $id,
+        GetCompanyDetailsUseCase $getCompanyDetailsUseCase,
+    ) {
         $company = $getCompanyDetailsUseCase->execute(
-            $this->getCompany($id, ['users'])
+            $this->getCompany($id, ['users']),
+            $request->safe()->only(['date_from', 'date_to']),
         );
 
         return ApiResponse::success(new CompanyResource($company));
     }
+
     public function create(RegisterCompanyRequest $request, CreateCompanyWithOwnerUseCase $createCompanyWithOwnerUseCase)
     {
         $company = $createCompanyWithOwnerUseCase->execute($request->validated());
 
         return ApiResponse::created(new CompanyResource($company));
     }
+
     public function update(UpdateCompanyRequest $request, string $id)
     {
         $data = $request->validated();
@@ -57,10 +64,12 @@ class CompanyController extends Controller
 
         return ApiResponse::updated(new CompanyResource($company->refresh()));
     }
+
     public function destroy(string $id)
     {
         $company = $this->getCompany($id);
         $this->companyRepository->delete($company);
+
         return ApiResponse::deleted();
     }
 
@@ -77,10 +86,10 @@ class CompanyController extends Controller
     private function getCompany(string $id, $relations = [], $relationsCount = [])
     {
         $company = $this->companyRepository->getById($id, $relations, $relationsCount);
-        if(is_null($company))
+        if (is_null($company)) {
             throw new ModelNotFoundException(__('api.not_found'));
+        }
+
         return $company;
     }
-
-
 }

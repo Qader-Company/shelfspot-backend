@@ -2,9 +2,9 @@
 
 namespace App\Modules\V1\Products\Infrastructure\Persistence\Repositories;
 
-use App\Modules\Shared\Support\Traits\HasTranslation;
-use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
 use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\HandlesTrash;
+use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Products\Domain\Repositories\ProductRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -19,6 +19,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
     {
         return Product::class;
     }
+
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)->paginate();
@@ -29,7 +30,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
         return $this->query($relations, $relationsCount)->find($id);
     }
 
-    public function create(array $attributes, UploadedFile $image = null): Product
+    public function create(array $attributes, ?UploadedFile $image = null): Product
     {
         return DB::transaction(function () use ($attributes, $image) {
             $translations = $attributes['translations'] ?? [];
@@ -42,11 +43,12 @@ class EloquentProductRepository implements ProductRepositoryInterface
             if ($image) {
                 $product->addMedia($image)->toMediaCollection('image');
             }
+
             return $product;
         });
     }
 
-    public function update(Product $product, array $attributes, UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): Product
+    public function update(Product $product, array $attributes, ?UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): Product
     {
         return DB::transaction(function () use ($product, $attributes, $image, $imageAction) {
             $translations = $attributes['translations'] ?? [];
@@ -62,6 +64,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
                 $product->clearMediaCollection('image');
                 $product->addMedia($image)->toMediaCollection('image');
             }
+
             return $product;
         });
     }
@@ -71,19 +74,20 @@ class EloquentProductRepository implements ProductRepositoryInterface
         $product->delete();
     }
 
-
-    public function countForCompany(int $companyId): int
+    public function countForCompany(int $companyId, array $filters = []): int
     {
         return $this->query([], [])
             ->where('company_id', $companyId)
+            ->when($filters['date_from'] ?? null, fn ($query, string $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn ($query, string $date) => $query->whereDate('created_at', '<=', $date))
             ->count();
     }
 
     private function query(array $relations, array $relationsCount, array $filters = [])
     {
         return Product::query()
-            ->when($filters, fn($q) => $q->filter($filters))
-            ->when($relations, fn($q) => $q->with($relations))
-            ->when($relationsCount, fn($q) => $q->withCount($relationsCount));
+            ->when($filters, fn ($q) => $q->filter($filters))
+            ->when($relations, fn ($q) => $q->with($relations))
+            ->when($relationsCount, fn ($q) => $q->withCount($relationsCount));
     }
 }

@@ -219,19 +219,23 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->get();
     }
 
-    public function countForCompany(int $companyId, ?TaskStatusEnum $status = null): int
+    public function countForCompany(int $companyId, ?TaskStatusEnum $status = null, array $filters = []): int
     {
         return $this->query()
             ->where('company_id', $companyId)
             ->when($status, fn (Builder $query) => $query->where('status', $status->value))
+            ->when($filters['date_from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
             ->count();
     }
 
-    public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null): float
+    public function sumTotalPriceForCompany(int $companyId, ?TaskPaymentStatusEnum $paymentStatus = null, array $filters = []): float
     {
         return (float) $this->query()
             ->where('company_id', $companyId)
             ->when($paymentStatus, fn (Builder $query) => $query->where('payment_status', $paymentStatus->value))
+            ->when($filters['date_from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
             ->sum('total_price');
     }
 

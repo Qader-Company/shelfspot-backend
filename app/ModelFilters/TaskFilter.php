@@ -24,6 +24,11 @@ class TaskFilter extends ModelFilter
         return $this->where('payment_status', $payment_status);
     }
 
+    public function storeId($storeId)
+    {
+        return $this->where('store_id', $storeId);
+    }
+
     public function companyId($companyId)
     {
         return $this->where('company_id', $companyId);

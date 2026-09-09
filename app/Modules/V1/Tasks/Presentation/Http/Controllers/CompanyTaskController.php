@@ -38,7 +38,7 @@ class CompanyTaskController extends Controller
 
     public function index(Request $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
-        $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
+        $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to', 'store_id']);
         $tasks = $this->taskRepository
             ->getAll(
                 relations: $this->taskRepository->listRelations(),

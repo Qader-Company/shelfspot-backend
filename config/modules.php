@@ -50,6 +50,7 @@ return [
             ['prefix' => 'admin/workers',                            'file' => 'workers.php',                'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/tasks',                              'file' => 'tasks.php',                  'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/access-control',                     'file' => 'access-control.php',         'middlewares' => $adminAuthMiddlewares],
+            ['prefix' => 'admin/companies/{company}/users',          'file' => 'company-users.php',          'middlewares' => $adminManageCompaniesMiddlewares],
             ['prefix' => 'admin/companies/{company}/brands',         'file' => 'catalog-brands.php',         'middlewares' => $adminManageCompaniesMiddlewares],
             ['prefix' => 'admin/companies/{company}/sub-brands',     'file' => 'catalog-sub-brands.php',     'middlewares' => $adminManageCompaniesMiddlewares],
             ['prefix' => 'admin/companies/{company}/categories',     'file' => 'catalog-categories.php',     'middlewares' => $adminManageCompaniesMiddlewares],

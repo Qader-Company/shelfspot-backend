@@ -11,6 +11,10 @@ enum AdminPermissionEnum: string
     case CREATE_COMPANY = 'create_company';
     case EDIT_COMPANY = 'edit_company';
     case DELETE_COMPANY = 'delete_company';
+    case VIEW_COMPANY_USER = 'view_company_user';
+    case EDIT_COMPANY_USER = 'edit_company_user';
+    case RESET_COMPANY_USER_PASSWORD = 'reset_company_user_password';
+    case DELETE_COMPANY_USER = 'delete_company_user';
     case MANAGE_COMPANY_CATALOG = 'manage_company_catalog';
     case VIEW_SERVICE = 'view_service';
     case CREATE_SERVICE = 'create_service';
@@ -48,6 +52,7 @@ enum AdminPermissionEnum: string
             self::VIEW_DASHBOARD => PermissionGroupEnum::DASHBOARD,
             self::VIEW_PLATFORM_SETTINGS, self::EDIT_PLATFORM_SETTINGS => PermissionGroupEnum::PLATFORM_SETTINGS,
             self::VIEW_COMPANY, self::CREATE_COMPANY, self::EDIT_COMPANY, self::DELETE_COMPANY => PermissionGroupEnum::COMPANIES,
+            self::VIEW_COMPANY_USER, self::EDIT_COMPANY_USER, self::RESET_COMPANY_USER_PASSWORD, self::DELETE_COMPANY_USER => PermissionGroupEnum::COMPANIES,
             self::MANAGE_COMPANY_CATALOG => PermissionGroupEnum::COMPANY_CATALOG,
             self::VIEW_SERVICE, self::CREATE_SERVICE, self::EDIT_SERVICE, self::DELETE_SERVICE => PermissionGroupEnum::SERVICES,
             self::VIEW_WORKER, self::CREATE_WORKER, self::EDIT_WORKER, self::DELETE_WORKER => PermissionGroupEnum::WORKERS,

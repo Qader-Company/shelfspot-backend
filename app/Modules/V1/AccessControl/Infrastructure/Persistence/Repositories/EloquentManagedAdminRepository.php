@@ -11,8 +11,8 @@ use App\Modules\V1\CompanyAdmins\Domain\Models\CompanyUser;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
@@ -29,14 +29,14 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         return DB::transaction(function () use ($attributes) {
             $user = User::create([
                 'name' => $attributes['name'],
-                'email' => $attributes[ 'email'],
+                'email' => $attributes['email'],
                 'password' => $attributes['password'],
-                'type' => PortalTypeEnum::ADMIN
+                'type' => PortalTypeEnum::ADMIN,
             ]);
 
             ShelfSpotAdmin::create([
                 'user_id' => $user->id,
-                'is_active' => $attributes['is_active'] ?? true
+                'is_active' => $attributes['is_active'] ?? true,
             ]);
 
             $this->syncRoles(
@@ -64,6 +64,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
             if (array_key_exists('roles', $attributes)) {
                 $this->syncRoles($user, PermissionCatalog::ADMIN_PORTAL, null, $attributes['roles']);
             }
+
             return $user->refresh()->load(['admin', 'roles']);
         });
     }
@@ -86,6 +87,13 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         return $this->companyAdminQuery($companyId, $filters)->get();
     }
 
+    public function findCompanyAdmin(int $companyId, int $userId): User
+    {
+        return $this->companyAdminQuery($companyId)
+            ->whereKey($userId)
+            ->firstOrFail();
+    }
+
     public function createCompanyAdmin(int $companyId, array $attributes): User
     {
         return DB::transaction(function () use ($companyId, $attributes) {
@@ -96,6 +104,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
             ]);
             CompanyUser::create(['company_id' => $companyId, 'user_id' => $user->id, 'is_owner' => false, 'is_active' => $attributes['is_active'] ?? true]);
             $this->syncRoles($user, PermissionCatalog::COMPANY_PORTAL, $companyId, $attributes['roles'] ?? []);
+
             return $user->load(['companyUser', 'roles']);
         });
     }
@@ -114,6 +123,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
             if (array_key_exists('roles', $attributes)) {
                 $this->syncRoles($user, PermissionCatalog::COMPANY_PORTAL, $companyId, $attributes['roles']);
             }
+
             return $user->refresh()->load(['companyUser', 'roles']);
         });
     }
@@ -126,6 +136,60 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         $this->ensureCompanyAdminCanBeDeleted($user, $companyUser);
 
         DB::transaction(function () use ($user, $companyUser) {
+            $companyUser->delete();
+            $user->delete();
+        });
+    }
+
+    public function updateCompanyAdminAsShelfSpotAdmin(int $companyId, User $user, array $attributes): User
+    {
+        $companyUser = $this->companyUser($companyId, $user);
+        $user->loadMissing('roles');
+        $this->ensureCompanyOwnerAdminUpdateIsSafe($user, $companyUser, $attributes);
+
+        return DB::transaction(function () use ($companyId, $user, $companyUser, $attributes) {
+            $previousEmail = $user->email;
+            $emailChanged = array_key_exists('email', $attributes) && $attributes['email'] !== $previousEmail;
+            $willBeDeactivated = array_key_exists('is_active', $attributes) && ! (bool) $attributes['is_active'];
+
+            $user->fill(collect($attributes)->only(['name', 'email'])->all())->save();
+
+            if (array_key_exists('is_active', $attributes)) {
+                $companyUser->update(['is_active' => $attributes['is_active']]);
+            }
+
+            if (array_key_exists('roles', $attributes)) {
+                $this->syncRoles($user, PermissionCatalog::COMPANY_PORTAL, $companyId, $attributes['roles']);
+            }
+
+            if ($emailChanged || $willBeDeactivated) {
+                $this->revokeUserAccess($user, [$previousEmail]);
+            }
+
+            return $user->refresh()->load(['companyUser', 'roles']);
+        });
+    }
+
+    public function resetCompanyAdminPassword(int $companyId, User $user, string $password): void
+    {
+        $this->companyUser($companyId, $user);
+
+        DB::transaction(function () use ($user, $password) {
+            $user->forceFill(['password' => $password])->save();
+            $this->revokeUserAccess($user);
+        });
+    }
+
+    public function deleteCompanyAdminAsShelfSpotAdmin(int $companyId, User $user): void
+    {
+        $companyUser = $this->companyUser($companyId, $user);
+
+        $user->loadMissing('roles');
+        $this->ensureCompanyAdminCanBeDeleted($user, $companyUser);
+
+        DB::transaction(function () use ($user, $companyUser) {
+            $this->revokeUserAccess($user);
+            $user->syncRoles([]);
             $companyUser->delete();
             $user->delete();
         });
@@ -178,6 +242,26 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
     }
 
     /**
+     * @throws AuthorizationException
+     */
+    private function ensureCompanyOwnerAdminUpdateIsSafe(User $user, CompanyUser $companyUser, array $attributes): void
+    {
+        $isOwner = $companyUser->is_owner
+            || $user->roles->contains('name', FullAccessRoleProvisioner::COMPANY_OWNER_ROLE);
+
+        if (! $isOwner) {
+            return;
+        }
+
+        $deactivatesOwner = array_key_exists('is_active', $attributes) && ! (bool) $attributes['is_active'];
+        $changesOwnerRoles = array_key_exists('roles', $attributes);
+
+        if ($deactivatesOwner || $changesOwnerRoles) {
+            throw new AuthorizationException('The company owner cannot be deactivated or have roles changed.');
+        }
+    }
+
+    /**
      * Protected full-access accounts are provisioned and maintained by the
      * system. They cannot be renamed, disabled, have their email/password
      * changed, or have their protected roles replaced through access control.
@@ -222,7 +306,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         return User::query()
             ->where('type', PortalTypeEnum::COMPANY)
             ->whereHas('companyUser', fn (Builder $query) => $query->where('company_id', $companyId))
-            ->with(['companyUser', 'roles','admin'])
+            ->with(['companyUser', 'roles', 'admin'])
             ->when($this->activeFilter($filters) !== null, fn (Builder $query) => $query->whereHas('companyUser', fn (Builder $query) => $query->where('company_id', $companyId)->where('is_active', $this->activeFilter($filters))))
             ->when(isset($filters['role']), fn (Builder $query) => $query->whereHas('roles', fn (Builder $query) => $query->where('name', $filters['role'])->where('portal', PermissionCatalog::COMPANY_PORTAL)->where('company_id', $companyId)))
             ->when(isset($filters['search']), fn (Builder $query) => $this->applySearchFilter($query, $filters['search']))
@@ -240,5 +324,22 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
             $query->where('name', 'like', '%'.$search.'%')
                 ->orWhere('email', 'like', '%'.$search.'%');
         });
+    }
+
+    private function companyUser(int $companyId, User $user): CompanyUser
+    {
+        return CompanyUser::query()
+            ->where('company_id', $companyId)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+    }
+
+    private function revokeUserAccess(User $user, array $additionalEmails = []): void
+    {
+        $user->tokens()->delete();
+        DB::table('sessions')->where('user_id', $user->id)->delete();
+        DB::table('password_reset_tokens')
+            ->whereIn('email', array_values(array_unique([$user->email, ...$additionalEmails])))
+            ->delete();
     }
 }

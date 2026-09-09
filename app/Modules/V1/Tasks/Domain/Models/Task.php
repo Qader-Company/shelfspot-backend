@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'store_id',
     'date',
     'execution_time',
+    'execution_window_from',
+    'execution_window_to',
     'estimated_duration_minutes',
     'longitude',
     'latitude',
@@ -65,6 +67,8 @@ class Task extends Model
     protected $casts = [
         'date' => 'date',
         'execution_time' => 'datetime:H:i:s',
+        'execution_window_from' => 'datetime:H:i:s',
+        'execution_window_to' => 'datetime:H:i:s',
         'total_price' => 'decimal:2',
         'expires_at' => 'datetime',
         'accepted_at' => 'datetime',

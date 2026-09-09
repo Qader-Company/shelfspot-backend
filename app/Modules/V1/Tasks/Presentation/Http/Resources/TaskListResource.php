@@ -21,6 +21,12 @@ class TaskListResource extends JsonResource
                 'name' => $this->company?->name,
             ]),
             'date' => $this->date?->toDateString(),
+            'execution_window' => $this->execution_window_from === null || $this->execution_window_to === null
+                ? null
+                : [
+                    'from' => $this->execution_window_from->format('H:i'),
+                    'to' => $this->execution_window_to->format('H:i'),
+                ],
             'location' => [
                 'latitude' => $this->latitude,
                 'longitude' => $this->longitude,

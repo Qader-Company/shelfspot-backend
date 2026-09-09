@@ -70,6 +70,9 @@ class UpdateCompanyTaskRequest extends FormRequest
     {
         return [
             'date' => ['sometimes', 'required', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:tomorrow'],
+            'execution_window' => ['sometimes', 'required', 'array:from,to'],
+            'execution_window.from' => ['required_with:execution_window', 'date_format:H:i'],
+            'execution_window.to' => ['required_with:execution_window', 'date_format:H:i', 'after:execution_window.from'],
             'store_id' => [
                 'sometimes',
                 'required',

@@ -147,6 +147,11 @@ class UpdateCompanyTaskUseCase
             $attributes['expires_at'] = TaskExpiryDate::fromExecutionDate($data['date']);
         }
 
+        if (array_key_exists('execution_window', $data)) {
+            $attributes['execution_window_from'] = $data['execution_window']['from'];
+            $attributes['execution_window_to'] = $data['execution_window']['to'];
+        }
+
         if (array_key_exists('store_id', $data)) {
             $store = $this->storeRepository->getActiveById((int) $data['store_id']);
 

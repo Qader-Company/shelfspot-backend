@@ -15,6 +15,7 @@ This flow belongs to the company portal Tasks module. Endpoints are under `/api/
 - Client sends `X-Company-Slug` for tenant context.
 - The acting company user has the required permission: `view_task`, `create_task`, `edit_task`, or `delete_task`.
 - Task date must be today or tomorrow in `Y-m-d` format.
+- New tasks must include an execution display window with `from` and `to` in `H:i` format. The window is informational and does not drive lifecycle or scheduling actions.
 - The task must select an active store belonging to the current company through `store_id`; manually submitted `location` data is rejected.
 - Each service must use an active service `service_key` and include at least one current-company product. Its price is read from the service catalog.
 - Request files, when sent, must be `jpg`, `jpeg`, `png`, `webp`, or `pdf`, max `10240 KB`.
@@ -57,6 +58,10 @@ X-Company-Slug: {{company_slug}}
         "id": 501,
         "company_id": 9,
         "date": "2026-07-04",
+        "execution_window": {
+          "from": "09:00",
+          "to": "12:00"
+        },
         "estimated_duration_minutes": 120,
         "location": {
           "latitude": "25.2854",
@@ -143,6 +148,10 @@ X-Company-Slug: {{company_slug}}
 ```json
 {
   "date": "string (required, format:Y-m-d, today or tomorrow)",
+  "execution_window": {
+    "from": "string (required, format:H:i)",
+    "to": "string (required, format:H:i, after:from)"
+  },
   "store_id": "integer (required, active store in the current company)",
   "notes": "string (optional nullable, max:5000)",
   "services": [
@@ -204,6 +213,10 @@ Request:
 ```json
 {
   "date": "2026-07-04",
+  "execution_window": {
+    "from": "09:00",
+    "to": "12:00"
+  },
   "store_id": 12,
   "notes": "Visit before noon.",
   "services": [
@@ -232,7 +245,7 @@ Response:
 ```
 
 ### Notes
-`execution_time` and `location` are prohibited at the top level. The backend copies the selected store's name, number, address, and coordinates into the task as a snapshot. Total task price is derived from the selected services' catalog prices. Service-specific dynamic validation may require additional fields based on each `service_key`.
+`execution_time` and `location` are prohibited at the top level. `execution_window` is returned for display only and does not affect expiry, assignment, start, completion, or automatic lifecycle actions. The backend copies the selected store's name, number, address, and coordinates into the task as a snapshot. Total task price is derived from the selected services' catalog prices. Service-specific dynamic validation may require additional fields based on each `service_key`.
 
 For `on_shelf_availability`, every selected product must include `product_details.minimum_quantity` as a positive integer. The worker receives this value with the task product and uses it when deciding whether the product is available.
 
@@ -333,6 +346,10 @@ X-Company-Slug: {{company_slug}}
 ```json
 {
   "date": "string (optional, format:Y-m-d, today or tomorrow)",
+  "execution_window": {
+    "from": "string (required when execution_window is sent, format:H:i)",
+    "to": "string (required when execution_window is sent, format:H:i, after:from)"
+  },
   "store_id": "integer (optional, active store in the current company)",
   "notes": "string (optional nullable, max:5000)",
   "services": [

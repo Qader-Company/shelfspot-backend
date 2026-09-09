@@ -51,6 +51,8 @@ class CreateCompanyTaskUseCase
                 'store_id' => $store->id,
                 'date' => $data['date'],
                 'execution_time' => self::FIXED_EXECUTION_TIME,
+                'execution_window_from' => $data['execution_window']['from'],
+                'execution_window_to' => $data['execution_window']['to'],
                 'expires_at' => TaskExpiryDate::fromExecutionDate($data['date']),
                 'latitude' => $store->latitude,
                 'longitude' => $store->longitude,

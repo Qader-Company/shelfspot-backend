@@ -16,6 +16,7 @@ Route::controller(StoreController::class)->group(function () {
     Route::get('/options', 'options')->middleware(
         'permission:'.CompanyPermissionEnum::VIEW_STORE->value.'|'.CompanyPermissionEnum::CREATE_TASK->value
     );
+
     Route::get('/', 'index')->middleware('permission:'.CompanyPermissionEnum::VIEW_STORE->value);
     Route::post('/', 'store')->middleware('permission:'.CompanyPermissionEnum::CREATE_STORE->value);
     Route::post('/bulk-delete', 'bulkDelete')->middleware('permission:'.CompanyPermissionEnum::DELETE_STORE->value);

@@ -76,7 +76,6 @@ class StoreCompanyTaskRequest extends FormRequest
     {
         return [
             'date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today', 'before_or_equal:tomorrow'],
-            'execution_time' => ['prohibited'],
             'execution_window' => ['required', 'array:from,to'],
             'execution_window.from' => ['required', 'date_format:H:i'],
             'execution_window.to' => ['required', 'date_format:H:i', 'after:execution_window.from'],

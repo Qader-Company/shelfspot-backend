@@ -47,7 +47,6 @@ class AdminCompanyUserManagementController extends Controller
                 )
             )
         );
-    }
 
     public function show(int $company, int $user): JsonResponse
     {

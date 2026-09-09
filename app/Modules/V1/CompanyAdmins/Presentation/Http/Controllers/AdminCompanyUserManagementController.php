@@ -12,6 +12,7 @@ use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInter
 use App\Modules\V1\AccessControl\Presentation\Http\Resources\RoleResource;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\AdminResetCompanyUserPasswordRequest;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\AdminUpdateCompanyUserRequest;
+use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\StoreCompanyAdminRequest;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Resources\AdminCompanyUserResource;
 use App\Modules\V1\Users\Domain\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -47,6 +48,17 @@ class AdminCompanyUserManagementController extends Controller
                 )
             )
         );
+    }
+
+    public function store(StoreCompanyAdminRequest $request, int $company): JsonResponse
+    {
+        $user = $this->managedAdminRepository->createCompanyAdmin(
+            $this->companyId(),
+            $request->validated(),
+        );
+
+        return ApiResponse::created(new AdminCompanyUserResource($user));
+    }
 
     public function show(int $company, int $user): JsonResponse
     {

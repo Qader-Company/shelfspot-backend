@@ -32,6 +32,7 @@ return [
             'edit_company' => 'Edit company',
             'delete_company' => 'Delete company',
             'view_company_user' => 'View company users',
+            'create_company_user' => 'Create company user',
             'edit_company_user' => 'Edit company users',
             'reset_company_user_password' => 'Reset company user passwords',
             'delete_company_user' => 'Delete company users',

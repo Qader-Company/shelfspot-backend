@@ -8,12 +8,27 @@ ShelfSpot administrators manage users of one selected company through tenant-sco
 |---|---|---|
 | `GET` | `/api/v1/admin/companies/{company}/roles` | `view_company_user` |
 | `GET` | `/api/v1/admin/companies/{company}/users` | `view_company_user` |
+| `POST` | `/api/v1/admin/companies/{company}/users` | `create_company_user` |
 | `GET` | `/api/v1/admin/companies/{company}/users/{user}` | `view_company_user` |
 | `PATCH` | `/api/v1/admin/companies/{company}/users/{user}` | `edit_company_user` |
 | `POST` | `/api/v1/admin/companies/{company}/users/{user}/reset-password` | `reset_company_user_password` |
 | `DELETE` | `/api/v1/admin/companies/{company}/users/{user}` | `delete_company_user` |
 
 The user list accepts `search`, `is_active`, and `role` query filters. The roles endpoint returns the roles belonging to the selected company for the role filter and edit form.
+
+## Create
+
+The create endpoint accepts `name`, `email`, `password`, `is_active`, and `roles`. The user is always linked to the company selected in the URL. Supplied role names must belong to that company; the protected `owner` role cannot be assigned.
+
+```json
+{
+  "name": "Branch Manager",
+  "email": "manager@example.com",
+  "password": "secure-password",
+  "is_active": true,
+  "roles": ["manager"]
+}
+```
 
 ## Update
 

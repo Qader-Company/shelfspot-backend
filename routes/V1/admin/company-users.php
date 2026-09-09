@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 Route::controller(AdminCompanyUserManagementController::class)->group(function () {
     Route::get('/', 'index')
         ->middleware('permission:'.AdminPermissionEnum::VIEW_COMPANY_USER->value);
+    Route::post('/', 'store')
+        ->middleware('permission:'.AdminPermissionEnum::CREATE_COMPANY_USER->value);
     Route::get('/{user}', 'show')
         ->middleware('permission:'.AdminPermissionEnum::VIEW_COMPANY_USER->value);
     Route::patch('/{user}', 'update')

@@ -110,6 +110,7 @@ These permissions apply to `/api/v1/admin/*` and the ShelfSpot administration UI
 | `edit_company` | Edit companies and restore deleted companies. |
 | `delete_company` | Soft-delete, bulk-delete, permanently delete, or bulk permanently delete companies. |
 | `view_company_user` | List and open users belonging to a selected company. |
+| `create_company_user` | Create a user for a selected company. |
 | `edit_company_user` | Edit company-user identity, active status, and company roles. |
 | `reset_company_user_password` | Set a new password for a company user and revoke their existing sessions. |
 | `delete_company_user` | Permanently delete a non-owner company user. |
@@ -218,6 +219,7 @@ export const ADMIN_PERMISSION = {
   VIEW_DASHBOARD: 'view_dashboard',
   MANAGE_COMPANY_CATALOG: 'manage_company_catalog',
   VIEW_COMPANY_USER: 'view_company_user',
+  CREATE_COMPANY_USER: 'create_company_user',
   EDIT_COMPANY_USER: 'edit_company_user',
   RESET_COMPANY_USER_PASSWORD: 'reset_company_user_password',
   DELETE_COMPANY_USER: 'delete_company_user',

@@ -32,6 +32,7 @@ return [
             'edit_company' => 'تعديل شركة',
             'delete_company' => 'حذف شركة',
             'view_company_user' => 'عرض مستخدمي الشركات',
+            'create_company_user' => 'إنشاء مستخدم شركة',
             'edit_company_user' => 'تعديل مستخدمي الشركات',
             'reset_company_user_password' => 'إعادة تعيين كلمات مرور مستخدمي الشركات',
             'delete_company_user' => 'حذف مستخدمي الشركات',

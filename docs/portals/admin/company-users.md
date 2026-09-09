@@ -6,13 +6,14 @@ ShelfSpot administrators manage users of one selected company through tenant-sco
 
 | Method | Endpoint | Permission |
 |---|---|---|
+| `GET` | `/api/v1/admin/companies/{company}/roles` | `view_company_user` |
 | `GET` | `/api/v1/admin/companies/{company}/users` | `view_company_user` |
 | `GET` | `/api/v1/admin/companies/{company}/users/{user}` | `view_company_user` |
 | `PATCH` | `/api/v1/admin/companies/{company}/users/{user}` | `edit_company_user` |
 | `POST` | `/api/v1/admin/companies/{company}/users/{user}/reset-password` | `reset_company_user_password` |
 | `DELETE` | `/api/v1/admin/companies/{company}/users/{user}` | `delete_company_user` |
 
-The list accepts `search`, `is_active` (or `active`), and `role` query filters.
+The user list accepts `search`, `is_active`, and `role` query filters. The roles endpoint returns the roles belonging to the selected company for the role filter and edit form.
 
 ## Update
 

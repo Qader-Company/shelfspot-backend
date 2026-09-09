@@ -6,7 +6,10 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
+use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
 use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
+use App\Modules\V1\AccessControl\Presentation\Http\Resources\RoleResource;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\AdminResetCompanyUserPasswordRequest;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\AdminUpdateCompanyUserRequest;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Resources\AdminCompanyUserResource;
@@ -20,6 +23,7 @@ class AdminCompanyUserManagementController extends Controller
 
     public function __construct(
         private readonly ManagedAdminRepositoryInterface $managedAdminRepository,
+        private readonly AccessControlRepositoryInterface $accessControlRepository,
         private readonly TenantContextInterface $tenantContext,
     ) {}
 
@@ -27,10 +31,22 @@ class AdminCompanyUserManagementController extends Controller
     {
         $users = $this->managedAdminRepository->companyAdmins(
             $this->companyId(),
-            $this->acceptedFilters($request, ['is_active', 'active', 'role', 'search']),
+            $this->acceptedFilters($request, ['is_active', 'role', 'search']),
         );
 
         return ApiResponse::success(AdminCompanyUserResource::collection($users));
+    }
+
+    public function roles(int $company): JsonResponse
+    {
+        return ApiResponse::success(
+            RoleResource::collection(
+                $this->accessControlRepository->roles(
+                    PermissionCatalog::COMPANY_PORTAL,
+                    $this->companyId(),
+                )
+            )
+        );
     }
 
     public function show(int $company, int $user): JsonResponse

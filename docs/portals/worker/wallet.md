@@ -12,31 +12,15 @@ The client can populate selectors from `/api/v1/enums/withdrawal-methods`, `/api
 
 ## Endpoints
 
-### Wallet overview
+### Wallet overview and transaction history
 
 - **Method:** GET
 - **URL:** `/api/v1/worker/wallet`
-- **Response fields:** `available_balance`, `total_earned`, `pending_withdrawals`, `total_withdrawn`, and `latest_transactions`.
-
-### Wallet transactions
-
-- **Method:** GET
-- **URL:** `/api/v1/worker/wallet/transactions`
 - **Optional filters:** `type`, `date_from`, `date_to`.
 - **Types:** `task_earning`, `withdrawal`, `withdrawal_refund`, `adjustment`.
+- **Response fields:** `statistics` contains `available_balance`, `total_earned`, `pending_withdrawals`, and `total_withdrawn`; `transactions` contains the paginated unified ledger.
 
-### Withdrawal requests
-
-- **Method:** GET
-- **URL:** `/api/v1/worker/wallet/withdrawals`
-- **Optional filters:** `status`, `date_from`, `date_to`.
-- **Statuses:** `pending`, `paid`, `rejected`.
-
-### Show withdrawal request
-
-- **Method:** GET
-- **URL:** `/api/v1/worker/wallet/withdrawals/{withdrawal}`
-- A worker can only access their own requests.
+Task earnings, withdrawals, and withdrawal refunds all appear in the same transaction collection. A withdrawal transaction embeds its current status, method, payout details, processing timestamps, and rejection reason.
 
 ### Create withdrawal request
 

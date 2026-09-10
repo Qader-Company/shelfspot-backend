@@ -13,13 +13,15 @@ class GetWorkerWalletOverviewUseCase
         private readonly WithdrawalRequestRepositoryInterface $withdrawalRepository,
     ) {}
 
-    public function execute(Worker $worker): array
+    public function execute(Worker $worker, array $filters = []): array
     {
         return [
-            'available_balance' => $this->walletRepository->currentBalance($worker->id),
-            'total_earned' => $this->walletRepository->totalEarned($worker->id),
-            ...$this->withdrawalRepository->workerSummary($worker->id),
-            'latest_transactions' => $this->walletRepository->latestTransactions($worker->id),
+            'statistics' => [
+                'available_balance' => $this->walletRepository->currentBalance($worker->id),
+                'total_earned' => $this->walletRepository->totalEarned($worker->id),
+                ...$this->withdrawalRepository->workerSummary($worker->id),
+            ],
+            'transactions' => $this->walletRepository->transactions($worker->id, $filters),
         ];
     }
 }

@@ -8,7 +8,6 @@ use App\Modules\V1\WorkersWallets\Domain\Repositories\WorkerWalletRepositoryInte
 use App\Modules\V1\WorkersWallets\Domain\Services\WorkerWalletBalanceCalculator;
 use App\Modules\V1\WorkersWallets\Domain\ValueObjects\WorkerWalletTransactionTypeEnum;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -21,15 +20,6 @@ class EloquentWorkerWalletRepository implements WorkerWalletRepositoryInterface
             ->with('reference')
             ->latest('id')
             ->paginate();
-    }
-
-    public function latestTransactions(int $workerId, int $limit = 10): Collection
-    {
-        return $this->queryForWorker($workerId)
-            ->with('reference')
-            ->latest('id')
-            ->limit($limit)
-            ->get();
     }
 
     public function currentBalance(int $workerId): float

@@ -7,10 +7,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 interface WithdrawalRequestRepositoryInterface
 {
-    public function forWorker(int $workerId, array $filters = []): LengthAwarePaginator;
-
-    public function findForWorker(int $workerId, int $withdrawalId, bool $lockForUpdate = false): ?WithdrawalRequest;
-
     public function forAdmin(array $filters = []): LengthAwarePaginator;
 
     public function findForAdmin(int $withdrawalId, bool $lockForUpdate = false): ?WithdrawalRequest;

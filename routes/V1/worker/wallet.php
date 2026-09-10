@@ -4,9 +4,6 @@ use App\Modules\V1\WorkersWallets\Presentation\Http\Controllers\WorkerWalletCont
 use Illuminate\Support\Facades\Route;
 
 Route::controller(WorkerWalletController::class)->group(function () {
-    Route::get('/', 'show');
-    Route::get('/transactions', 'transactions');
-    Route::get('/withdrawals', 'withdrawals');
+    Route::get('/', 'index');
     Route::post('/withdrawals', 'storeWithdrawal');
-    Route::get('/withdrawals/{withdrawal}', 'showWithdrawal');
 });

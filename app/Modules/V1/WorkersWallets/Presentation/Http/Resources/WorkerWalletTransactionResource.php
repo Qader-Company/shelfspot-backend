@@ -26,13 +26,19 @@ class WorkerWalletTransactionResource extends JsonResource
                 $reference instanceof Task,
                 fn () => $this->reference_id,
             ),
-            'withdrawal_id' => $this->when(
+            'withdrawal' => $this->when(
                 $reference instanceof WithdrawalRequest,
-                fn () => $this->reference_id,
-            ),
-            'withdrawal_status' => $this->when(
-                $reference instanceof WithdrawalRequest,
-                fn () => $reference->status?->value,
+                fn () => [
+                    'id' => $reference->id,
+                    'status' => $reference->status?->value,
+                    'status_label' => $reference->status?->label(),
+                    'method' => $reference->method?->value,
+                    'method_label' => $reference->method?->label(),
+                    'payout_details' => $reference->payout_details,
+                    'processed_at' => $reference->processed_at?->toDateTimeString(),
+                    'paid_at' => $reference->paid_at?->toDateTimeString(),
+                    'rejection_reason' => $reference->rejection_reason,
+                ],
             ),
             'created_at' => $this->created_at?->toDateTimeString(),
         ];

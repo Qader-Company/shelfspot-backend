@@ -10,23 +10,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class EloquentWithdrawalRequestRepository implements WithdrawalRequestRepositoryInterface
 {
-    public function forWorker(int $workerId, array $filters = []): LengthAwarePaginator
-    {
-        return $this->query($filters)
-            ->where('worker_id', $workerId)
-            ->latest('id')
-            ->paginate();
-    }
-
-    public function findForWorker(int $workerId, int $withdrawalId, bool $lockForUpdate = false): ?WithdrawalRequest
-    {
-        return WithdrawalRequest::query()
-            ->where('worker_id', $workerId)
-            ->whereKey($withdrawalId)
-            ->when($lockForUpdate, fn (Builder $query) => $query->lockForUpdate())
-            ->first();
-    }
-
     public function forAdmin(array $filters = []): LengthAwarePaginator
     {
         return $this->query($filters)

@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Tasks\Domain\Models;
 
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentOutcomeEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Users\Domain\Models\User;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'task_id',
     'worker_id',
     'assignment_type',
+    'worker_status',
     'assigned_by',
     'assigned_at',
     'unassigned_at',
@@ -24,6 +26,7 @@ class TaskWorkerAssignment extends Model
 {
     protected $casts = [
         'assignment_type' => TaskWorkerAssignmentTypeEnum::class,
+        'worker_status' => TaskStatusEnum::class,
         'outcome' => TaskWorkerAssignmentOutcomeEnum::class,
         'assigned_at' => 'datetime',
         'unassigned_at' => 'datetime',

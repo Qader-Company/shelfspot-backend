@@ -8,7 +8,7 @@ use App\Modules\V1\Workers\Domain\Models\Worker;
 
 class CanDeleteTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null): void
+    public static function validate(Task $task, ?Worker $worker = null): void
     {
         parent::validate($task);
         parent::insureTaskStatusIsNot(
@@ -16,6 +16,7 @@ class CanDeleteTaskRule extends AbstractTaskActionRule
             [
                 TaskStatusEnum::IN_PROGRESS,
                 TaskStatusEnum::WORKER_CANCELLED,
+                TaskStatusEnum::REASSIGNED,
                 TaskStatusEnum::COMPLETED,
                 TaskStatusEnum::REJECTED,
                 TaskStatusEnum::REOPENED,

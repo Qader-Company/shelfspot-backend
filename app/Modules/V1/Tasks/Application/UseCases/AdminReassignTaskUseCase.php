@@ -38,12 +38,16 @@ class AdminReassignTaskUseCase
 
             CanReassignTaskRule::validate($lockedTask, $worker, $workerHasActiveTask);
 
-            $now = now();
             $lockedTask->forceFill([
-                'status' => TaskStatusEnum::STARTED,
+                'status' => TaskStatusEnum::REASSIGNED,
                 'assigned_worker_id' => $worker->id,
-                'accepted_at' => $now,
-                'start_deadline_at' => $now->copy()->addMinutes(StartTaskUseCase::START_DEADLINE_MINUTES),
+                'accepted_at' => null,
+                'start_deadline_at' => null,
+                'start_deadline_extension_minutes' => null,
+                'start_deadline_extended_at' => null,
+                'started_at' => null,
+                'expected_completion_at' => null,
+                'in_progress_overdue_at' => null,
                 'worker_cancelled_at' => null,
                 'worker_cancel_reason' => null,
             ])->save();
@@ -62,7 +66,7 @@ class AdminReassignTaskUseCase
             TaskStatusUpdated::dispatch(
                 $lockedTask,
                 $fromStatus,
-                TaskStatusEnum::STARTED,
+                TaskStatusEnum::REASSIGNED,
                 $admin ?? $worker,
                 ['reassigned_worker_id' => $worker->id, 'assignment_type' => TaskWorkerAssignmentTypeEnum::REASSIGNED->value]
             );

@@ -17,13 +17,14 @@ use App\Modules\V1\Tasks\Application\UseCases\RestoreCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\UpdateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyAcceptTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyRejectTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\PayDraftTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\UpdateCompanyTaskRequest;
-use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskListResource;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
@@ -38,7 +39,7 @@ class CompanyTaskController extends Controller
 
     public function index(Request $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
-        $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to', 'store_id']);
+        $filters = $this->companyFilters($request, ['status', 'payment_status', 'date_from', 'date_to', 'store_id']);
         $tasks = $this->taskRepository
             ->getAll(
                 relations: $this->taskRepository->listRelations(),
@@ -54,7 +55,7 @@ class CompanyTaskController extends Controller
 
     public function trash(Request $request)
     {
-        $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
+        $filters = $this->companyFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
         $tasks = $this->taskRepository->getCompanyTrash(
             companyId: $this->tenantContext->getCompanyId(),
             relations: $this->taskRepository->listRelations(),
@@ -185,5 +186,22 @@ class CompanyTaskController extends Controller
         }
 
         return $task;
+    }
+
+    private function companyFilters(Request $request, array $accepted): array
+    {
+        $filters = $this->acceptedFilters($request, $accepted);
+
+        if (array_key_exists('status', $filters)) {
+            $filters['company_status'] = in_array($filters['status'], [
+                TaskStatusEnum::WORKER_CANCELLED->value,
+                TaskStatusEnum::REASSIGNED->value,
+            ], true)
+                ? TaskStatusEnum::IN_PROGRESS->value
+                : $filters['status'];
+            unset($filters['status']);
+        }
+
+        return $filters;
     }
 }

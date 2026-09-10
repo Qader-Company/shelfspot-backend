@@ -16,12 +16,6 @@ class StartTaskUseCase
 {
     public const START_DEADLINE_MINUTES = 15;
 
-    private const ACTIVE_WORKER_TASK_STATUSES = [
-        TaskStatusEnum::STARTED,
-        TaskStatusEnum::IN_PROGRESS,
-        TaskStatusEnum::REOPENED,
-    ];
-
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TaskWorkerAssignmentManager $assignmentManager,
@@ -38,7 +32,8 @@ class StartTaskUseCase
 
             CanStartTaskRule::validate(
                 task: $lockedTask,
-                workerHasActiveTask: $this->workerHasActiveTask($worker)
+                worker: $worker,
+                workerHasActiveTask: $this->workerHasAnotherActiveTask($worker, $lockedTask),
             );
 
             $now = now();
@@ -49,12 +44,14 @@ class StartTaskUseCase
                 'start_deadline_at' => $now->copy()->addMinutes(self::START_DEADLINE_MINUTES),
             ])->save();
 
-            $this->assignmentManager->assign(
-                $lockedTask,
-                $worker,
-                TaskWorkerAssignmentTypeEnum::INITIAL,
-                $worker->user,
-            );
+            if ($fromStatus === TaskStatusEnum::PENDING) {
+                $this->assignmentManager->assign(
+                    $lockedTask,
+                    $worker,
+                    TaskWorkerAssignmentTypeEnum::INITIAL,
+                    $worker->user,
+                );
+            }
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,
@@ -71,14 +68,12 @@ class StartTaskUseCase
         });
     }
 
-    private function workerHasActiveTask(Worker $worker): bool
+    private function workerHasAnotherActiveTask(Worker $worker, Task $task): bool
     {
-        foreach (TaskStatusEnum::workerActiveStatuses() as $status) {
-            if ($this->taskRepository->countAssignedToWorkerByStatus($worker->id, $status) > 0) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->taskRepository->query()
+            ->where('assigned_worker_id', $worker->id)
+            ->whereKeyNot($task->id)
+            ->whereIn('status', TaskStatusEnum::values(TaskStatusEnum::workerActiveStatuses()))
+            ->exists();
     }
 }

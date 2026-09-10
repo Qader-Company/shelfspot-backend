@@ -6,6 +6,7 @@ enum TaskStatusEnum: string
 {
     case DRAFT = 'draft';
     case PENDING = 'pending';
+    case REASSIGNED = 'reassigned';
     case STARTED = 'started';
     case IN_PROGRESS = 'in_progress';
     case WORKER_CANCELLED = 'worker_cancelled';
@@ -19,6 +20,7 @@ enum TaskStatusEnum: string
     public static function workerActiveStatuses(): array
     {
         return [
+            self::REASSIGNED,
             self::STARTED,
             self::IN_PROGRESS,
             self::REOPENED,

@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -94,11 +95,19 @@ class TaskResource extends JsonResource
 
     private function companyFacingStatus(): string
     {
-        if ($this->status === TaskStatusEnum::WORKER_CANCELLED) {
+        if (in_array($this->status, [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::REASSIGNED], true)
+            || $this->isReassignedStart()) {
             return TaskStatusEnum::IN_PROGRESS->value;
         }
 
         return $this->status->value;
+    }
+
+    private function isReassignedStart(): bool
+    {
+        return $this->status === TaskStatusEnum::STARTED
+            && $this->relationLoaded('currentWorkerAssignment')
+            && $this->currentWorkerAssignment?->assignment_type === TaskWorkerAssignmentTypeEnum::REASSIGNED;
     }
 
     private function progress(): array

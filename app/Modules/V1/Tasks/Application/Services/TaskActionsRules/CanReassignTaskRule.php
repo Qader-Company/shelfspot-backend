@@ -9,12 +9,12 @@ use Illuminate\Validation\ValidationException;
 
 class CanReassignTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null, bool $workerHasActiveTask = false): void
+    public static function validate(Task $task, ?Worker $worker = null, bool $workerHasActiveTask = false): void
     {
         parent::validate($task);
         parent::insureTaskStatusIsOneOf(
             task: $task,
-            statuses: [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::STARTED],
+            statuses: [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::STARTED, TaskStatusEnum::REASSIGNED],
             message: __('tasks.validation.reassign_cancelled_only')
         );
 

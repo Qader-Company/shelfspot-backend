@@ -19,16 +19,26 @@ class CanStartTaskRule extends AbstractTaskActionRule
 
         parent::insureTaskIsCharged($task);
         parent::insureTaskIsNotDeleted($task);
+        parent::insureTaskStatusIsOneOf(
+            task: $task,
+            statuses: [TaskStatusEnum::PENDING, TaskStatusEnum::REASSIGNED],
+            message: __('tasks.validation.accept_pending_only')
+        );
+
+        if ($task->status === TaskStatusEnum::REASSIGNED) {
+            parent::insureTaskAssignmentToWorker(
+                task: $task,
+                workerId: $worker?->id,
+                message: __('tasks.validation.worker_not_assigned'),
+            );
+
+            return;
+        }
+
         parent::insureTaskDateIsSameDay($task);
         parent::insureTaskAssignmentToWorker(
             $task,
             message: __('tasks.validation.accept_unassigned_only')
         );
-        parent::insureTaskStatusIsOneOf(
-            task: $task,
-            statuses: [TaskStatusEnum::PENDING],
-            message: __('tasks.validation.accept_pending_only')
-        );
-
     }
 }

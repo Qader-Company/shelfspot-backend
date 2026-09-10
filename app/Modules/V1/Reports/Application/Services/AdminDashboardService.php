@@ -91,11 +91,12 @@ class AdminDashboardService
         $statuses = $this->baseTaskQuery()
             ->selectRaw(
                 'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as pending, '.
-                'COALESCE(SUM(CASE WHEN status IN (?, ?, ?) THEN 1 ELSE 0 END), 0) as in_progress, '.
+                'COALESCE(SUM(CASE WHEN status IN (?, ?, ?, ?) THEN 1 ELSE 0 END), 0) as in_progress, '.
                 'COALESCE(SUM(CASE WHEN status IN (?, ?) THEN 1 ELSE 0 END), 0) as completed, '.
                 'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) as rejected',
                 [
                     TaskStatusEnum::PENDING->value,
+                    TaskStatusEnum::REASSIGNED->value,
                     TaskStatusEnum::STARTED->value,
                     TaskStatusEnum::IN_PROGRESS->value,
                     TaskStatusEnum::REOPENED->value,

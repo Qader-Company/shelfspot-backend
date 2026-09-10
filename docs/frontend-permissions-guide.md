@@ -127,6 +127,8 @@ These permissions apply to `/api/v1/admin/*` and the ShelfSpot administration UI
 | `delete_task` | Delete an admin-side task record. |
 | `reassign_task` | Assign/reassign a task, list eligible workers for reassignment, and reopen a task. |
 | `view_payment` | List payments and open payment details. There are currently no create/edit/delete payment permissions. |
+| `view_withdrawal` | List withdrawal requests and open their details. |
+| `process_withdrawal` | Mark a pending withdrawal as paid or reject it. |
 | `view_wallet_coupon` | List wallet coupons and open coupon details. |
 | `create_wallet_coupon` | Create a wallet coupon. |
 | `edit_wallet_coupon` | Edit a wallet coupon. |

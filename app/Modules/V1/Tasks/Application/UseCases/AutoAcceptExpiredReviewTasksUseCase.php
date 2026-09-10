@@ -9,6 +9,7 @@ use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentOutcomeEnum;
+use App\Modules\V1\WorkersWallets\Application\UseCases\SettleAcceptedTaskUseCase;
 use Illuminate\Support\Facades\DB;
 
 class AutoAcceptExpiredReviewTasksUseCase
@@ -16,6 +17,7 @@ class AutoAcceptExpiredReviewTasksUseCase
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TaskWorkerAssignmentManager $assignmentManager,
+        private readonly SettleAcceptedTaskUseCase $settleAcceptedTask,
     ) {}
 
     public function execute(?int $limit = null): int
@@ -52,6 +54,8 @@ class AutoAcceptExpiredReviewTasksUseCase
                         $lockedTask,
                         TaskWorkerAssignmentOutcomeEnum::COMPLETED,
                     );
+
+                    $this->settleAcceptedTask->execute($lockedTask);
 
                     TaskStatusUpdated::dispatch(
                         $lockedTask,

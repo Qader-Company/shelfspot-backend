@@ -29,4 +29,19 @@ return [
         'queued' => 'Queued',
         'failed' => 'Failed',
     ],
+    'withdrawal_method' => [
+        'bank_account' => 'Bank account',
+        'wallet' => 'Mobile wallet',
+    ],
+    'withdrawal_status' => [
+        'pending' => 'Pending',
+        'paid' => 'Paid',
+        'rejected' => 'Rejected',
+    ],
+    'worker_wallet_transaction_type' => [
+        'task_earning' => 'Task earning',
+        'withdrawal' => 'Withdrawal',
+        'withdrawal_refund' => 'Withdrawal refund',
+        'adjustment' => 'Adjustment',
+    ],
 ];

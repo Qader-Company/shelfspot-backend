@@ -47,6 +47,7 @@ return [
             ['prefix' => 'admin/companies',                          'file' => 'companies.php',              'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/wallet-coupons',                     'file' => 'wallet-coupons.php',         'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/payments',                           'file' => 'payments.php',              'middlewares' => $adminAuthMiddlewares],
+            ['prefix' => 'admin/withdrawals',                        'file' => 'withdrawals.php',           'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/workers',                            'file' => 'workers.php',                'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/tasks',                              'file' => 'tasks.php',                  'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/access-control',                     'file' => 'access-control.php',         'middlewares' => $adminAuthMiddlewares],
@@ -63,6 +64,7 @@ return [
             ['prefix' => 'worker/notifications', 'file' => 'notifications.php', 'middlewares' => $workerAuthMiddlewares],
             ['prefix' => 'worker/account', 'file' => 'account.php', 'middlewares' => $workerAuthMiddlewares],
             ['prefix' => 'worker/tasks',   'file' => 'tasks.php',   'middlewares' => $workerAuthMiddlewares],
+            ['prefix' => 'worker/wallet',  'file' => 'wallet.php',  'middlewares' => $workerAuthMiddlewares],
         ],
 
         'company' => [

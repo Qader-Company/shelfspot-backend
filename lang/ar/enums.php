@@ -29,4 +29,19 @@ return [
         'queued' => 'في قائمة الانتظار',
         'failed' => 'فشل',
     ],
+    'withdrawal_method' => [
+        'bank_account' => 'حساب بنكي',
+        'wallet' => 'محفظة إلكترونية',
+    ],
+    'withdrawal_status' => [
+        'pending' => 'قيد الانتظار',
+        'paid' => 'تم الدفع',
+        'rejected' => 'مرفوض',
+    ],
+    'worker_wallet_transaction_type' => [
+        'task_earning' => 'أرباح مهمة',
+        'withdrawal' => 'سحب',
+        'withdrawal_refund' => 'إعادة مبلغ سحب',
+        'adjustment' => 'تسوية',
+    ],
 ];

@@ -49,6 +49,8 @@ return [
             'delete_task' => 'حذف مهمة',
             'reassign_task' => 'إعادة تعيين مهمة',
             'view_payment' => 'عرض المدفوعات',
+            'view_withdrawal' => 'عرض طلبات السحب',
+            'process_withdrawal' => 'معالجة طلبات السحب',
             'view_wallet_coupon' => 'عرض كوبونات المحفظة',
             'create_wallet_coupon' => 'إنشاء كوبون محفظة',
             'edit_wallet_coupon' => 'تعديل كوبون محفظة',

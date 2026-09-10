@@ -55,10 +55,20 @@ class AdminPaymentController extends Controller
             ->where('payment_status', TaskPaymentStatusEnum::REFUNDED->value)
             ->sum('total_price');
 
+        $totalWorkerShare = (clone $summaryQuery)
+            ->whereNotNull('settled_at')
+            ->sum('worker_share_amount');
+
+        $totalPlatformShare = (clone $summaryQuery)
+            ->whereNotNull('settled_at')
+            ->sum('platform_share_amount');
+
         return [
             'total_incoming' => (float) $totalIncoming,
             'total_outgoing' => (float) $totalOutgoing,
             'net_balance' => (float) $totalIncoming - (float) $totalOutgoing,
+            'total_worker_share' => (float) $totalWorkerShare,
+            'total_platform_share' => (float) $totalPlatformShare,
         ];
     }
 

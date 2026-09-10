@@ -7,6 +7,8 @@ use App\Modules\V1\Tasks\Domain\Models\TaskWorkerAssignment;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Users\Domain\Models\User;
+use App\Modules\V1\WorkersWallets\Domain\Models\WithdrawalRequest;
+use App\Modules\V1\WorkersWallets\Domain\Models\WorkerWalletTransaction;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -54,6 +56,16 @@ class Worker extends Model implements HasMedia
     public function taskAssignments(): HasMany
     {
         return $this->hasMany(TaskWorkerAssignment::class);
+    }
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WorkerWalletTransaction::class);
+    }
+
+    public function withdrawalRequests(): HasMany
+    {
+        return $this->hasMany(WithdrawalRequest::class);
     }
 
     public function priorityTasks(): HasMany

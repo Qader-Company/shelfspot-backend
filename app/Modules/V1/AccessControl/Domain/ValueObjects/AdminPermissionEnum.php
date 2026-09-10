@@ -29,6 +29,8 @@ enum AdminPermissionEnum: string
     case DELETE_TASK = 'delete_task';
     case REASSIGN_TASK = 'reassign_task';
     case VIEW_PAYMENT = 'view_payment';
+    case VIEW_WITHDRAWAL = 'view_withdrawal';
+    case PROCESS_WITHDRAWAL = 'process_withdrawal';
     case VIEW_WALLET_COUPON = 'view_wallet_coupon';
     case CREATE_WALLET_COUPON = 'create_wallet_coupon';
     case EDIT_WALLET_COUPON = 'edit_wallet_coupon';
@@ -58,7 +60,7 @@ enum AdminPermissionEnum: string
             self::VIEW_SERVICE, self::CREATE_SERVICE, self::EDIT_SERVICE, self::DELETE_SERVICE => PermissionGroupEnum::SERVICES,
             self::VIEW_WORKER, self::CREATE_WORKER, self::EDIT_WORKER, self::DELETE_WORKER => PermissionGroupEnum::WORKERS,
             self::VIEW_TASK, self::DELETE_TASK, self::REASSIGN_TASK => PermissionGroupEnum::TASKS,
-            self::VIEW_PAYMENT => PermissionGroupEnum::PAYMENTS,
+            self::VIEW_PAYMENT, self::VIEW_WITHDRAWAL, self::PROCESS_WITHDRAWAL => PermissionGroupEnum::PAYMENTS,
             self::VIEW_WALLET_COUPON, self::CREATE_WALLET_COUPON, self::EDIT_WALLET_COUPON, self::DELETE_WALLET_COUPON => PermissionGroupEnum::WALLET_COUPONS,
             self::VIEW_ROLE, self::CREATE_ROLE, self::EDIT_ROLE, self::DELETE_ROLE => PermissionGroupEnum::ROLES,
             self::VIEW_ADMIN, self::CREATE_ADMIN, self::EDIT_ADMIN, self::DELETE_ADMIN => PermissionGroupEnum::ADMINS,

@@ -10,6 +10,7 @@ use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentOutcomeEnum;
 use App\Modules\V1\Users\Domain\Models\User;
+use App\Modules\V1\WorkersWallets\Application\UseCases\SettleAcceptedTaskUseCase;
 use Illuminate\Support\Facades\DB;
 
 class CompanyAcceptTaskUseCase
@@ -17,6 +18,7 @@ class CompanyAcceptTaskUseCase
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TaskWorkerAssignmentManager $assignmentManager,
+        private readonly SettleAcceptedTaskUseCase $settleAcceptedTask,
     ) {}
 
     public function execute(Task $task, User $actor, ?array $feedback = null): Task
@@ -41,6 +43,8 @@ class CompanyAcceptTaskUseCase
                 $lockedTask,
                 TaskWorkerAssignmentOutcomeEnum::COMPLETED,
             );
+
+            $this->settleAcceptedTask->execute($lockedTask);
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,

@@ -21,6 +21,12 @@ class AdminPaymentResource extends JsonResource
                 'phone' => $this->company->phone,
             ] : null),
             'amount' => (float) $this->total_price,
+            'settlement' => $this->settled_at === null ? null : [
+                'worker_share_amount' => (float) $this->worker_share_amount,
+                'platform_share_amount' => (float) $this->platform_share_amount,
+                'worker_share_percentage' => (int) $this->worker_share_percentage,
+                'settled_at' => $this->settled_at->toDateTimeString(),
+            ],
             'direction' => $this->direction(),
             'status' => $this->statusValue(),
             'status_label' => $this->statusLabel(),

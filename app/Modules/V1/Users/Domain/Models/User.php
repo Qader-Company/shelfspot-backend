@@ -10,6 +10,7 @@ use App\Modules\V1\Workers\Domain\Models\Worker;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -18,6 +19,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'type', 'email_verified_at'])]
 #[Hidden(['password', 'remember_token'])]
+#[UseFactory(UserFactory::class)]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -64,10 +66,5 @@ class User extends Authenticatable
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'App.Models.User.'.$this->getKey();
-    }
-
-    protected static function newFactory(): UserFactory
-    {
-        return UserFactory::new();
     }
 }

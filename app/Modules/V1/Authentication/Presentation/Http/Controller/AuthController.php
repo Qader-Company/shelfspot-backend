@@ -2,23 +2,23 @@
 
 namespace App\Modules\V1\Authentication\Presentation\Http\Controller;
 
-
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\V1\Authentication\Application\UseCases\LogInUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\RegisterUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\SendOtpUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\SocialLoginUseCase;
+use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
+use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\EmailValidationRequest;
+use App\Modules\V1\Authentication\Presentation\Http\Requests\LoginRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\RegisterRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\SocialLoginRequest;
 use App\Modules\V1\Users\Application\Services\UserResourceResolver;
-use App\Modules\V1\Authentication\Application\UseCases\LogInUseCase;
-use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
-use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
-use App\Modules\V1\Authentication\Presentation\Http\Requests\LoginRequest;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class AuthController extends Controller
 {
@@ -71,15 +71,23 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()?->currentAccessToken()?->delete();
+
         return ApiResponse::message(__('auth.loggedOut'));
     }
 
     public function refreshToken(Request $request, string $type, TokenIssuer $tokenHandler)
     {
+        $portal = PortalTypeEnum::tryFrom($type);
+
+        if ($request->user()?->type !== $portal || ! $request->user()->tokenCan($portal->value)) {
+            throw new AccessDeniedHttpException(__('api.forbidden'));
+        }
+
         $data = $tokenHandler->refreshToken(
             user: $request->user(),
-            portal: PortalTypeEnum::tryFrom($type),
+            portal: $portal,
         );
+
         return ApiResponse::success($data, __('auth.token_refreshed'));
     }
 

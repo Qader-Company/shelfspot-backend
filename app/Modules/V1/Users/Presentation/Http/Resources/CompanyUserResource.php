@@ -3,7 +3,6 @@
 namespace App\Modules\V1\Users\Presentation\Http\Resources;
 
 use App\Modules\V1\AccessControl\Presentation\Http\Resources\PermissionResource;
-use App\Modules\V1\Users\Application\Services\UserAccessResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,8 +15,6 @@ class CompanyUserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $access = UserAccessResolver::resolve($this->resource);
-
         return [
             'id' => $this->id,
             'name' => $this->name,

@@ -6,6 +6,7 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Reports\Application\Services\CompanyDashboardReportService;
 use App\Modules\V1\Tasks\Application\UseCases\CancelCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
@@ -27,6 +28,7 @@ use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskListResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class CompanyTaskController extends Controller
 {
@@ -35,6 +37,7 @@ class CompanyTaskController extends Controller
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TenantContextInterface $tenantContext,
+        private readonly CompanyDashboardReportService $dashboardReportService,
     ) {}
 
     public function index(Request $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
@@ -47,10 +50,15 @@ class CompanyTaskController extends Controller
                 filters: $filters
             );
 
-        return ApiResponse::success(
-            TaskListResource::collection($tasks)
-                ->response()->getData(true)
+        $response = TaskListResource::collection($tasks)
+            ->response()
+            ->getData(true);
+        $response['statistics'] = $this->dashboardReportService->filteredStatistics(
+            companyId: $this->tenantContext->getCompanyId(),
+            dateFilters: Arr::only($filters, ['date_from', 'date_to'])
         );
+
+        return ApiResponse::success($response);
     }
 
     public function trash(Request $request)

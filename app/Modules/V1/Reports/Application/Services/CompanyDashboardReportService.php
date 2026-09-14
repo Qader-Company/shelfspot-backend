@@ -37,6 +37,8 @@ class CompanyDashboardReportService
                 $range = $this->rangeFor($selectedPeriod, $now);
                 $previousRange = $this->previousRangeFor($selectedPeriod, $range['from']);
 
+                $totalRequests = $this->totalRequests($companyId, $range['from'], $range['to']);
+                $previousTotalRequests = $this->totalRequests($companyId, $previousRange['from'], $previousRange['to']);
                 $activeRequests = $this->activeRequests($companyId);
                 $previousActiveRequests = $this->activeRequests($companyId, $previousRange['from'], $previousRange['to']);
                 $completedRequests = $this->completedRequests($companyId, $range['from'], $range['to']);
@@ -50,6 +52,7 @@ class CompanyDashboardReportService
                     'period' => $selectedPeriod,
                     'range' => $this->serializeRange($range),
                     'cards' => [
+                        'total_requests' => $this->metric($totalRequests, $previousTotalRequests),
                         'active_requests' => $this->metric($activeRequests, $previousActiveRequests),
                         'completed_this_period' => $this->metric($completedRequests, $previousCompletedRequests),
                         'delayed_requests' => $this->metric($delayedRequests, $previousDelayedRequests),
@@ -62,6 +65,57 @@ class CompanyDashboardReportService
                 ];
             },
         );
+    }
+
+    public function filteredStatistics(int $companyId, array $dateFilters = []): array
+    {
+        $query = $this->baseQuery($companyId)
+            ->when(
+                $dateFilters['date_from'] ?? null,
+                fn (Builder $query, string $date) => $query->whereDate('date', '>=', $date)
+            )
+            ->when(
+                $dateFilters['date_to'] ?? null,
+                fn (Builder $query, string $date) => $query->whereDate('date', '<=', $date)
+            );
+
+        $totalRequests = (clone $query)->count();
+        $activeRequests = (clone $query)
+            ->whereIn('status', TaskStatusEnum::values(self::ACTIVE_STATUSES))
+            ->count();
+        $completedRequests = (clone $query)
+            ->whereIn('status', [TaskStatusEnum::COMPLETED->value, TaskStatusEnum::ACCEPTED->value])
+            ->count();
+        $delayedRequests = (clone $query)
+            ->whereIn('status', TaskStatusEnum::values(self::ACTIVE_STATUSES))
+            ->where(function (Builder $query) {
+                $query->where('date', '<', now()->toDateString())
+                    ->orWhere('expires_at', '<', now());
+            })
+            ->count();
+        $reviewedRequests = (clone $query)
+            ->whereIn('status', [TaskStatusEnum::ACCEPTED->value, TaskStatusEnum::REJECTED->value])
+            ->count();
+        $acceptedRequests = (clone $query)
+            ->where('status', TaskStatusEnum::ACCEPTED->value)
+            ->count();
+
+        return [
+            'total_requests' => $totalRequests,
+            'active_requests' => $activeRequests,
+            'completed_this_period' => $completedRequests,
+            'delayed_requests' => $delayedRequests,
+            'acceptance_rate' => $reviewedRequests === 0
+                ? 0.0
+                : round(($acceptedRequests / $reviewedRequests) * 100, 2),
+        ];
+    }
+
+    private function totalRequests(int $companyId, CarbonImmutable $from, CarbonImmutable $to): int
+    {
+        return $this->baseQuery($companyId)
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
     }
 
     private function activeRequests(int $companyId, ?CarbonImmutable $from = null, ?CarbonImmutable $to = null): int

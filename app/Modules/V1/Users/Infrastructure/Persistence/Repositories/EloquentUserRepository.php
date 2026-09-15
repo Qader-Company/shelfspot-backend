@@ -7,15 +7,6 @@ use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 
 class EloquentUserRepository implements UserRepositoryInterface
 {
-    public function list(bool $active, array $filters)
-    {
-        // TODO: Implement list() method.
-    }
-
-    public function findById(int $id): User
-    {
-        // TODO: Implement findById() method.
-    }
 
     public function create(array $attributes): User
     {

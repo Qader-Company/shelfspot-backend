@@ -8,6 +8,7 @@ use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInte
 use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
 use App\Modules\V1\Admins\Domain\Models\ShelfSpotAdmin;
 use App\Modules\V1\CompanyAdmins\Domain\Models\CompanyUser;
+use App\Modules\V1\Users\Application\Services\UserAccessRevoker;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -17,7 +18,10 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
 {
-    public function __construct(private readonly AccessControlRepositoryInterface $accessControlRepository) {}
+    public function __construct(
+        private readonly AccessControlRepositoryInterface $accessControlRepository,
+        private readonly UserAccessRevoker $userAccessRevoker,
+    ) {}
 
     public function shelfSpotAdmins(array $filters = []): Collection
     {
@@ -57,12 +61,19 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         $this->ensureProtectedAccountCannotBeUpdated($user);
 
         return DB::transaction(function () use ($user, $attributes) {
+            $willBeDeactivated = array_key_exists('is_active', $attributes)
+                && ! (bool) $attributes['is_active'];
+
             $user->fill(collect($attributes)->only(['name', 'email', 'password'])->all())->save();
             if (array_key_exists('is_active', $attributes)) {
                 $user->admin()->update(['is_active' => $attributes['is_active']]);
             }
             if (array_key_exists('roles', $attributes)) {
                 $this->syncRoles($user, PermissionCatalog::ADMIN_PORTAL, null, $attributes['roles']);
+            }
+
+            if ($willBeDeactivated) {
+                $this->userAccessRevoker->revoke($user);
             }
 
             return $user->refresh()->load(['admin', 'roles']);
@@ -77,6 +88,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         $this->ensureAdminCanBeDeleted($user);
 
         DB::transaction(function () use ($user) {
+            $this->userAccessRevoker->revoke($user);
             $user->admin()->delete();
             $user->delete();
         });
@@ -116,12 +128,19 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         $this->ensureProtectedAccountCannotBeUpdated($user, $companyUser);
 
         return DB::transaction(function () use ($companyId, $user, $companyUser, $attributes) {
+            $willBeDeactivated = array_key_exists('is_active', $attributes)
+                && ! (bool) $attributes['is_active'];
+
             $user->fill(collect($attributes)->only(['name', 'email', 'password'])->all())->save();
             if (array_key_exists('is_active', $attributes)) {
                 $companyUser->update(['is_active' => $attributes['is_active']]);
             }
             if (array_key_exists('roles', $attributes)) {
                 $this->syncRoles($user, PermissionCatalog::COMPANY_PORTAL, $companyId, $attributes['roles']);
+            }
+
+            if ($willBeDeactivated) {
+                $this->userAccessRevoker->revoke($user);
             }
 
             return $user->refresh()->load(['companyUser', 'roles']);
@@ -136,6 +155,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         $this->ensureCompanyAdminCanBeDeleted($user, $companyUser);
 
         DB::transaction(function () use ($user, $companyUser) {
+            $this->userAccessRevoker->revoke($user);
             $companyUser->delete();
             $user->delete();
         });
@@ -163,7 +183,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
             }
 
             if ($emailChanged || $willBeDeactivated) {
-                $this->revokeUserAccess($user, [$previousEmail]);
+                $this->userAccessRevoker->revoke($user, [$previousEmail]);
             }
 
             return $user->refresh()->load(['companyUser', 'roles']);
@@ -176,7 +196,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
 
         DB::transaction(function () use ($user, $password) {
             $user->forceFill(['password' => $password])->save();
-            $this->revokeUserAccess($user);
+            $this->userAccessRevoker->revoke($user);
         });
     }
 
@@ -188,7 +208,7 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
         $this->ensureCompanyAdminCanBeDeleted($user, $companyUser);
 
         DB::transaction(function () use ($user, $companyUser) {
-            $this->revokeUserAccess($user);
+            $this->userAccessRevoker->revoke($user);
             $user->syncRoles([]);
             $companyUser->delete();
             $user->delete();
@@ -334,12 +354,4 @@ class EloquentManagedAdminRepository implements ManagedAdminRepositoryInterface
             ->firstOrFail();
     }
 
-    private function revokeUserAccess(User $user, array $additionalEmails = []): void
-    {
-        $user->tokens()->delete();
-        DB::table('sessions')->where('user_id', $user->id)->delete();
-        DB::table('password_reset_tokens')
-            ->whereIn('email', array_values(array_unique([$user->email, ...$additionalEmails])))
-            ->delete();
-    }
 }

@@ -1,0 +1,64 @@
+<?php
+
+use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
+use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
+use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
+use App\Modules\V1\Authentication\Presentation\Http\Controller\AuthController;
+use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerificationController;
+use App\Modules\V1\Authentication\Presentation\Http\Controller\ResetPasswordController;
+use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
+use Illuminate\Support\Facades\Route;
+
+Route::post('{type}/register', [AuthController::class, 'register'])
+    ->where('type', PortalTypeEnum::COMPANY->value.'|'.PortalTypeEnum::WORKER->value);
+//            ->middleware('throttle:auth-register');
+
+Route::post('{type}/login', [AuthController::class, 'login'])
+    ->where('type', implode('|', PortalTypeEnum::values()));
+//        ->middleware('throttle:auth-login');
+
+Route::post('{type}/social/{provider}/login', [AuthController::class, 'socialLogin'])
+    ->where('type', implode('|', PortalTypeEnum::values()))
+    ->where('provider', implode('|', SocialProviderEnum::values()))
+    ->middleware('throttle:auth-login');
+
+Route::delete('/logout', [AuthController::class, 'logout'])
+    ->middleware(['auth:sanctum', 'throttle:auth-logout']);
+
+Route::post('{type}/refresh', [AuthController::class, 'refreshToken'])
+    ->middleware([
+        'auth:sanctum',
+        'abilities:'.TokenTypeEnum::REFRESH_TOKEN->value,
+        'active.user',
+        'throttle:auth-refresh',
+    ]);
+
+Route::post('{type}/{purpose}/send-otp', [AuthController::class, 'sendTypedOTP'])
+    ->where('type', implode('|', PortalTypeEnum::values()))
+    ->where('purpose', implode('|', OtpPurposeEnum::values()))
+    ->middleware('throttle:auth-otp-send');
+
+//    Route::post('{purpose}/send-otp', [AuthController::class, 'sendOTP'])
+//        ->where('purpose', implode('|', OtpPurposeEnum::values()))
+//        ->middleware('throttle:auth-otp-send');
+
+// ////////////// verify email \\\\\\\\\\\\\\\\
+Route::patch('{type}/email-verification', [EmailVerificationController::class, 'verifyEmail'])
+    ->where('type', PortalTypeEnum::COMPANY->value.'|'.PortalTypeEnum::WORKER->value)
+    ->middleware([
+        'auth:sanctum',
+        'abilities:'.TokenTypeEnum::VERIFY_TOKEN->value,
+        'throttle:auth-otp-verify',
+    ]);
+
+// ///////////// reset password \\\\\\\\\\\\\\\\
+Route::post('{type}/reset-password-verification', [ResetPasswordController::class, 'verifyResetPassOTP'])
+    ->where('type', implode('|', PortalTypeEnum::values()))
+    ->middleware('throttle:auth-otp-verify');
+
+Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword'])
+    ->middleware([
+        'auth:sanctum',
+        'abilities:'.TokenTypeEnum::RESET_PASSWORD_TOKEN->value,
+        'throttle:auth-reset-password',
+    ]);

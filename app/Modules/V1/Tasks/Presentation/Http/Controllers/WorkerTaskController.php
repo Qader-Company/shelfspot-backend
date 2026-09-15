@@ -81,19 +81,11 @@ class WorkerTaskController extends Controller
         );
     }
 
-    public function show(int $id, Request $request)
+    public function show(int $id)
     {
-        $task = $this->taskRepository->assignedTaskForWorker(
-            taskId: $id,
-            workerId: $this->worker($request)->id,
-            relations: $this->taskRepository->detailRelations()
-        );
-
-        if (! $task) {
-            throw new ModelNotFoundException(__('api.not_found'));
-        }
-
-        return ApiResponse::success(new TaskResource($task));
+        return ApiResponse::success(new TaskResource(
+            $this->task($id, $this->taskRepository->detailRelations())
+        ));
     }
 
     public function start(int $id, Request $request, StartTaskUseCase $acceptTaskUseCase)

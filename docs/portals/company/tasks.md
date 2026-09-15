@@ -325,7 +325,11 @@ Response:
 ```
 
 ### Notes
-Company responses map `worker_cancelled` to `in_progress` for company-facing status display.
+Company responses keep the worker recovery flow internal:
+
+- `worker_cancelled` and `reassigned` are returned as `in_progress`.
+- `started` is also returned as `in_progress` when the current assignment type is `reassigned`.
+- Filtering with `status=in_progress` follows the same mapping, so reassignment does not disappear from company task lists.
 
 ## Endpoint: Update Task
 - **Method:** PATCH

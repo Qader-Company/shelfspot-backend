@@ -20,16 +20,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        foreach (config('modules.providers', []) as $provider) {
-            $this->app->register($provider);
-        }
         $this->app->bind(
             ApiResponse::class,
             ApiResponseLogic::class
         );
 
-        $this->app->singleton(TenantContextInterface::class, TenantContext::class);
+        $this->app->singleton(
+            TenantContextInterface::class,
+            TenantContext::class
+        );
 
+        foreach (config('modules.providers', []) as $provider) {
+            $this->app->register($provider);
+        }
     }
 
     /**
@@ -47,13 +50,14 @@ class AppServiceProvider extends ServiceProvider
     {
         foreach (config('modules.routes') as $key => $portal) {
             foreach ($portal as $route) {
+                $version = $route['version'] ?? 'v1';
                 $middlewares = array_merge(
                     ['api', 'locale', 'api.key'],
                     $route['middlewares'] ?? []
                 );
                 Route::middleware($middlewares)
-                    ->prefix('api/'.($route['version'] ?? 'v1').'/'.($route['prefix'] ?? ''))
-                    ->group(base_path('routes/'.($route['directory'] ?? 'V1/'.$key).'/'.($route['file'] ?? '')));
+                    ->prefix('api/'.$version.'/'.($route['prefix'] ?? ''))
+                    ->group(base_path('routes/'.($route['directory'] ?? $version.'/'.$key).'/'.$route['file']));
             }
         }
     }

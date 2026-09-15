@@ -8,7 +8,7 @@ use App\Modules\V1\Workers\Domain\Models\Worker;
 
 class CanCancelTaskRule extends AbstractTaskActionRule
 {
-    public static function validate(Task $task, Worker $worker = null): void
+    public static function validate(Task $task, ?Worker $worker = null): void
     {
         parent::validate($task);
         parent::insureTaskAssignmentToWorker(
@@ -18,7 +18,7 @@ class CanCancelTaskRule extends AbstractTaskActionRule
         );
         parent::insureTaskStatusIsOneOf(
             task: $task,
-            statuses: [TaskStatusEnum::STARTED, TaskStatusEnum::IN_PROGRESS],
+            statuses: [TaskStatusEnum::REASSIGNED, TaskStatusEnum::STARTED, TaskStatusEnum::IN_PROGRESS],
             message: __('tasks.validation.cancel_active_only')
         );
 

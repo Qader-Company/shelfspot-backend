@@ -22,14 +22,14 @@ use App\Modules\V1\Users\Infrastructure\Providers\UserModuleServiceProvider;
 use App\Modules\V1\Workers\Infrastructure\Providers\WorkersModuleServiceProvider;
 use App\Modules\V1\WorkersWallets\Infrastructure\Providers\WorkersWalletsModuleServiceProvider;
 
-$adminAuthMiddlewares = ['auth:sanctum', 'abilities:admin,access'];
+$adminAuthMiddlewares = ['auth:sanctum', 'abilities:admin,access', 'active.user'];
 $adminManageCompaniesMiddlewares
     = array_merge($adminAuthMiddlewares, ['tenant']);
 
-$companyAuthMiddlewares = ['auth:sanctum', 'abilities:company,access'];
+$companyAuthMiddlewares = ['auth:sanctum', 'abilities:company,access', 'active.user'];
 $companyMiddlewares = array_merge($companyAuthMiddlewares, ['tenant', 'tenant.user']);
 
-$workerAuthMiddlewares = ['auth:sanctum', 'abilities:worker,access'];
+$workerAuthMiddlewares = ['auth:sanctum', 'abilities:worker,access', 'active.user'];
 
 return [
     'routes' => [
@@ -39,15 +39,15 @@ return [
         ],
 
         'admin' => [
-            ['prefix' => 'admin/notifications',                       'file' => 'notifications.php',           'middlewares' => $adminAuthMiddlewares],
+            ['prefix' => 'admin/notifications',                      'file' => 'notifications.php',          'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/dashboard',                          'file' => 'dashboard.php',              'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/platform-settings',                  'file' => 'platform-settings.php',      'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/profile',                            'file' => 'profile.php',                'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/services',                           'file' => 'services.php',               'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/companies',                          'file' => 'companies.php',              'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/wallet-coupons',                     'file' => 'wallet-coupons.php',         'middlewares' => $adminAuthMiddlewares],
-            ['prefix' => 'admin/payments',                           'file' => 'payments.php',              'middlewares' => $adminAuthMiddlewares],
-            ['prefix' => 'admin/withdrawals',                        'file' => 'withdrawals.php',           'middlewares' => $adminAuthMiddlewares],
+            ['prefix' => 'admin/payments',                           'file' => 'payments.php',               'middlewares' => $adminAuthMiddlewares],
+            ['prefix' => 'admin/withdrawals',                        'file' => 'withdrawals.php',            'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/workers',                            'file' => 'workers.php',                'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/tasks',                              'file' => 'tasks.php',                  'middlewares' => $adminAuthMiddlewares],
             ['prefix' => 'admin/access-control',                     'file' => 'access-control.php',         'middlewares' => $adminAuthMiddlewares],
@@ -62,13 +62,13 @@ return [
 
         'worker' => [
             ['prefix' => 'worker/notifications', 'file' => 'notifications.php', 'middlewares' => $workerAuthMiddlewares],
-            ['prefix' => 'worker/account', 'file' => 'account.php', 'middlewares' => $workerAuthMiddlewares],
-            ['prefix' => 'worker/tasks',   'file' => 'tasks.php',   'middlewares' => $workerAuthMiddlewares],
-            ['prefix' => 'worker/wallet',  'file' => 'wallet.php',  'middlewares' => $workerAuthMiddlewares],
+            ['prefix' => 'worker/account',       'file' => 'account.php',       'middlewares' => $workerAuthMiddlewares],
+            ['prefix' => 'worker/tasks',         'file' => 'tasks.php',         'middlewares' => $workerAuthMiddlewares],
+            ['prefix' => 'worker/wallet',        'file' => 'wallet.php',        'middlewares' => $workerAuthMiddlewares],
         ],
 
         'company' => [
-            ['prefix' => 'company/notifications',   'file' => 'notifications.php',   'middlewares' => $companyMiddlewares],
+            ['prefix' => 'company/notifications',  'file' => 'notifications.php',  'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/services',       'file' => 'services.php',       'middlewares' => $companyAuthMiddlewares],
             ['prefix' => 'company/profile',        'file' => 'profile.php',        'middlewares' => $companyMiddlewares],
             ['prefix' => 'company/brands',         'file' => 'brands.php',         'middlewares' => $companyMiddlewares],

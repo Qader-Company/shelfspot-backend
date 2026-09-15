@@ -346,7 +346,7 @@ Use `.notification(...)`; do not listen to `shelfspot.notification.*` as an Echo
 | Event | When it is emitted | Recipients | Priority | Event-specific `meta` keys |
 | --- | --- | --- | --- | --- |
 | `task.published` | A task moves `draft` -> `pending` | Available workers within 5 km, capped by the backend | `normal` | None beyond common keys |
-| `task.reassigned` | An admin assigns/reassigns a task to a worker | Newly assigned worker | `high` | `reassigned_worker_id`, `assignment_type` |
+| `task.reassigned` | An admin moves a task to `reassigned` and assigns a worker | Newly assigned worker | `high` | `reassigned_worker_id`, `assignment_type` |
 | `task.reopened` | An admin reopens a task and assigns a worker | Newly assigned worker and eligible company users | `high` | `actor_type`, `reason` (nullable), `previous_worker_id`, `assigned_worker_id`, `assignment_type`, `reopen_deadline_at` |
 | `task.completed` | A worker submits/completes the task | Eligible company users | `high` | None beyond common keys |
 | `task.failed` | A pending task expires, or a reopened task expires | Eligible company users | `high` | Always a failure reason; reopened expiry also has `reopen_deadline_at`, `previous_worker_id` |

@@ -7,7 +7,7 @@ use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 
 class ProfileHandlerFactory
 {
-    public function for(User $user): ProfileHandler
+    public function for(User $user): AbstractProfileHandler
     {
         return match ($user->type) {
             PortalTypeEnum::ADMIN => app(AdminProfileHandler::class),

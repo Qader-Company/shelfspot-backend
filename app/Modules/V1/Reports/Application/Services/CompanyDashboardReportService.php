@@ -5,6 +5,7 @@ namespace App\Modules\V1\Reports\Application\Services;
 use App\Modules\V1\Reports\Application\Caching\CompanyDashboardCache;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +16,11 @@ class CompanyDashboardReportService
 
     private const ACTIVE_STATUSES = [
         TaskStatusEnum::PENDING,
+        TaskStatusEnum::REASSIGNED,
         TaskStatusEnum::STARTED,
         TaskStatusEnum::IN_PROGRESS,
         TaskStatusEnum::REOPENED,
+        TaskStatusEnum::WORKER_CANCELLED,
     ];
 
     public function __construct(private readonly CompanyDashboardCache $cache) {}
@@ -34,6 +37,8 @@ class CompanyDashboardReportService
                 $range = $this->rangeFor($selectedPeriod, $now);
                 $previousRange = $this->previousRangeFor($selectedPeriod, $range['from']);
 
+                $totalRequests = $this->totalRequests($companyId, $range['from'], $range['to']);
+                $previousTotalRequests = $this->totalRequests($companyId, $previousRange['from'], $previousRange['to']);
                 $activeRequests = $this->activeRequests($companyId);
                 $previousActiveRequests = $this->activeRequests($companyId, $previousRange['from'], $previousRange['to']);
                 $completedRequests = $this->completedRequests($companyId, $range['from'], $range['to']);
@@ -47,6 +52,7 @@ class CompanyDashboardReportService
                     'period' => $selectedPeriod,
                     'range' => $this->serializeRange($range),
                     'cards' => [
+                        'total_requests' => $this->metric($totalRequests, $previousTotalRequests),
                         'active_requests' => $this->metric($activeRequests, $previousActiveRequests),
                         'completed_this_period' => $this->metric($completedRequests, $previousCompletedRequests),
                         'delayed_requests' => $this->metric($delayedRequests, $previousDelayedRequests),
@@ -59,6 +65,57 @@ class CompanyDashboardReportService
                 ];
             },
         );
+    }
+
+    public function filteredStatistics(int $companyId, array $dateFilters = []): array
+    {
+        $query = $this->baseQuery($companyId)
+            ->when(
+                $dateFilters['date_from'] ?? null,
+                fn (Builder $query, string $date) => $query->whereDate('date', '>=', $date)
+            )
+            ->when(
+                $dateFilters['date_to'] ?? null,
+                fn (Builder $query, string $date) => $query->whereDate('date', '<=', $date)
+            );
+
+        $totalRequests = (clone $query)->count();
+        $activeRequests = (clone $query)
+            ->whereIn('status', TaskStatusEnum::values(self::ACTIVE_STATUSES))
+            ->count();
+        $completedRequests = (clone $query)
+            ->whereIn('status', [TaskStatusEnum::COMPLETED->value, TaskStatusEnum::ACCEPTED->value])
+            ->count();
+        $delayedRequests = (clone $query)
+            ->whereIn('status', TaskStatusEnum::values(self::ACTIVE_STATUSES))
+            ->where(function (Builder $query) {
+                $query->where('date', '<', now()->toDateString())
+                    ->orWhere('expires_at', '<', now());
+            })
+            ->count();
+        $reviewedRequests = (clone $query)
+            ->whereIn('status', [TaskStatusEnum::ACCEPTED->value, TaskStatusEnum::REJECTED->value])
+            ->count();
+        $acceptedRequests = (clone $query)
+            ->where('status', TaskStatusEnum::ACCEPTED->value)
+            ->count();
+
+        return [
+            'total_requests' => $totalRequests,
+            'active_requests' => $activeRequests,
+            'completed_this_period' => $completedRequests,
+            'delayed_requests' => $delayedRequests,
+            'acceptance_rate' => $reviewedRequests === 0
+                ? 0.0
+                : round(($acceptedRequests / $reviewedRequests) * 100, 2),
+        ];
+    }
+
+    private function totalRequests(int $companyId, CarbonImmutable $from, CarbonImmutable $to): int
+    {
+        return $this->baseQuery($companyId)
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
     }
 
     private function activeRequests(int $companyId, ?CarbonImmutable $from = null, ?CarbonImmutable $to = null): int
@@ -133,11 +190,32 @@ class CompanyDashboardReportService
             ->groupBy('status')
             ->pluck('total', 'status');
 
+        $reassignedStarted = $this->baseQuery($companyId)
+            ->where('status', TaskStatusEnum::STARTED->value)
+            ->whereHas('currentWorkerAssignment', fn (Builder $query) => $query->where(
+                'assignment_type',
+                TaskWorkerAssignmentTypeEnum::REASSIGNED->value,
+            ))
+            ->count();
+
+        $hiddenInProgress = (int) ($totalsByStatus[TaskStatusEnum::WORKER_CANCELLED->value] ?? 0)
+            + (int) ($totalsByStatus[TaskStatusEnum::REASSIGNED->value] ?? 0)
+            + $reassignedStarted;
+
         return collect(TaskStatusEnum::cases())
+            ->reject(fn (TaskStatusEnum $status) => in_array($status, [
+                TaskStatusEnum::WORKER_CANCELLED,
+                TaskStatusEnum::REASSIGNED,
+            ], true))
             ->map(fn (TaskStatusEnum $status) => [
                 'status' => $status->value,
-                'total' => (int) ($totalsByStatus[$status->value] ?? 0),
+                'total' => match ($status) {
+                    TaskStatusEnum::IN_PROGRESS => (int) ($totalsByStatus[$status->value] ?? 0) + $hiddenInProgress,
+                    TaskStatusEnum::STARTED => max(0, (int) ($totalsByStatus[$status->value] ?? 0) - $reassignedStarted),
+                    default => (int) ($totalsByStatus[$status->value] ?? 0),
+                },
             ])
+            ->values()
             ->all();
     }
 

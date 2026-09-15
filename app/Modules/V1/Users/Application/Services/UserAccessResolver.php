@@ -25,9 +25,17 @@ class UserAccessResolver
             ? $user->companyUser?->company_id
             : null;
 
+        if ($user->type === PortalTypeEnum::COMPANY && ! $companyId) {
+            return ['roles' => [], 'permissions' => []];
+        }
+
         $roles = $user->roles()
             ->where('portal', $portal)
-            ->where('company_id', $companyId)
+            ->when(
+                $user->type === PortalTypeEnum::COMPANY,
+                fn ($query) => $query->where('company_id', $companyId),
+                fn ($query) => $query->whereNull('company_id'),
+            )
             ->with(['permissions' => fn ($query) => $query->where('portal', $portal)])
             ->get();
 

@@ -272,6 +272,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         return [
             'company',
             'assignedWorker.user',
+            'currentWorkerAssignment',
         ];
     }
 
@@ -295,6 +296,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             'creator',
             'company',
             'assignedWorker.user',
+            'currentWorkerAssignment',
         ];
     }
 

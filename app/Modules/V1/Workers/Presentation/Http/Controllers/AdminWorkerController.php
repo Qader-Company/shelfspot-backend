@@ -5,8 +5,9 @@ namespace App\Modules\V1\Workers\Presentation\Http\Controllers;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
-use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
+use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Users\Application\Services\UserAccessRevoker;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Workers\Application\Jobs\SendWorkerCredentialsEmailJob;
 use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
@@ -31,8 +32,8 @@ class AdminWorkerController extends Controller
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
         private readonly UserRepositoryInterface $userRepository,
-    ) {
-    }
+        private readonly UserAccessRevoker $userAccessRevoker,
+    ) {}
 
     public function index(Request $request)
     {
@@ -76,6 +77,8 @@ class AdminWorkerController extends Controller
         DB::transaction(function () use ($worker, $data) {
             $userAttributes = Arr::only($data, ['name', 'email', 'password']);
             $workerAttributes = Arr::only($data, ['phone', 'is_active']);
+            $willBeDeactivated = array_key_exists('is_active', $workerAttributes)
+                && ! (bool) $workerAttributes['is_active'];
 
             if ($userAttributes !== []) {
                 $this->userRepository->update($worker->user, $userAttributes);
@@ -88,6 +91,10 @@ class AdminWorkerController extends Controller
             if (isset($data['image'])) {
                 $worker->addMedia($data['image'])->toMediaCollection('image');
             }
+
+            if ($willBeDeactivated) {
+                $this->userAccessRevoker->revoke($worker->user);
+            }
         });
 
         return ApiResponse::updated(new WorkerResource($worker->refresh()->load('user')));
@@ -96,7 +103,11 @@ class AdminWorkerController extends Controller
     public function destroy(int $worker)
     {
         $worker = $this->getWorker($worker, ['user']);
-        $this->workerRepository->delete($worker);
+
+        DB::transaction(function () use ($worker) {
+            $this->userAccessRevoker->revoke($worker->user);
+            $this->workerRepository->delete($worker);
+        });
 
         return ApiResponse::deleted();
     }

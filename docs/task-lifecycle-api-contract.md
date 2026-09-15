@@ -12,6 +12,21 @@
 | `rejected` | company/admin | الشركة رفضت التسليم وكتبت سبب. | Company can accept, admin can message/reopen. |
 | `accepted` | company/admin/worker | التسليم اتقبل يدويًا أو تلقائيًا. | Read-only. |
 | `reopened` | company/admin/worker | الأدمن أعاد فتح التاسك بعد الرفض. | Worker can execute again. |
+| `reassigned` | admin/worker | الأدمن أسند التاسك لعامل جديد وينتظر العامل أن يقبلها. | Assigned worker can start or cancel. |
+
+## Reassignment Flow
+
+```text
+worker_cancelled/started/reassigned
+    -> reassigned       (admin assigns a worker)
+    -> started          (the assigned worker calls /start)
+    -> in_progress      (the assigned worker checks in through /execute)
+```
+
+- `PATCH /api/v1/admin/tasks/{task}/reassign` assigns the worker and creates a `reassigned` assignment without starting the check-in timer.
+- Only the assigned worker can call `POST /api/v1/worker/tasks/{task}/start` while the task is `reassigned`.
+- The worker's start action keeps the existing reassignment record and starts the 15-minute check-in deadline.
+- Company APIs expose the recovery flow as `in_progress`; admin and worker APIs expose the internal status.
 
 ## Company Endpoints
 

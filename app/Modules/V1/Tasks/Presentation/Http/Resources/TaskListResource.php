@@ -2,11 +2,16 @@
 
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesWorkerStoreDistance;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TaskListResource extends JsonResource
 {
+    use IncludesWorkerStoreDistance;
+
     public function toArray(Request $request): array
     {
         $userType = $request->user()?->type?->value;
@@ -62,7 +67,7 @@ class TaskListResource extends JsonResource
                 ];
             }),
             'services_count' => $this->when(isset($this->services_count), (int) $this->services_count),
-            'distance_km' => $this->when(isset($this->distance_km), fn () => round((float) $this->distance_km, 3)),
+            'distance_km' => $this->when($isWorker, fn () => $this->workerStoreDistanceKm($request)),
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
@@ -70,6 +75,18 @@ class TaskListResource extends JsonResource
 
     private function companyFacingStatus(): string
     {
-        return $this->status->value === 'worker_cancelled' ? 'in_progress' : $this->status->value;
+        if (in_array($this->status, [TaskStatusEnum::WORKER_CANCELLED, TaskStatusEnum::REASSIGNED], true)
+            || $this->isReassignedStart()) {
+            return TaskStatusEnum::IN_PROGRESS->value;
+        }
+
+        return $this->status->value;
+    }
+
+    private function isReassignedStart(): bool
+    {
+        return $this->status === TaskStatusEnum::STARTED
+            && $this->relationLoaded('currentWorkerAssignment')
+            && $this->currentWorkerAssignment?->assignment_type === TaskWorkerAssignmentTypeEnum::REASSIGNED;
     }
 }

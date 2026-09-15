@@ -58,7 +58,7 @@ class PermissionCatalog
         throw new InvalidArgumentException("Unsupported permission [{$permission}] for portal [{$portal}].");
     }
 
-    public static function grouped(string $portal, Collection $permissions): Collection
+    public static function grouped(string $portal, Collection $permissions)
     {
         $permissionsByName = $permissions->keyBy('name');
 

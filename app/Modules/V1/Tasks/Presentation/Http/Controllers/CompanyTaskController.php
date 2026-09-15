@@ -6,6 +6,7 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\Reports\Application\Services\CompanyDashboardReportService;
 use App\Modules\V1\Tasks\Application\UseCases\CancelCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyAcceptTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\CompanyRejectTaskUseCase;
@@ -17,15 +18,17 @@ use App\Modules\V1\Tasks\Application\UseCases\RestoreCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Application\UseCases\UpdateCompanyTaskUseCase;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Repositories\TaskRepositoryInterface;
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyAcceptTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\CompanyRejectTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\PayDraftTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\StoreCompanyTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\UpdateCompanyTaskRequest;
-use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskListResource;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class CompanyTaskController extends Controller
 {
@@ -34,11 +37,12 @@ class CompanyTaskController extends Controller
     public function __construct(
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TenantContextInterface $tenantContext,
+        private readonly CompanyDashboardReportService $dashboardReportService,
     ) {}
 
     public function index(Request $request, CreateCompanyTaskUseCase $createCompanyTaskUseCase)
     {
-        $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to', 'store_id']);
+        $filters = $this->companyFilters($request, ['status', 'payment_status', 'date_from', 'date_to', 'store_id']);
         $tasks = $this->taskRepository
             ->getAll(
                 relations: $this->taskRepository->listRelations(),
@@ -46,15 +50,20 @@ class CompanyTaskController extends Controller
                 filters: $filters
             );
 
-        return ApiResponse::success(
-            TaskListResource::collection($tasks)
-                ->response()->getData(true)
+        $response = TaskListResource::collection($tasks)
+            ->response()
+            ->getData(true);
+        $response['statistics'] = $this->dashboardReportService->filteredStatistics(
+            companyId: $this->tenantContext->getCompanyId(),
+            dateFilters: Arr::only($filters, ['date_from', 'date_to'])
         );
+
+        return ApiResponse::success($response);
     }
 
     public function trash(Request $request)
     {
-        $filters = $this->acceptedFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
+        $filters = $this->companyFilters($request, ['status', 'payment_status', 'date_from', 'date_to']);
         $tasks = $this->taskRepository->getCompanyTrash(
             companyId: $this->tenantContext->getCompanyId(),
             relations: $this->taskRepository->listRelations(),
@@ -185,5 +194,22 @@ class CompanyTaskController extends Controller
         }
 
         return $task;
+    }
+
+    private function companyFilters(Request $request, array $accepted): array
+    {
+        $filters = $this->acceptedFilters($request, $accepted);
+
+        if (array_key_exists('status', $filters)) {
+            $filters['company_status'] = in_array($filters['status'], [
+                TaskStatusEnum::WORKER_CANCELLED->value,
+                TaskStatusEnum::REASSIGNED->value,
+            ], true)
+                ? TaskStatusEnum::IN_PROGRESS->value
+                : $filters['status'];
+            unset($filters['status']);
+        }
+
+        return $filters;
     }
 }

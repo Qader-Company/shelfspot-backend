@@ -4,6 +4,7 @@ return [
     'task_status' => [
         'draft' => 'مسودة',
         'pending' => 'قيد الانتظار',
+        'reassigned' => 'أعيد إسنادها',
         'started' => 'بدأت',
         'in_progress' => 'قيد التنفيذ',
         'worker_cancelled' => 'ألغيت بواسطة العامل',

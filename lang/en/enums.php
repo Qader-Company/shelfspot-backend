@@ -4,6 +4,7 @@ return [
     'task_status' => [
         'draft' => 'Draft',
         'pending' => 'Pending',
+        'reassigned' => 'Reassigned',
         'started' => 'Started',
         'in_progress' => 'In progress',
         'worker_cancelled' => 'Worker cancelled',

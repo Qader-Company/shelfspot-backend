@@ -129,7 +129,8 @@ class TaskNotificationDispatcher
     private function statusEvent(TaskStatusEnum $fromStatus, TaskStatusEnum $toStatus, array $meta): ?string
     {
         return match ($toStatus) {
-            TaskStatusEnum::STARTED => isset($meta['reassigned_worker_id']) ? 'task.reassigned' : null,
+            TaskStatusEnum::REASSIGNED => 'task.reassigned',
+            TaskStatusEnum::STARTED => null,
             TaskStatusEnum::COMPLETED => 'task.completed',
             TaskStatusEnum::ACCEPTED => null,
             TaskStatusEnum::REJECTED => 'task.rejected',

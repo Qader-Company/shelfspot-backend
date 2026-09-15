@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Workers\Presentation\Http\Resources;
 
+use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +17,11 @@ class WorkerPriorityTaskResource extends JsonResource
         return [
             'id' => $this->id,
             'status' => $this->status?->value,
+            'action_required' => match ($this->status) {
+                TaskStatusEnum::REASSIGNED => 'start',
+                TaskStatusEnum::STARTED, TaskStatusEnum::REOPENED => 'check_in',
+                default => null,
+            },
             'assignment_type' => $assignment?->assignment_type?->value,
             'assigned_at' => $assignment?->assigned_at?->toDateTimeString(),
             'reopen_deadline_at' => $this->reopen_deadline_at?->toDateTimeString(),

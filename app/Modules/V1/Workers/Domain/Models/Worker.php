@@ -71,7 +71,7 @@ class Worker extends Model implements HasMedia
     public function priorityTasks(): HasMany
     {
         return $this->hasMany(Task::class, 'assigned_worker_id')
-            ->whereIn('status', [TaskStatusEnum::REOPENED, TaskStatusEnum::STARTED])
+            ->whereIn('status', [TaskStatusEnum::REOPENED, TaskStatusEnum::REASSIGNED, TaskStatusEnum::STARTED])
             ->whereHas('currentWorkerAssignment', fn ($query) => $query->whereIn('assignment_type', [
                 TaskWorkerAssignmentTypeEnum::REOPENED_SAME_WORKER,
                 TaskWorkerAssignmentTypeEnum::REOPENED_REASSIGNED,

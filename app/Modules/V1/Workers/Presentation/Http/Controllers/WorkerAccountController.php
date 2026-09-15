@@ -24,8 +24,11 @@ class WorkerAccountController extends Controller
 
     public function profile(Request $request)
     {
+        $user = $request->user();
         return ApiResponse::success(
-            $this->profileHandlerFactory->for($request->user())->profile($request->user())
+            $this->profileHandlerFactory
+                ->for($user)
+                ->profile($user)
         );
     }
 

@@ -39,7 +39,7 @@ Admin and company users receive these arrays inside the `user` object returned b
 
 ```json
 {
-  "permissions": [
+  "available_permissions": [
     {
       "id": 1,
       "name": "view_dashboard",
@@ -47,7 +47,7 @@ Admin and company users receive these arrays inside the `user` object returned b
       "portal": "admin"
     }
   ],
-  "available_permissions": [
+  "not_available_permissions": [
     {
       "id": 2,
       "name": "edit_platform_settings",
@@ -58,8 +58,8 @@ Admin and company users receive these arrays inside the `user` object returned b
 }
 ```
 
-- `permissions` contains permissions the authenticated user **has** through their roles.
-- `available_permissions` contains permissions the user **does not have** in the current portal.
+- In login and profile responses, `available_permissions` contains permissions the authenticated user **has** through their roles.
+- In login and profile responses, `not_available_permissions` contains permissions the user **does not have** in the current portal.
 - In role-management responses, `permissions` contains permissions assigned to that role and `available_permissions` contains the complementary portal permissions that can still be assigned. The same permission must never appear in both arrays.
 - Worker responses do not contain either array because worker routes do not use this role-permission catalog.
 - Company permissions are scoped to the user's company. Permissions from a role belonging to another company must never be used.
@@ -78,7 +78,7 @@ type Permission = {
 };
 
 const grantedPermissions = new Set(
-  user.permissions.map((permission: Permission) => permission.name),
+  user.available_permissions.map((permission: Permission) => permission.name),
 );
 
 export const can = (permission: string): boolean =>
@@ -92,7 +92,7 @@ Examples:
 {can('edit_product') && <EditProductButton />}
 ```
 
-Use `permissions` to show or enable protected navigation, screens, and actions. Use `available_permissions` only in access-management UI (for example, explaining missing access); do **not** interpret it as granted access. A hidden button is not a security boundary—the API remains authoritative and can return HTTP `403`.
+Use `available_permissions` from the authenticated user object to show or enable protected navigation, screens, and actions. `not_available_permissions` is informational and must not be interpreted as granted access. Role-management responses use a different pair—`permissions` and `available_permissions`—for assigned and assignable role permissions. A hidden button is not a security boundary—the API remains authoritative and can return HTTP `403`.
 
 Permission names overlap between portals. For example, `view_role` exists in both admin and company portals, but it controls a different URL namespace. The authenticated portal must therefore be considered alongside the permission name.
 

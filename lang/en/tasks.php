@@ -2,7 +2,7 @@
 
 return [
     'validation' => [
-        'accept_pending_only' => 'Only pending tasks can be accepted.',
+        'accept_pending_only' => 'Only pending or reassigned tasks can be started.',
         'accept_charged_only' => 'Task payment must be charged before acceptance.',
         'pay_draft_only' => 'Only draft tasks can be paid.',
         'pay_execution_date_invalid' => 'The execution date must be today or tomorrow. Please provide a new date before payment.',
@@ -30,8 +30,8 @@ return [
         'complete_in_progress_only' => 'Tasks can only be completed after they are in progress.',
         'complete_requires_services' => 'A task must have services before it can be completed.',
         'complete_requires_completed_services' => 'All task services must be completed before completing the task.',
-        'cancel_active_only' => 'Only accepted or in-progress tasks can be cancelled by the assigned worker.',
-        'reassign_cancelled_only' => 'Only worker-cancelled or accepted tasks can be reassigned.',
+        'cancel_active_only' => 'Only reassigned, accepted, or in-progress tasks can be cancelled by the assigned worker.',
+        'reassign_cancelled_only' => 'Only worker-cancelled, accepted, or reassigned tasks can be reassigned.',
         'reassign_active_worker_only' => 'Tasks can only be reassigned to an active worker.',
         'reassign_worker_busy' => 'This worker already has an in-progress task.',
         'accept_completed_or_rejected_only' => 'Only completed or rejected tasks can be accepted by the company.',

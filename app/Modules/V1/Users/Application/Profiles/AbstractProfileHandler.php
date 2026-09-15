@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-abstract class AbstractProfileHandler implements ProfileHandler
+abstract class AbstractProfileHandler
 {
     abstract protected function portal(): PortalTypeEnum;
 

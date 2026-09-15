@@ -2,10 +2,10 @@
 
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
-use App\Modules\V1\Tasks\Application\Support\RemainingMinutes;
 use App\Modules\V1\Stores\Presentation\Http\Resources\StoreResource;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesTaskStartTiming;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesWorkerStoreDistance;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Http\Request;
@@ -13,7 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class TaskResource extends JsonResource
 {
-    use IncludesWorkerStoreDistance;
+    use IncludesTaskStartTiming, IncludesWorkerStoreDistance;
 
     public function toArray(Request $request): array
     {
@@ -54,29 +54,18 @@ class TaskResource extends JsonResource
             'payment_status' => $this->payment_status->value,
             'payment_status_label' => $this->payment_status->label(),
             'created_by' => $this->whenLoaded('creator', fn () => $this->creator?->name),
-            'expires_at' => $this->expires_at?->toDateTimeString(),
-            'charged_at' => $this->charged_at?->toDateTimeString(),
-            'accepted_at' => $this->accepted_at?->toDateTimeString(),
-            'start_deadline_at' => $this->when($isWorker, $this->start_deadline_at?->toDateTimeString()),
-            'start_deadline_remaining_minutes' => $this->when(
-                $isWorker,
-                fn () => $this->status === TaskStatusEnum::STARTED
-                    ? RemainingMinutes::until($this->start_deadline_at)
-                    : null,
-            ),
-            'start_deadline_extension_minutes' => $this->when($isWorker, $this->start_deadline_extension_minutes),
-            'start_deadline_extended_at' => $this->when($isWorker, $this->start_deadline_extended_at?->toDateTimeString()),
-            'started_at' => $this->started_at?->toDateTimeString(),
-            'expected_completion_at' => $this->expected_completion_at?->toDateTimeString(),
-            'in_progress_overdue_at' => $this->in_progress_overdue_at?->toDateTimeString(),
-            'completed_at' => $this->completed_at?->toDateTimeString(),
-            'rejected_at' => $this->rejected_at?->toDateTimeString(),
+            'expires_at' => $this->when($this->expires_at !== null, fn () => $this->expires_at->toISOString()),
+            'start' => $this->startTiming($isWorker),
+            'check_in_at' => $this->when($this->started_at !== null, fn () => $this->started_at->toISOString()),
+            'expected_completion_at' => $this->when($this->expected_completion_at !== null, fn () => $this->expected_completion_at->toISOString()),
+            'completed_at' => $this->when($this->completed_at !== null, fn () => $this->completed_at->toISOString()),
+            'rejected_at' => $this->when($this->rejected_at !== null, fn () => $this->rejected_at->toISOString()),
             'rejection_reason' => $this->rejection_reason,
-            'company_accepted_at' => $this->company_accepted_at?->toDateTimeString(),
+            'company_accepted_at' => $this->when($this->company_accepted_at !== null, fn () => $this->company_accepted_at->toISOString()),
             'feedback' => $this->when($isCompany || $isAdmin, $this->feedback),
-            'auto_accept_at' => $this->auto_accept_at?->toDateTimeString(),
-            'reopened_at' => $this->reopened_at?->toDateTimeString(),
-            'reopen_deadline_at' => $this->reopen_deadline_at?->toDateTimeString(),
+            'auto_accept_at' => $this->when($this->auto_accept_at !== null, fn () => $this->auto_accept_at->toISOString()),
+            'reopened_at' => $this->when($this->reopened_at !== null, fn () => $this->reopened_at->toISOString()),
+            'reopen_deadline_at' => $this->when($this->reopen_deadline_at !== null, fn () => $this->reopen_deadline_at->toISOString()),
             'reopen_reason' => $this->reopen_reason,
             'failure_reason' => $this->failure_reason?->value,
             'assignment_type' => $this->when(
@@ -92,8 +81,6 @@ class TaskResource extends JsonResource
             'assigned_worker' => new WorkerResource($this->whenLoaded('assignedWorker')),
             'distance_km' => $this->when($isWorker, fn () => $this->workerStoreDistanceKm($request)),
             'services' => TaskServiceResource::collection($this->whenLoaded('services')),
-            'created_at' => $this->created_at?->toDateTimeString(),
-            'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
     }
 

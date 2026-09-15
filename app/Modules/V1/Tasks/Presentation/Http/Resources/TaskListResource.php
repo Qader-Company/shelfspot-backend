@@ -2,17 +2,17 @@
 
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
-use App\Modules\V1\Tasks\Application\Support\RemainingMinutes;
 use App\Modules\V1\Stores\Presentation\Http\Resources\StoreResource;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesTaskStartTiming;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesWorkerStoreDistance;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TaskListResource extends JsonResource
 {
-    use IncludesWorkerStoreDistance;
+    use IncludesTaskStartTiming, IncludesWorkerStoreDistance;
 
     public function toArray(Request $request): array
     {
@@ -45,15 +45,10 @@ class TaskListResource extends JsonResource
             'status_label' => __('enums.task_status.'.($isCompany ? $this->companyFacingStatus() : $this->status->value)),
             'payment_status' => $this->payment_status->value,
             'payment_status_label' => $this->payment_status->label(),
-            'expires_at' => $this->expires_at?->toDateTimeString(),
-            'start_deadline_at' => $this->when($isWorker, $this->start_deadline_at?->toDateTimeString()),
-            'start_deadline_remaining_minutes' => $this->when(
-                $isWorker,
-                fn () => $this->status === TaskStatusEnum::STARTED
-                    ? RemainingMinutes::until($this->start_deadline_at)
-                    : null,
-            ),
-            'expected_completion_at' => $this->expected_completion_at?->toDateTimeString(),
+            'expires_at' => $this->when($this->expires_at !== null, fn () => $this->expires_at->toISOString()),
+            'start' => $this->startTiming($isWorker),
+            'check_in_at' => $this->when($this->started_at !== null, fn () => $this->started_at->toISOString()),
+            'expected_completion_at' => $this->when($this->expected_completion_at !== null, fn () => $this->expected_completion_at->toISOString()),
             'assignment_type' => $this->when(
                 $isWorker && $this->relationLoaded('currentWorkerAssignment'),
                 fn () => $this->currentWorkerAssignment?->assignment_type?->value,
@@ -69,8 +64,6 @@ class TaskListResource extends JsonResource
             }),
             'services_count' => $this->when(isset($this->services_count), (int) $this->services_count),
             'distance_km' => $this->when($isWorker, fn () => $this->workerStoreDistanceKm($request)),
-            'created_at' => $this->created_at?->toDateTimeString(),
-            'updated_at' => $this->updated_at?->toDateTimeString(),
         ];
     }
 

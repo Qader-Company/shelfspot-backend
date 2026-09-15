@@ -30,17 +30,21 @@ worker_cancelled/started/reassigned
 
 ## Worker Start Timer
 
-`POST /api/v1/worker/tasks/{task}/start` returns `start_deadline_remaining_minutes` alongside `start_deadline_at`. The same field appears in the worker's task list and task details. It is the remaining time to reach the store and call `/execute`, not the time to finish the service.
+`POST /api/v1/worker/tasks/{task}/start` returns the Start time and its fixed check-in allowance in `start`. The same shape appears in task lists and details. `allowed_minutes` starts at 15 and grows only if the worker extends it; `extended_by_minutes` shows the added amount. `remaining_minutes` is shown to the worker while the task is `started` and counts down to the `/execute` check-in deadline.
 
 ```json
 {
   "status": "started",
-  "start_deadline_at": "2026-09-15 12:15:00",
-  "start_deadline_remaining_minutes": 15
+  "start": {
+    "at": "2026-09-15T09:00:00.000000Z",
+    "allowed_minutes": 15,
+    "extended_by_minutes": 0,
+    "remaining_minutes": 15
+  }
 }
 ```
 
-`POST /api/v1/worker/tasks/{task}/extend-start-deadline` recalculates the number from the new deadline. For example, a 10-minute extension after 5 minutes have passed returns `20`. The value is `0` once the deadline has passed and `null` when the task is no longer `started`.
+`POST /api/v1/worker/tasks/{task}/extend-start-deadline` changes `allowed_minutes` to 25 and `extended_by_minutes` to 10 for a 10-minute extension. If 5 minutes have passed, `remaining_minutes` is 20. It reaches 0 at the deadline and disappears when the task is no longer `started`. After `/execute`, `check_in_at` contains the actual check-in time. Times use ISO 8601 UTC; the task's `date` and `execution_window` remain separate scheduling fields.
 
 ## Company Endpoints
 
@@ -64,12 +68,9 @@ Authorization: Bearer {company_access_token}
   "data": {
     "id": 1,
     "status": "completed",
-    "completed_at": "2026-06-10 09:00:00",
-    "rejected_at": null,
+    "completed_at": "2026-06-10T09:00:00.000000Z",
     "rejection_reason": null,
-    "company_accepted_at": null,
-    "auto_accept_at": "2026-06-12 01:00:00",
-    "reopened_at": null,
+    "auto_accept_at": "2026-06-12T01:00:00.000000Z",
     "reopen_reason": null,
     "progress": {
       "total_services": 1,
@@ -101,7 +102,7 @@ rejected -> accepted
 {
   "data": {
     "status": "accepted",
-    "company_accepted_at": "2026-06-10 09:00:00"
+    "company_accepted_at": "2026-06-10T09:00:00.000000Z"
   }
 }
 ```
@@ -132,7 +133,7 @@ POST /api/v1/company/tasks/{task}/reject
 {
   "data": {
     "status": "rejected",
-    "rejected_at": "2026-06-10 09:00:00",
+    "rejected_at": "2026-06-10T09:00:00.000000Z",
     "rejection_reason": "Submitted photos are not clear enough."
   }
 }
@@ -177,9 +178,8 @@ rejected -> reopened
 {
   "data": {
     "status": "reopened",
-    "reopened_at": "2026-06-10 09:00:00",
-    "reopen_reason": "Company rejection is valid.",
-    "auto_accept_at": null
+    "reopened_at": "2026-06-10T09:00:00.000000Z",
+    "reopen_reason": "Company rejection is valid."
   }
 }
 ```

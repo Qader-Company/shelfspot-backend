@@ -690,7 +690,7 @@ X-Company-Slug: {{company_slug}}
   "data": {
     "id": 501,
     "status": "accepted",
-    "company_accepted_at": "2026-07-04 16:00:00"
+    "company_accepted_at": "2026-07-04T16:00:00.000000Z"
   }
 }
 ```

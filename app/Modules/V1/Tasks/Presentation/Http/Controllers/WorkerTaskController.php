@@ -70,7 +70,7 @@ class WorkerTaskController extends Controller
         $tasks = $this->taskRepository->assignedToWorker(
             workerId: $this->worker($request)->id,
             filters: $request->filters(),
-            relations: ['assignedWorker.user', 'currentWorkerAssignment'],
+            relations: ['store', 'assignedWorker.user', 'currentWorkerAssignment'],
             relationsCount: $this->taskRepository->listRelationsCount(),
         );
 
@@ -96,7 +96,7 @@ class WorkerTaskController extends Controller
         );
 
         return ApiResponse::updated(
-            new TaskResource($task)
+            new TaskResource($task->loadMissing('store'))
         );
     }
 
@@ -108,7 +108,7 @@ class WorkerTaskController extends Controller
             minutes: $request->minutes()
         );
 
-        return ApiResponse::updated(new TaskResource($task));
+        return ApiResponse::updated(new TaskResource($task->loadMissing('store')));
     }
 
     public function execute(int $id, StartTaskRequest $request, StartExecuteTaskUseCase $startTaskUseCase)
@@ -123,6 +123,7 @@ class WorkerTaskController extends Controller
         return ApiResponse::updated(
             new TaskResource(
                 $task->load([
+                    'store',
                     'services.service.translations',
                     'services.products.product',
                     'services.submission',

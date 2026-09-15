@@ -14,64 +14,44 @@ use App\Modules\V1\Tasks\Domain\ValueObjects\TaskPaymentStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskServiceStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Users\Domain\Models\User;
-use App\Modules\V1\Workers\Domain\Models\Worker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DemoNearbyPendingTasksSeeder extends Seeder
 {
-    private const BANDS = [
-        'local' => ['count' => 16, 'distance_km' => 2.5],
-        '10km' => ['count' => 8, 'distance_km' => 9.5],
-        '20km' => ['count' => 8, 'distance_km' => 19.5],
-        '30km' => ['count' => 8, 'distance_km' => 29.5],
-    ];
-
     public function run(): void
     {
         $company = Company::query()->where('email', 'catalog@shelfspot.test')->firstOrFail();
         $owner = User::query()->where('email', 'owner@shelfspot.test')->firstOrFail();
-        $worker = Worker::query()->whereHas('user', fn ($query) => $query
-            ->where('email', 'adel.elmashhoor@shelfspot.test'))->firstOrFail();
         $service = Service::query()->where('is_active', true)->firstOrFail();
         $products = Product::query()
             ->where('company_id', $company->id)
             ->whereIn('sku', ['DEMO-BEV-001', 'DEMO-BEV-002', 'DEMO-BEV-003'])
             ->orderBy('sku')
             ->get();
+        $stores = Store::query()
+            ->where('company_id', $company->id)
+            ->where('number', 'like', 'DEMO-NEARBY-%')
+            ->get()
+            ->keyBy('number');
 
-        if ($worker->last_latitude === null || $worker->last_longitude === null || $products->isEmpty()) {
-            throw new \RuntimeException('The demo worker location and catalog products must be seeded first.');
+        if ($products->isEmpty()) {
+            throw new \RuntimeException('The demo catalog products must be seeded first.');
         }
 
         $today = now()->toDateString();
 
-        DB::transaction(function () use ($company, $owner, $worker, $service, $products, $today): void {
-            foreach (self::BANDS as $band => $config) {
+        DB::transaction(function () use ($company, $owner, $service, $products, $stores, $today): void {
+            foreach (DemoNearbyStoresSeeder::BANDS as $band => $config) {
                 $prefix = "[Demo nearby pending: {$band}:";
                 for ($slot = 0; $slot < $config['count']; $slot++) {
-                    $bearing = fmod($slot * 137.507764, 360.0);
-                    [$latitude, $longitude] = $this->coordinatesAtDistance(
-                        (float) $worker->last_latitude,
-                        (float) $worker->last_longitude,
-                        $config['distance_km'],
-                        $bearing,
-                    );
+                    $number = sprintf('DEMO-NEARBY-%s-%03d', strtoupper($band), $slot + 1);
+                    $store = $stores->get($number);
 
-                    $store = Store::query()->updateOrCreate(
-                        [
-                            'company_id' => $company->id,
-                            'number' => sprintf('DEMO-NEARBY-%s-%03d', strtoupper($band), $slot + 1),
-                        ],
-                        [
-                            'name' => "Demo store {$band} #".($slot + 1),
-                            'latitude' => $latitude,
-                            'longitude' => $longitude,
-                            'address' => "Demo location {$band}",
-                            'is_active' => true,
-                        ],
-                    );
+                    if ($store === null) {
+                        throw new \RuntimeException("Seed demo nearby stores before tasks; missing store {$number}.");
+                    }
 
                     // Link tasks seeded before stores were available without changing their lifecycle.
                     Task::query()
@@ -144,22 +124,5 @@ class DemoNearbyPendingTasksSeeder extends Seeder
                 }
             }
         });
-    }
-
-    private function coordinatesAtDistance(float $latitude, float $longitude, float $distanceKm, float $bearingDegrees): array
-    {
-        $angularDistance = $distanceKm / 6371.0;
-        $bearing = deg2rad($bearingDegrees);
-        $lat1 = deg2rad($latitude);
-        $lon1 = deg2rad($longitude);
-
-        $lat2 = asin(sin($lat1) * cos($angularDistance)
-            + cos($lat1) * sin($angularDistance) * cos($bearing));
-        $lon2 = $lon1 + atan2(
-            sin($bearing) * sin($angularDistance) * cos($lat1),
-            cos($angularDistance) - sin($lat1) * sin($lat2),
-        );
-
-        return [round(rad2deg($lat2), 7), round(rad2deg($lon2), 7)];
     }
 }

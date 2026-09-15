@@ -234,7 +234,10 @@ class DemoCompanyCatalogSeeder extends Seeder
             );
         });
 
-        $this->call(DemoNearbyPendingTasksSeeder::class);
+        $this->call([
+            DemoNearbyStoresSeeder::class,
+            DemoNearbyPendingTasksSeeder::class,
+        ]);
     }
 
     private function seedTask(

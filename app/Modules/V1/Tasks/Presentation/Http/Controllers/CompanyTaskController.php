@@ -78,7 +78,7 @@ class CompanyTaskController extends Controller
     {
         $task = $restoreCompanyTaskUseCase->execute($this->getCompanyDeletedTask($id));
 
-        return ApiResponse::updated(new TaskResource($task));
+        return ApiResponse::updated(new TaskResource($task->loadMissing('store')));
     }
 
     public function purge(int $id, PurgeCompanyTaskUseCase $purgeCompanyTaskUseCase)
@@ -150,7 +150,7 @@ class CompanyTaskController extends Controller
             $request->validated('feedback'),
         );
 
-        return ApiResponse::updated(new TaskResource($task));
+        return ApiResponse::updated(new TaskResource($task->loadMissing('store')));
     }
 
     public function reject(int $id, CompanyRejectTaskRequest $request, CompanyRejectTaskUseCase $companyRejectTaskUseCase)
@@ -161,7 +161,7 @@ class CompanyTaskController extends Controller
             $request->validated('reason')
         );
 
-        return ApiResponse::updated(new TaskResource($task));
+        return ApiResponse::updated(new TaskResource($task->loadMissing('store')));
     }
 
     public function destroy(int $id, Request $request, DeleteCompanyTaskUseCase $deleteCompanyTaskUseCase)

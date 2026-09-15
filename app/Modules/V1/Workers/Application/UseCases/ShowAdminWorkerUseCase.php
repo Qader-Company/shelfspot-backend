@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class ShowAdminWorkerUseCase
 {
     private const TASK_RELATIONS = [
+        'store',
         'services.service.translations',
         'services.products.product',
         'services.submission',

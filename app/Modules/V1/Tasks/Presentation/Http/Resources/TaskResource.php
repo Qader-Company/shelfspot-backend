@@ -3,6 +3,7 @@
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
 use App\Modules\V1\Tasks\Application\Support\RemainingMinutes;
+use App\Modules\V1\Stores\Presentation\Http\Resources\StoreResource;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesWorkerStoreDistance;
@@ -43,14 +44,7 @@ class TaskResource extends JsonResource
                 'location_name' => $this->location_name,
                 'address' => $this->address,
             ],
-            'store' => $this->store_number === null ? null : [
-                'id' => $this->store_id,
-                'name' => $this->location_name,
-                'number' => $this->store_number,
-                'latitude' => (float) $this->latitude,
-                'longitude' => (float) $this->longitude,
-                'address' => $this->address,
-            ],
+            'store' => $this->whenLoaded('store', fn () => new StoreResource($this->store)),
             'total_price' => (int) $this->total_price,
             'notes' => $this->notes,
             'status' => $isCompany ? $this->companyFacingStatus() : $this->status->value,

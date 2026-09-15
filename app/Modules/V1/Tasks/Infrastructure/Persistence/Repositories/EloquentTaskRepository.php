@@ -105,7 +105,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         $distanceSql = $this->haversineSql();
 
         return $this->query(
-            relations: ['company'],
+            relations: ['company', 'store'],
             relationsCount: $this->listRelationsCount(),
             filters: $filters
         )->where('status', TaskStatusEnum::PENDING->value)
@@ -271,6 +271,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     {
         return [
             'company',
+            'store',
             'assignedWorker.user',
             'currentWorkerAssignment',
         ];
@@ -284,6 +285,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     public function detailRelations(): array
     {
         return [
+            'store',
             'services.service.translations',
             'services.media',
             'services.submission',

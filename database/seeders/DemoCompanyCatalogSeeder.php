@@ -233,6 +233,8 @@ class DemoCompanyCatalogSeeder extends Seeder
                 serviceStatus: TaskServiceStatusEnum::COMPLETED,
             );
         });
+
+        $this->call(DemoNearbyPendingTasksSeeder::class);
     }
 
     private function seedTask(

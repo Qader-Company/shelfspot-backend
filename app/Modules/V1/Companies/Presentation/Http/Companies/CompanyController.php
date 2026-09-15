@@ -42,7 +42,7 @@ class CompanyController extends Controller
         GetCompanyDetailsUseCase $getCompanyDetailsUseCase,
     ) {
         $company = $getCompanyDetailsUseCase->execute(
-            $this->getCompany($id, ['users']),
+            $this->getCompany($id, ['users.user']),
             $request->safe()->only(['date_from', 'date_to']),
         );
 

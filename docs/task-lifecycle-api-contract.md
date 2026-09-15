@@ -28,6 +28,20 @@ worker_cancelled/started/reassigned
 - The worker's start action keeps the existing reassignment record and starts the 15-minute check-in deadline.
 - Company APIs expose the recovery flow as `in_progress`; admin and worker APIs expose the internal status.
 
+## Worker Start Timer
+
+`POST /api/v1/worker/tasks/{task}/start` returns `start_deadline_remaining_minutes` alongside `start_deadline_at`. The same field appears in the worker's task list and task details. It is the remaining time to reach the store and call `/execute`, not the time to finish the service.
+
+```json
+{
+  "status": "started",
+  "start_deadline_at": "2026-09-15 12:15:00",
+  "start_deadline_remaining_minutes": 15
+}
+```
+
+`POST /api/v1/worker/tasks/{task}/extend-start-deadline` recalculates the number from the new deadline. For example, a 10-minute extension after 5 minutes have passed returns `20`. The value is `0` once the deadline has passed and `null` when the task is no longer `started`.
+
 ## Company Endpoints
 
 ### Show task

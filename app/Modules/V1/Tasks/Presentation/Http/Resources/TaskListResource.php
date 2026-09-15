@@ -2,6 +2,7 @@
 
 namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
+use App\Modules\V1\Tasks\Application\Support\RemainingMinutes;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesWorkerStoreDistance;
@@ -52,6 +53,12 @@ class TaskListResource extends JsonResource
             'payment_status_label' => $this->payment_status->label(),
             'expires_at' => $this->expires_at?->toDateTimeString(),
             'start_deadline_at' => $this->when($isWorker, $this->start_deadline_at?->toDateTimeString()),
+            'start_deadline_remaining_minutes' => $this->when(
+                $isWorker,
+                fn () => $this->status === TaskStatusEnum::STARTED
+                    ? RemainingMinutes::until($this->start_deadline_at)
+                    : null,
+            ),
             'expected_completion_at' => $this->expected_completion_at?->toDateTimeString(),
             'assignment_type' => $this->when(
                 $isWorker && $this->relationLoaded('currentWorkerAssignment'),

@@ -116,7 +116,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->select('tasks.*')
             ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
             ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
-            ->orderBy('distance_km')
+            ->orderBy('id')
             ->cursorPaginate();
     }
 

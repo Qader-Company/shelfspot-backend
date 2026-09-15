@@ -117,7 +117,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
             ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
             ->orderBy('id')
-            ->cursorPaginate();
+            ->cursorPaginate(perPage:15, cursor: request()->query('cursor'));
     }
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], array $relationsCount = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator

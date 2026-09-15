@@ -4,12 +4,15 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesWorkerStoreDistance;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TaskResource extends JsonResource
 {
+    use IncludesWorkerStoreDistance;
+
     public function toArray(Request $request): array
     {
         $userType = $request->user()?->type;
@@ -86,7 +89,7 @@ class TaskResource extends JsonResource
             'progress' => $this->progress(),
             'assigned_worker_id' => $this->when($isWorker || $this->relationLoaded('assignedWorker'), $this->assigned_worker_id),
             'assigned_worker' => new WorkerResource($this->whenLoaded('assignedWorker')),
-            'distance_km' => $this->when(isset($this->distance_km), fn () => round((float) $this->distance_km, 3)),
+            'distance_km' => $this->when($isWorker, fn () => $this->workerStoreDistanceKm($request)),
             'services' => TaskServiceResource::collection($this->whenLoaded('services')),
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),

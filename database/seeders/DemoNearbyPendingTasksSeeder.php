@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Modules\V1\Companies\Domain\Models\Company;
 use App\Modules\V1\Products\Domain\Models\Product;
 use App\Modules\V1\Services\Domain\Models\Service;
+use App\Modules\V1\Stores\Domain\Models\Store;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskService;
 use App\Modules\V1\Tasks\Domain\Models\TaskServiceProduct;
@@ -49,16 +50,7 @@ class DemoNearbyPendingTasksSeeder extends Seeder
         DB::transaction(function () use ($company, $owner, $worker, $service, $products, $today): void {
             foreach (self::BANDS as $band => $config) {
                 $prefix = "[Demo nearby pending: {$band}:";
-                $existing = Task::query()
-                    ->where('company_id', $company->id)
-                    ->whereDate('date', $today)
-                    ->where('status', TaskStatusEnum::PENDING)
-                    ->where('payment_status', TaskPaymentStatusEnum::CHARGED)
-                    ->whereNull('assigned_worker_id')
-                    ->where('notes', 'like', $prefix.'%')
-                    ->count();
-
-                for ($slot = $existing; $slot < $config['count']; $slot++) {
+                for ($slot = 0; $slot < $config['count']; $slot++) {
                     $bearing = fmod($slot * 137.507764, 360.0);
                     [$latitude, $longitude] = $this->coordinatesAtDistance(
                         (float) $worker->last_latitude,
@@ -67,15 +59,57 @@ class DemoNearbyPendingTasksSeeder extends Seeder
                         $bearing,
                     );
 
+                    $store = Store::query()->updateOrCreate(
+                        [
+                            'company_id' => $company->id,
+                            'number' => sprintf('DEMO-NEARBY-%s-%03d', strtoupper($band), $slot + 1),
+                        ],
+                        [
+                            'name' => "Demo store {$band} #".($slot + 1),
+                            'latitude' => $latitude,
+                            'longitude' => $longitude,
+                            'address' => "Demo location {$band}",
+                            'is_active' => true,
+                        ],
+                    );
+
+                    // Link tasks seeded before stores were available without changing their lifecycle.
+                    Task::query()
+                        ->where('company_id', $company->id)
+                        ->whereDate('date', $today)
+                        ->where('notes', 'like', $prefix.'%')
+                        ->where('location_name', $store->name)
+                        ->whereNull('store_id')
+                        ->update([
+                            'store_id' => $store->id,
+                            'store_number' => $store->number,
+                        ]);
+
+                    $hasPendingTask = Task::query()
+                        ->where('company_id', $company->id)
+                        ->whereDate('date', $today)
+                        ->where('status', TaskStatusEnum::PENDING)
+                        ->where('payment_status', TaskPaymentStatusEnum::CHARGED)
+                        ->whereNull('assigned_worker_id')
+                        ->where('notes', 'like', $prefix.'%')
+                        ->where('store_id', $store->id)
+                        ->exists();
+
+                    if ($hasPendingTask) {
+                        continue;
+                    }
+
                     $task = Task::query()->create([
                         'company_id' => $company->id,
+                        'store_id' => $store->id,
                         'date' => $today,
                         'execution_time' => '00:00:00',
                         'estimated_duration_minutes' => 60,
-                        'latitude' => $latitude,
-                        'longitude' => $longitude,
-                        'location_name' => "Demo store {$band} #".($slot + 1),
-                        'address' => "Demo location {$band}",
+                        'latitude' => $store->latitude,
+                        'longitude' => $store->longitude,
+                        'location_name' => $store->name,
+                        'address' => $store->address,
+                        'store_number' => $store->number,
                         'total_price' => $service->price,
                         'notes' => $prefix.' '.Str::uuid().']',
                         'status' => TaskStatusEnum::PENDING,

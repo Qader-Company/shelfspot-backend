@@ -4,11 +4,14 @@ namespace App\Modules\V1\Tasks\Presentation\Http\Resources;
 
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\Concerns\IncludesWorkerStoreDistance;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TaskListResource extends JsonResource
 {
+    use IncludesWorkerStoreDistance;
+
     public function toArray(Request $request): array
     {
         $userType = $request->user()?->type?->value;
@@ -64,7 +67,7 @@ class TaskListResource extends JsonResource
                 ];
             }),
             'services_count' => $this->when(isset($this->services_count), (int) $this->services_count),
-            'distance_km' => $this->when(isset($this->distance_km), fn () => round((float) $this->distance_km, 3)),
+            'distance_km' => $this->when($isWorker, fn () => $this->workerStoreDistanceKm($request)),
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];

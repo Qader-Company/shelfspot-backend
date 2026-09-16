@@ -16,7 +16,7 @@ class WorkerProfileHandler extends AbstractProfileHandler
 
     protected function relations(): array
     {
-        return ['worker.priorityTasks.currentWorkerAssignment'];
+        return ['worker.activeTask.currentWorkerAssignment'];
     }
 
     protected function portalRules(User $user): array

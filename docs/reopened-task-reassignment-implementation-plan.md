@@ -1,4 +1,4 @@
-# Reopened Tasks, Reassignment, and Worker Priority Tasks
+# Reopened Tasks, Reassignment, and the Worker Active Task
 
 ## Objective
 
@@ -119,12 +119,13 @@ Rules:
 5. Record a status-history event with the deadline and failure reason.
 6. Do not allow the admin reopen endpoint to reopen failed tasks.
 
-### 5. Return priority tasks in `WorkerResource`
+### 5. Return the active task in `WorkerResource`
 
-1. Add a compact `WorkerPriorityTaskResource`; do not nest the full `TaskResource` to avoid circular payloads.
-2. Add a `priority_tasks` property to `WorkerResource`, only when the relation is loaded for the authenticated worker's own profile.
-3. Each priority task includes: task ID, status, assignment type, assignment time, rework deadline, location summary, and estimated duration.
-4. Load this relation in the worker account/profile endpoint only. Do not expose it when `WorkerResource` is used in admin lists or nested inside a task response.
+1. Add a compact `WorkerActiveTaskResource`; do not nest the full `TaskResource` to avoid circular payloads.
+2. Add an `active_task` property to `WorkerResource`, only when the relation is loaded for the authenticated worker's own profile.
+3. The active task is one of `reassigned`, `started`, `reopened`, or `in_progress` and includes only its ID, current status, and assignment type.
+4. Return `active_task: null` when the worker has no active task.
+5. Load this relation in the worker account/profile endpoint only. Do not expose it when `WorkerResource` is used in admin lists or nested inside a task response.
 
 Example worker profile payload:
 
@@ -132,16 +133,11 @@ Example worker profile payload:
 {
   "id": 15,
   "name": "Ahmed",
-  "priority_tasks": [
-    {
-      "id": 124,
-      "status": "reopened",
-      "assignment_type": "reopened_reassigned",
-      "assigned_at": "2026-07-12 14:00:00",
-      "reopen_deadline_at": "2026-07-14 00:00:00",
-      "location_name": "Store branch"
-    }
-  ]
+  "active_task": {
+    "id": 124,
+    "status": "in_progress",
+    "assignment_type": "reopened_reassigned"
+  }
 }
 ```
 
@@ -165,7 +161,7 @@ Add tests for:
 4. Correct computation of the reopening deadline.
 5. Reopened task expiry: failure reason, worker unassignment, assignment closure, and no automatic refund.
 6. Company cancellation of the failed rework task and its automatic refund.
-7. `WorkerResource.priority_tasks` visibility only to the authenticated worker.
+7. `WorkerResource.active_task` visibility only to the authenticated worker, including a `null` response when there is no active task.
 8. Worker `/my` list prioritization and stable pagination.
 9. Prevention of reopening a `failed` task.
 
@@ -178,4 +174,4 @@ Add tests for:
 
 ## Definition of Done
 
-The implementation is complete when an admin can choose an eligible worker during reopen, the selected worker sees a compact priority-task payload in their own `WorkerResource`, the original worker's contribution remains auditable, and expired rework tasks end permanently as failed for the company to decide whether to cancel and refund.
+The implementation is complete when an admin can choose an eligible worker during reopen, the selected worker sees a compact active-task payload in their own `WorkerResource`, the original worker's contribution remains auditable, and expired rework tasks end permanently as failed for the company to decide whether to cancel and refund.

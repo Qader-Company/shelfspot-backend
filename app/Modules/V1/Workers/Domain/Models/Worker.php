@@ -5,15 +5,16 @@ namespace App\Modules\V1\Workers\Domain\Models;
 use App\Modules\V1\Tasks\Domain\Models\Task;
 use App\Modules\V1\Tasks\Domain\Models\TaskWorkerAssignment;
 use App\Modules\V1\Tasks\Domain\ValueObjects\TaskStatusEnum;
-use App\Modules\V1\Tasks\Domain\ValueObjects\TaskWorkerAssignmentTypeEnum;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\WorkersWallets\Domain\Models\WithdrawalRequest;
 use App\Modules\V1\WorkersWallets\Domain\Models\WorkerWalletTransaction;
 use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -68,17 +69,20 @@ class Worker extends Model implements HasMedia
         return $this->hasMany(WithdrawalRequest::class);
     }
 
-    public function priorityTasks(): HasMany
+    public function activeTask(): HasOne
     {
-        return $this->hasMany(Task::class, 'assigned_worker_id')
-            ->whereIn('status', [TaskStatusEnum::REOPENED, TaskStatusEnum::REASSIGNED, TaskStatusEnum::STARTED])
-            ->whereHas('currentWorkerAssignment', fn ($query) => $query->whereIn('assignment_type', [
-                TaskWorkerAssignmentTypeEnum::REOPENED_SAME_WORKER,
-                TaskWorkerAssignmentTypeEnum::REOPENED_REASSIGNED,
-                TaskWorkerAssignmentTypeEnum::REASSIGNED,
-            ]))
-            ->orderByDesc('reopened_at')
-            ->orderByDesc('accepted_at')
-            ->orderByDesc('id');
+        $activeStatuses = TaskStatusEnum::values([
+            TaskStatusEnum::REASSIGNED,
+            TaskStatusEnum::STARTED,
+            TaskStatusEnum::REOPENED,
+            TaskStatusEnum::IN_PROGRESS,
+        ]);
+
+        return $this->hasOne(Task::class, 'assigned_worker_id')
+            ->whereIn('status', $activeStatuses)
+            ->ofMany(
+                ['id' => 'max'],
+                fn (Builder $query) => $query->whereIn('status', $activeStatuses),
+            );
     }
 }

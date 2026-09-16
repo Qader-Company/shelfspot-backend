@@ -42,9 +42,11 @@ class WorkerResource extends JsonResource
                 $worker->in_progress_task_completion_percentage ?? null
             ),
             'assigned_tasks' => TaskResource::collection($this->whenLoaded('assignedTasks')),
-            'priority_tasks' => $this->when(
-                $isOwnProfile && $worker?->relationLoaded('priorityTasks'),
-                fn () => WorkerPriorityTaskResource::collection($worker->priorityTasks)->resolve($request),
+            'active_task' => $this->when(
+                $isOwnProfile && $worker?->relationLoaded('activeTask'),
+                fn () => $worker->activeTask
+                    ? (new WorkerActiveTaskResource($worker->activeTask))->resolve($request)
+                    : null,
             ),
         ];
     }

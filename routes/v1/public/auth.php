@@ -8,6 +8,7 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
 use App\Modules\V1\Authentication\Presentation\Http\Controller\ResetPasswordController;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\FirebaseTestController;
 
 Route::post('{type}/register', [AuthController::class, 'register'])
     ->where('type', PortalTypeEnum::COMPANY->value.'|'.PortalTypeEnum::WORKER->value);
@@ -62,3 +63,9 @@ Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword']
         'abilities:'.TokenTypeEnum::RESET_PASSWORD_TOKEN->value,
         'throttle:auth-reset-password',
     ]);
+
+
+Route::middleware('auth:sanctum')->post(
+    '/firebase/test',
+    [FirebaseTestController::class, 'send']
+);

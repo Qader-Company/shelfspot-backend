@@ -126,6 +126,7 @@ class WorkerTaskController extends Controller
                     'store',
                     'services.service.translations',
                     'services.products.product',
+                    'services.products.product.translations',
                     'services.submission',
                     'assignedWorker',
                 ])

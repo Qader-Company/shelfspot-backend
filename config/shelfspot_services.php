@@ -75,7 +75,7 @@ return [
                         'min_items' => 1,
                         'item_fields' => [
                             'product_id' => ['type' => 'integer', 'required' => true],
-                            'sku' => ['type' => 'string', 'required' => true],
+//                            'sku' => ['type' => 'string', 'required' => true],
                             'availability' => ['type' => 'enum', 'required' => true, 'values' => ['available', 'unavailable']],
                         ],
                     ],
@@ -132,7 +132,7 @@ return [
                         'item_fields' => [
                             'product_id' => ['type' => 'integer', 'required' => true],
                             'quantity' => ['type' => 'integer', 'required' => true, 'min' => 0],
-                            'expiry_date' => ['type' => 'date', 'required' => true],
+//                            'expiry_date' => ['type' => 'date', 'required' => true],
                         ],
                     ],
                     'additional_notes' => ['type' => 'string', 'required' => false, 'max' => 2000],

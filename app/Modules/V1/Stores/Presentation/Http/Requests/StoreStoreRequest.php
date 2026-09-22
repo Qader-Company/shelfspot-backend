@@ -21,7 +21,6 @@ class StoreStoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('stores', 'number')->where('company_id', $this->companyId()),
             ],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],

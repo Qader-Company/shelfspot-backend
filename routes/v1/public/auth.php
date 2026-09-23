@@ -64,7 +64,7 @@ Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword']
         'throttle:auth-reset-password',
     ]);
 
-if (app()->environment('local')) {
+//if (app()->environment('local')) {
     Route::post('/firebase/test', [FirebaseTestController::class, 'send'])
         ->middleware([
             'auth:sanctum',
@@ -72,4 +72,4 @@ if (app()->environment('local')) {
             'active.user',
             'throttle:10,1',
         ]);
-}
+//}

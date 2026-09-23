@@ -6,6 +6,7 @@ use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\V1\Users\Application\Profiles\ProfileHandlerFactory;
 use App\Modules\V1\Users\Domain\Models\DeviceToken;
+use App\Modules\V1\Users\Presentation\Http\Requests\DestroyDeviceTokenRequest;
 use App\Modules\V1\Users\Presentation\Http\Requests\StoreDeviceTokenRequest;
 use App\Modules\V1\Users\Presentation\Http\Requests\UpdateProfileRequest;
 use Illuminate\Http\Request;
@@ -31,7 +32,6 @@ class ProfileController extends Controller
         );
     }
 
-
     public function storeDeviceToken(StoreDeviceTokenRequest $request)
     {
         $validated = $request->validated();
@@ -49,9 +49,23 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Device token registered successfully.',
-            'data' => $deviceToken,
+            'message' => __('notifications.device_token_registered'),
+            'data' => [
+                'id' => $deviceToken->id,
+                'device_type' => $deviceToken->device_type,
+                'device_name' => $deviceToken->device_name,
+                'last_used_at' => $deviceToken->last_used_at,
+            ],
         ]);
     }
 
+    public function destroyDeviceToken(DestroyDeviceTokenRequest $request)
+    {
+        $request->user()
+            ->deviceTokens()
+            ->where('token', $request->validated('token'))
+            ->delete();
+
+        return ApiResponse::deleted(__('notifications.device_token_deleted'));
+    }
 }

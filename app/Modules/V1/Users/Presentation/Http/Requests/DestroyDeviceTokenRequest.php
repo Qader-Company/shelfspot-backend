@@ -4,7 +4,7 @@ namespace App\Modules\V1\Users\Presentation\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreDeviceTokenRequest extends FormRequest
+class DestroyDeviceTokenRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,8 +15,6 @@ class StoreDeviceTokenRequest extends FormRequest
     {
         return [
             'token' => ['required', 'string', 'max:512'],
-            'device_type' => ['nullable', 'in:android,ios'],
-            'device_name' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

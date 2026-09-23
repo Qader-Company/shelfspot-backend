@@ -41,5 +41,6 @@ return [
 
     'firebase' => [
         'credentials' => env('FIREBASE_CREDENTIALS'),
-    ]
+        'credentials_base64' => env('FIREBASE_CREDENTIALS_BASE64'),
+    ],
 ];

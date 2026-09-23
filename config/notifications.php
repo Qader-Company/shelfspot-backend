@@ -11,6 +11,11 @@ return [
 
     'backoff' => [30, 120, 600],
 
+    'firebase' => [
+        'enabled' => env('FIREBASE_NOTIFICATIONS_ENABLED', false),
+        'android_channel_id' => env('FIREBASE_ANDROID_CHANNEL_ID', 'shelfspot_notifications'),
+    ],
+
     'health' => [
         'max_pending_per_queue' => (int) env('NOTIFICATIONS_QUEUE_MAX_PENDING', 100),
         'reverb_timeout_seconds' => (int) env('NOTIFICATIONS_REVERB_HEALTH_TIMEOUT', 2),

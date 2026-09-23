@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\FirebaseTestController;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
@@ -8,7 +9,6 @@ use App\Modules\V1\Authentication\Presentation\Http\Controller\EmailVerification
 use App\Modules\V1\Authentication\Presentation\Http\Controller\ResetPasswordController;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\FirebaseTestController;
 
 Route::post('{type}/register', [AuthController::class, 'register'])
     ->where('type', PortalTypeEnum::COMPANY->value.'|'.PortalTypeEnum::WORKER->value);
@@ -64,8 +64,12 @@ Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword']
         'throttle:auth-reset-password',
     ]);
 
-
-Route::middleware('auth:sanctum')->post(
-    '/firebase/test',
-    [FirebaseTestController::class, 'send']
-);
+if (app()->environment('local')) {
+    Route::post('/firebase/test', [FirebaseTestController::class, 'send'])
+        ->middleware([
+            'auth:sanctum',
+            'abilities:'.PortalTypeEnum::WORKER->value.',access',
+            'active.user',
+            'throttle:10,1',
+        ]);
+}

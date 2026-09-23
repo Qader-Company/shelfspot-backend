@@ -1,6 +1,6 @@
 # Real-time notifications
 
-Notifications are persisted for the recipient `User` and broadcast through Laravel's private notification channel (`App.Models.User.{id}`). The client should listen with `Echo.private(...).notification(...)`, update its unread counter, then fetch the target resource through the normal authorised API.
+Notifications are persisted for the recipient `User` and broadcast through Laravel's private notification channel (`App.Models.User.{id}`). Worker recipients additionally receive Firebase Cloud Messaging push notifications on every registered device. Admin and company recipients remain database-and-Reverb only.
 
 ## Required services
 
@@ -13,6 +13,16 @@ php artisan queue:work
 php artisan reverb:start
 ```
 
+For worker push notifications, also set `FIREBASE_NOTIFICATIONS_ENABLED=true` and create the Android notification channel named by `FIREBASE_ANDROID_CHANNEL_ID` in the mobile app. Locally, `FIREBASE_CREDENTIALS` can point to a readable service-account JSON file. For containers, set `FIREBASE_CREDENTIALS_BASE64` to the Base64-encoded JSON instead; it takes precedence over the file path. Never copy the service-account file into the application image.
+
+## Worker device tokens
+
+- `POST /api/v1/worker/account/device-tokens` registers or refreshes a device with `token`, optional `device_type` (`android` or `ios`), and optional `device_name`.
+- `DELETE /api/v1/worker/account/device-tokens` removes the supplied `token`.
+- `DELETE /api/v1/auth/logout` accepts an optional `device_token` and removes it before revoking the current access token.
+
+Firebase removes invalid and unregistered tokens automatically after a delivery attempt. Push jobs use the same high/normal notification queues and retry policy as the persisted notification.
+
 ## Notification API
 
 - `GET /api/v1/{admin|company|worker}/notifications`
@@ -20,7 +30,7 @@ php artisan reverb:start
 - `PATCH /api/v1/{admin|company|worker}/notifications/{id}/read`
 - `PATCH /api/v1/{admin|company|worker}/notifications/read-all`
 
-All payloads include `event`, `category`, `priority`, `action`, and context under `meta`. Current delivery rules are intentionally narrow: companies receive task completion, task failure, and reopening; admins receive worker cancellations and company rejections; workers receive nearby published tasks, reassignment, and reopening. Push delivery can reuse the same persisted payload later without changing task workflows.
+All payloads include `event`, `category`, `priority`, `action`, and context under `meta`. Current delivery rules are intentionally narrow: companies receive task completion, task failure, and reopening; admins receive worker cancellations and company rejections; workers receive nearby published tasks, reassignment, and reopening. Only worker recipients receive the Firebase copy.
 
 ## Notification Lab test sender
 

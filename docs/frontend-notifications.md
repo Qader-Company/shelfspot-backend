@@ -5,6 +5,8 @@ This is the contract for an external ShelfSpots frontend. Notifications have two
 1. **REST API** is the persisted source of truth. Use it for the initial screen, unread counts, missed events, and read state.
 2. **Realtime (Laravel Reverb)** delivers a newly created notification while the user is online. It never replays notifications sent before a client subscribed.
 
+Worker apps have a third wake-up path: **Firebase Cloud Messaging**. FCM is for system push display and opening the target screen; REST remains the source of truth and Reverb remains the foreground realtime path. Admin and company apps do not receive FCM pushes.
+
 Always load the REST API after login and after every realtime reconnect. A websocket notification should be inserted into the local list immediately, but it does not replace the next REST refresh.
 
 ## 1. Requirements and authentication
@@ -43,6 +45,44 @@ For a frontend hosted on a different origin, the backend deployment must include
 ## 2. REST API
 
 Replace `{portal}` below with `admin`, `company`, or `worker`.
+
+### Worker device registration
+
+After worker login and whenever Firebase rotates its token:
+
+```http
+POST /api/v1/worker/account/device-tokens
+Content-Type: application/json
+
+{
+  "token": "<fcm-token>",
+  "device_type": "android",
+  "device_name": "Pixel 9"
+}
+```
+
+Before logout, either call `DELETE /api/v1/worker/account/device-tokens` with `{ "token": "<fcm-token>" }`, or include `{ "device_token": "<fcm-token>" }` in the existing logout request. Register again after login even when the locally cached FCM token appears unchanged.
+
+The FCM `data` payload contains string values only:
+
+```json
+{
+  "notification_id": "7ec2e819-c2fb-43bc-94d9-98dd5d18da1a",
+  "event": "task.reassigned",
+  "category": "task",
+  "priority": "high",
+  "task_id": "42",
+  "company_id": "7",
+  "status": "reassigned",
+  "actor_id": "",
+  "action_resource": "task",
+  "action_id": "42",
+  "meta": "{\"status_history_id\":145}",
+  "occurred_at": "2026-07-27T12:00:00+00:00"
+}
+```
+
+Parse numeric IDs where needed and JSON-decode `meta`. On notification tap, open `action_resource/action_id`, then refresh the REST notification list and unread count. The Android app must create the `shelfspot_notifications` channel (or the value configured by the backend) before receiving pushes.
 
 | Purpose | Method | Path | Parameters / body |
 | --- | --- | --- | --- |

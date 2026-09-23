@@ -70,6 +70,16 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $validated = $request->validate([
+            'device_token' => ['nullable', 'string', 'max:512'],
+        ]);
+
+        if (! empty($validated['device_token'])) {
+            $request->user()?->deviceTokens()
+                ->where('token', $validated['device_token'])
+                ->delete();
+        }
+
         $request->user()?->currentAccessToken()?->delete();
 
         return ApiResponse::message(__('auth.loggedOut'));

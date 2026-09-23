@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'device_token_registered' => 'Device registered for push notifications.',
+    'device_token_deleted' => 'Device removed from push notifications.',
+
     'task_published' => [
         'title' => 'New task nearby',
         'description' => 'Task #:task is available near your location.',

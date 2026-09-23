@@ -21,7 +21,9 @@ class FirebaseChannel
         if (! config('notifications.firebase.enabled')
             || ! $notifiable instanceof User
             || $notifiable->type !== PortalTypeEnum::WORKER
-            || ! method_exists($notification, 'toFirebase')) {
+            || ! method_exists($notification, 'toFirebase')
+            || (method_exists($notification, 'shouldSendToFirebase')
+                && ! $notification->shouldSendToFirebase($notifiable))) {
             return null;
         }
 

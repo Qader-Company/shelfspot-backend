@@ -14,6 +14,11 @@ return [
     'firebase' => [
         'enabled' => env('FIREBASE_NOTIFICATIONS_ENABLED', false),
         'android_channel_id' => env('FIREBASE_ANDROID_CHANNEL_ID', 'shelfspot_notifications'),
+        'worker_events' => [
+            'task.published',
+            'task.reassigned',
+            'task.reopened',
+        ],
     ],
 
     'health' => [

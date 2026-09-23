@@ -29,13 +29,23 @@ class RealtimeNotification extends Notification implements ShouldQueue
     {
         $channels = [DeduplicatedDatabaseChannel::class, DeduplicatedBroadcastChannel::class];
 
-        if (config('notifications.firebase.enabled')
-            && $notifiable instanceof User
-            && $notifiable->type === PortalTypeEnum::WORKER) {
+        if ($this->shouldSendToFirebase($notifiable)) {
             $channels[] = FirebaseChannel::class;
         }
 
         return $channels;
+    }
+
+    public function shouldSendToFirebase(object $notifiable): bool
+    {
+        return config('notifications.firebase.enabled')
+            && $notifiable instanceof User
+            && $notifiable->type === PortalTypeEnum::WORKER
+            && in_array(
+                $this->payload['event'] ?? null,
+                config('notifications.firebase.worker_events', []),
+                true,
+            );
     }
 
     public function toArray(object $notifiable): array

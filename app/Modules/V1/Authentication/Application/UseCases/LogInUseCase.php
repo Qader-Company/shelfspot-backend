@@ -3,9 +3,10 @@
 namespace App\Modules\V1\Authentication\Application\UseCases;
 
 use App\Modules\V1\Authentication\Domain\Services\OtpService;
-use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
+use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
+use App\Modules\V1\Users\Application\Services\DeviceTokenManager;
 use App\Modules\V1\Users\Application\Services\UserActivationChecker;
 use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
@@ -16,14 +17,12 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class LogInUseCase
 {
-
     public function __construct(
         private TokenIssuer $tokenIssuer,
         private OtpService $otpService,
-        private UserRepositoryInterface $userRepository
-    )
-    {
-    }
+        private UserRepositoryInterface $userRepository,
+        private DeviceTokenManager $deviceTokens,
+    ) {}
 
     public function execute(array $credentials, PortalTypeEnum $userType)
     {
@@ -42,22 +41,28 @@ class LogInUseCase
             throw new UnauthorizedHttpException('', __('auth.credentials_mismatch'));
         }
 
+        $needsVerification = is_null($user->email_verified_at);
+
+        if (! $needsVerification && $userType === PortalTypeEnum::WORKER) {
+            $this->deviceTokens->registerWorkerDevice($user, $credentials);
+        }
+
         return $this->userDataDependedOnVerificationStatus(
             $user,
             $userType,
-            is_null($user->email_verified_at)
+            $needsVerification,
         );
     }
 
     private function userDataDependedOnVerificationStatus(User $user, PortalTypeEnum $userType, bool $needsVerification)
     {
         $data = [
-            'data' => ['user' => $user,],
+            'data' => ['user' => $user],
             'message' => __('auth.login_success'),
             'code' => Response::HTTP_OK,
         ];
 
-        if($needsVerification){
+        if ($needsVerification) {
             $data['data']['verification_token'] = $this->tokenIssuer->create($user, $userType, TokenTypeEnum::VERIFY_TOKEN);
             $data['message'] = __('auth.verify_account');
             $data['code'] = Response::HTTP_FORBIDDEN;

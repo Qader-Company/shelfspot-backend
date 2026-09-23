@@ -15,6 +15,7 @@ use App\Modules\V1\Authentication\Presentation\Http\Requests\EmailValidationRequ
 use App\Modules\V1\Authentication\Presentation\Http\Requests\LoginRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\RegisterRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\SocialLoginRequest;
+use App\Modules\V1\Users\Application\Services\DeviceTokenManager;
 use App\Modules\V1\Users\Application\Services\UserResourceResolver;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Illuminate\Http\Request;
@@ -68,16 +69,14 @@ class AuthController extends Controller
         return ApiResponse::success($data, __('auth.login_success'));
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request, DeviceTokenManager $deviceTokens)
     {
         $validated = $request->validate([
             'device_token' => ['nullable', 'string', 'max:512'],
         ]);
 
-        if (! empty($validated['device_token'])) {
-            $request->user()?->deviceTokens()
-                ->where('token', $validated['device_token'])
-                ->delete();
+        if ($request->user()) {
+            $deviceTokens->removeDevice($request->user(), $validated['device_token'] ?? null);
         }
 
         $request->user()?->currentAccessToken()?->delete();

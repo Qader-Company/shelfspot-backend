@@ -46,22 +46,26 @@ For a frontend hosted on a different origin, the backend deployment must include
 
 Replace `{portal}` below with `admin`, `company`, or `worker`.
 
-### Worker device registration
+### Worker device registration during login
 
-After worker login and whenever Firebase rotates its token:
+Obtain the FCM token before worker login and include it in the login request:
 
 ```http
-POST /api/v1/worker/account/device-tokens
+POST /api/v1/auth/worker/login
 Content-Type: application/json
 
 {
-  "token": "<fcm-token>",
+  "email": "worker@example.com",
+  "password": "worker-password",
+  "device_token": "<fcm-token>",
   "device_type": "android",
   "device_name": "Pixel 9"
 }
 ```
 
-Before logout, either call `DELETE /api/v1/worker/account/device-tokens` with `{ "token": "<fcm-token>" }`, or include `{ "device_token": "<fcm-token>" }` in the existing logout request. Register again after login even when the locally cached FCM token appears unchanged.
+The three device fields are optional and accepted only by worker login (including worker social login). Admin and company login requests that contain them are rejected. There is no separate registration endpoint. If Firebase rotates the token during an active session, the backend receives the new value on the worker's next login.
+
+Include `{ "device_token": "<fcm-token>" }` in the existing logout request so the backend removes the device before revoking the access token.
 
 The FCM `data` payload contains string values only:
 

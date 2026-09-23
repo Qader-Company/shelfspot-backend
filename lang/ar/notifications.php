@@ -1,9 +1,6 @@
 <?php
 
 return [
-    'device_token_registered' => 'تم تسجيل الجهاز لاستقبال الإشعارات.',
-    'device_token_deleted' => 'تم إلغاء تسجيل الجهاز من الإشعارات.',
-
     'task_published' => [
         'title' => 'مهمة جديدة بالقرب منك',
         'description' => 'المهمة رقم #:task متاحة بالقرب من موقعك.',

@@ -12,101 +12,75 @@ Worker notifications use three delivery paths in parallel:
 
 FCM is enabled for worker users only. Admin and company users continue to use Database/REST and Reverb without Firebase push delivery.
 
-## 2. Required request headers
+## 2. Worker login with the device token
 
-All API requests in this document require:
+Obtain the FCM token before sending the worker login request. The device fields are optional so denying notification permission must not block login.
 
 ```http
+POST /api/v1/auth/worker/login
 Accept: application/json
 Content-Type: application/json
 X-Authorization: <platform-api-key>
-Authorization: Bearer <worker-access-token>
 ```
-
-The Bearer token must be a worker access token, not a refresh, verification, or password-reset token.
-
-## 3. Device-token lifecycle
-
-### 3.1 Register or refresh a device
-
-Call this endpoint after worker login, whenever FCM rotates the token, and on authenticated app startup to ensure the current token is registered.
-
-```http
-POST /api/v1/worker/account/device-tokens
-```
-
-Request:
 
 ```json
 {
-  "token": "<fcm-registration-token>",
+  "email": "worker@example.com",
+  "password": "worker-password",
+  "device_token": "<fcm-registration-token>",
   "device_type": "android",
   "device_name": "Samsung S24"
 }
 ```
 
-Fields:
+Device fields:
 
 | Field | Required | Rules |
 | --- | --- | --- |
-| `token` | Yes | String, maximum 512 characters |
-| `device_type` | No | `android` or `ios` |
-| `device_name` | No | String, maximum 255 characters |
+| `device_token` | No | String, maximum 512 characters |
+| `device_type` | No | `android` or `ios`; only send with `device_token` |
+| `device_name` | No | String, maximum 255 characters; only send with `device_token` |
 
-Success response (`200`):
+The device is stored only when worker credentials are valid, the worker is active, and email verification is complete. The normal login response is unchanged.
 
-```json
-{
-  "success": true,
-  "message": "Device registered for push notifications.",
-  "data": {
-    "id": 15,
-    "device_type": "android",
-    "device_name": "Samsung S24",
-    "last_used_at": "2026-09-23T08:30:00.000000Z"
-  }
-}
-```
+The same FCM token can move safely between worker accounts on a shared device: a successful login associates it with the currently authenticated worker. Different devices can log in with different tokens, allowing one worker to receive pushes on multiple devices.
 
-A worker can register multiple devices. Registering an existing FCM token refreshes its device information and associates it with the currently authenticated worker.
+### 2.1 Worker social login
 
-### 3.2 FCM token refresh
-
-Subscribe to the Firebase SDK token-refresh callback. Every newly issued token must immediately be sent to the registration endpoint while the worker is authenticated.
-
-Do not assume an FCM token is permanent. It can change after an app reinstall, app-data reset, device restore, or Firebase rotation.
-
-### 3.3 Remove a device token
+For worker Google login, keep the provider token and FCM token in separate fields:
 
 ```http
-DELETE /api/v1/worker/account/device-tokens
+POST /api/v1/auth/worker/social/google/login
+Accept: application/json
+Content-Type: application/json
+X-Authorization: <platform-api-key>
 ```
-
-Request:
 
 ```json
 {
-  "token": "<fcm-registration-token>"
+  "token": "<google-id-token>",
+  "device_token": "<fcm-registration-token>",
+  "device_type": "ios",
+  "device_name": "iPhone 17"
 }
 ```
 
-Success response (`200`):
+### 2.2 Worker-only restriction
 
-```json
-{
-  "success": true,
-  "message": "Device removed from push notifications."
-}
-```
+`device_token`, `device_type`, and `device_name` are accepted only when the route portal is `worker`. Admin and company login requests containing any device field fail validation with `422` and never register an FCM token.
 
-The endpoint is idempotent. Removing a token that is already absent still returns success.
+There is no standalone device-token registration endpoint. If Firebase rotates the token during an authenticated session, keep the new value locally and include it on the worker's next login.
 
-### 3.4 Logout
+## 3. Logout and device removal
 
 The preferred logout request removes the device token and revokes the current access token in one call:
 
 ```http
 DELETE /api/v1/auth/logout
+Accept: application/json
+Content-Type: application/json
+X-Authorization: <platform-api-key>
+Authorization: Bearer <worker-access-token>
 ```
 
 ```json
@@ -115,7 +89,7 @@ DELETE /api/v1/auth/logout
 }
 ```
 
-If the application calls the device-token delete endpoint separately, it may send an empty logout body afterward. Remove the token before deleting local authentication state so the request can still use the worker access token.
+Send the same FCM token used during login. The backend removes it before revoking the current access token. Clear local authentication state and disconnect Reverb only after sending the request.
 
 ## 4. Worker events delivered through Firebase
 
@@ -247,7 +221,7 @@ The backend sends `apns-push-type: alert`, immediate APNs priority, and the defa
 | `401` | Access token missing, invalid, or expired | Refresh the session or log in again |
 | `403` | Token is not allowed to access worker APIs | Do not retry with the same token |
 | `422` | Invalid token/device request data | Fix the request and log validation details |
-| `429` | Too many registration/deletion requests | Respect `Retry-After` before retrying |
+| `429` | Request rate limited | Respect `Retry-After` before retrying |
 | `500` | Unexpected backend error | Retry with bounded exponential backoff and report diagnostics |
 
 Do not log the full FCM registration token in analytics, crash reports, or normal application logs.
@@ -255,15 +229,18 @@ Do not log the full FCM registration token in analytics, crash reports, or norma
 ## 11. Recommended application flow
 
 ```text
-Worker logs in
+Before worker login
     -> request notification permission when appropriate
-    -> Firebase getToken()
-    -> POST /worker/account/device-tokens
+    -> Firebase getToken() when permission/setup allows it
+    -> include device_token/device_type/device_name in POST /auth/worker/login
+
+Worker login succeeds
     -> load REST notifications and unread count
     -> connect Reverb
 
 Firebase token rotates
-    -> POST /worker/account/device-tokens with the new token
+    -> keep the new token locally
+    -> include it on the next worker login
 
 FCM or Reverb notification arrives
     -> deduplicate by notification_id
@@ -281,8 +258,10 @@ Worker logs out
 
 - [ ] Fresh install permission accepted.
 - [ ] Fresh install permission denied without crashing or blocking login.
-- [ ] Device token registered after login.
-- [ ] Token refresh updates backend registration.
+- [ ] Worker login with a device token registers the device.
+- [ ] Worker login without notification permission still succeeds.
+- [ ] Company/admin login rejects device fields.
+- [ ] A rotated token is included on the next worker login.
 - [ ] `task.published` push opens the correct task.
 - [ ] `task.reassigned` push opens the correct task.
 - [ ] `task.reopened` push opens the correct task.
@@ -295,4 +274,3 @@ Worker logs out
 - [ ] Logging into a different worker account re-associates the current token correctly.
 - [ ] Android release build uses the correct channel and Firebase project.
 - [ ] iOS production build receives APNs-delivered FCM notifications.
-

@@ -304,7 +304,10 @@ X-Authorization: {{api_key}}
 ```json
 {
   "email": "string (required, valid email, max:255)",
-  "password": "string (required, min:6)"
+  "password": "string (required, min:6)",
+  "device_token": "string (optional, FCM token, max:512)",
+  "device_type": "string (optional with device_token: android or ios)",
+  "device_name": "string (optional with device_token, max:255)"
 }
 ```
 
@@ -343,7 +346,10 @@ Request:
 ```json
 {
   "email": "worker@example.com",
-  "password": "73eQf4b1"
+  "password": "73eQf4b1",
+  "device_token": "fcm-registration-token",
+  "device_type": "android",
+  "device_name": "Pixel 9"
 }
 ```
 Response:
@@ -360,7 +366,7 @@ Response:
 ```
 
 ### Notes
-Use the worker access token with routes under `/api/v1/worker/*`.
+Use the worker access token with routes under `/api/v1/worker/*`. Obtain the FCM token before login and include it when available. Device fields are accepted only on worker login and are stored only after a successful, verified login. There is no separate device-token registration endpoint.
 
 ## Endpoint: Refresh Worker Token
 - **Method:** POST
@@ -441,12 +447,15 @@ This endpoint requires a refresh-token Bearer token, not a normal access token.
 ### Headers
 ```
 Accept: application/json
+X-Authorization: {{api_key}}
 Authorization: Bearer {{token}}
 ```
 
 ### Request Body
 ```json
-{}
+{
+  "device_token": "string (optional, current FCM token, max:512)"
+}
 ```
 
 ### Success (200)
@@ -467,7 +476,9 @@ Authorization: Bearer {{token}}
 #### Example: Logout worker session
 Request:
 ```json
-{}
+{
+  "device_token": "fcm-registration-token"
+}
 ```
 Response:
 ```json
@@ -478,7 +489,7 @@ Response:
 ```
 
 ### Notes
-Logout is shared across portals and revokes the token used in the request.
+Logout is shared across portals and revokes the token used in the request. When `device_token` is supplied, the backend removes that device before revoking the current access token.
 
 ## Branch: Worker session renewal
 **Condition:** Worker access token expired but refresh token is still valid.

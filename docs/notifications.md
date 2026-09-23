@@ -17,11 +17,12 @@ For worker push notifications, also set `FIREBASE_NOTIFICATIONS_ENABLED=true` an
 
 ## Worker device tokens
 
-- `POST /api/v1/worker/account/device-tokens` registers or refreshes a device with `token`, optional `device_type` (`android` or `ios`), and optional `device_name`.
-- `DELETE /api/v1/worker/account/device-tokens` removes the supplied `token`.
+- `POST /api/v1/auth/worker/login` accepts optional `device_token`, `device_type` (`android` or `ios`), and `device_name` fields. The token is stored only after a successful verified worker login.
+- `POST /api/v1/auth/worker/social/{provider}/login` accepts the same optional device fields for worker social login.
+- Other portals prohibit the device fields and never register FCM tokens.
 - `DELETE /api/v1/auth/logout` accepts an optional `device_token` and removes it before revoking the current access token.
 
-Firebase removes invalid and unregistered tokens automatically after a delivery attempt. Push jobs use the same high/normal notification queues and retry policy as the persisted notification.
+There is no standalone device-token registration endpoint. If Firebase rotates the token during an authenticated session, the new token is stored on the worker's next login. Firebase removes invalid and unregistered tokens automatically after a delivery attempt. Push jobs use the same high/normal notification queues and retry policy as the persisted notification.
 
 ## Notification API
 

@@ -6,11 +6,11 @@ use App\Facades\ApiResponse;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
-use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
 use App\Modules\V1\AccessControl\Presentation\Http\Controllers\AccessControlController;
 use App\Modules\V1\AccessControl\Presentation\Http\Requests\StoreRoleRequest;
 use App\Modules\V1\AccessControl\Presentation\Http\Requests\UpdateRoleRequest;
 use App\Modules\V1\AccessControl\Presentation\Http\Resources\ManagedAdminResource;
+use App\Modules\V1\CompanyAdmins\Application\Services\CompanyUserManagementService;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\StoreCompanyAdminRequest;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\UpdateCompanyAdminRequest;
 use App\Modules\V1\Users\Domain\Models\User;
@@ -21,12 +21,11 @@ class CompanyAdminManagementController extends AccessControlController
 
     public function __construct(
         AccessControlRepositoryInterface $accessControlRepository,
-        private readonly ManagedAdminRepositoryInterface $managedAdminRepository,
+        private readonly CompanyUserManagementService $companyUsers,
         private readonly TenantContextInterface $tenantContext
     ) {
         parent::__construct($accessControlRepository);
     }
-
 
     public function permissions()
     {
@@ -77,7 +76,7 @@ class CompanyAdminManagementController extends AccessControlController
     {
         return ApiResponse::success(
             ManagedAdminResource::collection(
-                $this->managedAdminRepository->companyAdmins($this->companyId())
+                $this->companyUsers->users($this->companyId())
             )
         );
     }
@@ -86,7 +85,7 @@ class CompanyAdminManagementController extends AccessControlController
     {
         return ApiResponse::created(
             new ManagedAdminResource(
-                $this->managedAdminRepository->createCompanyAdmin(
+                $this->companyUsers->create(
                     $this->companyId(),
                     $request->validated()
                 )
@@ -98,7 +97,7 @@ class CompanyAdminManagementController extends AccessControlController
     {
         return ApiResponse::updated(
             new ManagedAdminResource(
-                $this->managedAdminRepository->updateCompanyAdmin(
+                $this->companyUsers->updateFromCompanyPortal(
                     $this->companyId(),
                     $user,
                     $request->validated()
@@ -109,7 +108,7 @@ class CompanyAdminManagementController extends AccessControlController
 
     public function destroyAdmin(User $user)
     {
-        $this->managedAdminRepository->deleteCompanyAdmin(
+        $this->companyUsers->deleteFromCompanyPortal(
             $this->companyId(),
             $user
         );

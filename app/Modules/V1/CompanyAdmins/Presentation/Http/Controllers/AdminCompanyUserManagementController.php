@@ -8,8 +8,8 @@ use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
-use App\Modules\V1\AccessControl\Domain\Repositories\ManagedAdminRepositoryInterface;
 use App\Modules\V1\AccessControl\Presentation\Http\Resources\RoleResource;
+use App\Modules\V1\CompanyAdmins\Application\Services\CompanyUserManagementService;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\AdminResetCompanyUserPasswordRequest;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\AdminUpdateCompanyUserRequest;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\StoreCompanyAdminRequest;
@@ -23,14 +23,14 @@ class AdminCompanyUserManagementController extends Controller
     use Filterable;
 
     public function __construct(
-        private readonly ManagedAdminRepositoryInterface $managedAdminRepository,
+        private readonly CompanyUserManagementService $companyUsers,
         private readonly AccessControlRepositoryInterface $accessControlRepository,
         private readonly TenantContextInterface $tenantContext,
     ) {}
 
     public function index(Request $request, int $company): JsonResponse
     {
-        $users = $this->managedAdminRepository->companyAdmins(
+        $users = $this->companyUsers->users(
             $this->companyId(),
             $this->acceptedFilters($request, ['is_active', 'role', 'search']),
         );
@@ -52,7 +52,7 @@ class AdminCompanyUserManagementController extends Controller
 
     public function store(StoreCompanyAdminRequest $request, int $company): JsonResponse
     {
-        $user = $this->managedAdminRepository->createCompanyAdmin(
+        $user = $this->companyUsers->create(
             $this->companyId(),
             $request->validated(),
         );
@@ -69,7 +69,7 @@ class AdminCompanyUserManagementController extends Controller
 
     public function update(AdminUpdateCompanyUserRequest $request, int $company, int $user): JsonResponse
     {
-        $updatedUser = $this->managedAdminRepository->updateCompanyAdminAsShelfSpotAdmin(
+        $updatedUser = $this->companyUsers->updateFromAdminPortal(
             $this->companyId(),
             $this->companyUser($user),
             $request->validated(),
@@ -80,7 +80,7 @@ class AdminCompanyUserManagementController extends Controller
 
     public function resetPassword(AdminResetCompanyUserPasswordRequest $request, int $company, int $user): JsonResponse
     {
-        $this->managedAdminRepository->resetCompanyAdminPassword(
+        $this->companyUsers->resetPassword(
             $this->companyId(),
             $this->companyUser($user),
             $request->validated('password'),
@@ -91,7 +91,7 @@ class AdminCompanyUserManagementController extends Controller
 
     public function destroy(int $company, int $user): JsonResponse
     {
-        $this->managedAdminRepository->deleteCompanyAdminAsShelfSpotAdmin(
+        $this->companyUsers->deleteFromAdminPortal(
             $this->companyId(),
             $this->companyUser($user),
         );
@@ -101,7 +101,7 @@ class AdminCompanyUserManagementController extends Controller
 
     private function companyUser(int $userId): User
     {
-        return $this->managedAdminRepository->findCompanyAdmin($this->companyId(), $userId);
+        return $this->companyUsers->find($this->companyId(), $userId);
     }
 
     private function companyId(): int

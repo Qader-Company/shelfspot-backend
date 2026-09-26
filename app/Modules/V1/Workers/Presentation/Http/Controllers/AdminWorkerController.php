@@ -7,22 +7,18 @@ use App\Http\Controllers\Controller;
 use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
 use App\Modules\Shared\Support\Traits\Filterable;
-use App\Modules\V1\Users\Application\Services\UserAccessRevoker;
-use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Workers\Application\Jobs\SendWorkerCredentialsEmailJob;
 use App\Modules\V1\Workers\Application\UseCases\CreateWorkerUseCase;
+use App\Modules\V1\Workers\Application\UseCases\DeleteWorkerUseCase;
 use App\Modules\V1\Workers\Application\UseCases\ShowAdminWorkerUseCase;
-use App\Modules\V1\Workers\Domain\Models\Worker;
+use App\Modules\V1\Workers\Application\UseCases\UpdateWorkerUseCase;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
 use App\Modules\V1\Workers\Presentation\Http\Requests\AdminShowWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Requests\RegisterWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerRequest;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
 
 class AdminWorkerController extends Controller
 {
@@ -31,8 +27,6 @@ class AdminWorkerController extends Controller
 
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
-        private readonly UserRepositoryInterface $userRepository,
-        private readonly UserAccessRevoker $userAccessRevoker,
     ) {}
 
     public function index(Request $request)
@@ -69,45 +63,16 @@ class AdminWorkerController extends Controller
         ));
     }
 
-    public function update(UpdateWorkerRequest $request, int $worker)
+    public function update(UpdateWorkerRequest $request, int $worker, UpdateWorkerUseCase $updateWorkerUseCase)
     {
-        $worker = $this->getWorker($worker, ['user']);
-        $data = $request->validated();
-
-        DB::transaction(function () use ($worker, $data) {
-            $userAttributes = Arr::only($data, ['name', 'email', 'password']);
-            $workerAttributes = Arr::only($data, ['phone', 'is_active']);
-            $willBeDeactivated = array_key_exists('is_active', $workerAttributes)
-                && ! (bool) $workerAttributes['is_active'];
-
-            if ($userAttributes !== []) {
-                $this->userRepository->update($worker->user, $userAttributes);
-            }
-
-            if ($workerAttributes !== []) {
-                $this->workerRepository->update($worker, $workerAttributes);
-            }
-
-            if (isset($data['image'])) {
-                $worker->addMedia($data['image'])->toMediaCollection('image');
-            }
-
-            if ($willBeDeactivated) {
-                $this->userAccessRevoker->revoke($worker->user);
-            }
-        });
-
-        return ApiResponse::updated(new WorkerResource($worker->refresh()->load('user')));
+        return ApiResponse::updated(new WorkerResource(
+            $updateWorkerUseCase->execute($worker, $request->validated())
+        ));
     }
 
-    public function destroy(int $worker)
+    public function destroy(int $worker, DeleteWorkerUseCase $deleteWorkerUseCase)
     {
-        $worker = $this->getWorker($worker, ['user']);
-
-        DB::transaction(function () use ($worker) {
-            $this->userAccessRevoker->revoke($worker->user);
-            $this->workerRepository->delete($worker);
-        });
+        $deleteWorkerUseCase->execute($worker);
 
         return ApiResponse::deleted();
     }
@@ -120,16 +85,5 @@ class AdminWorkerController extends Controller
     protected function trashResourceCollection(LengthAwarePaginator $items): mixed
     {
         return WorkerResource::collection($items)->response()->getData(true);
-    }
-
-    private function getWorker(int $id, array $relations = []): Worker
-    {
-        $worker = $this->workerRepository->getById($id, $relations);
-
-        if (! $worker) {
-            throw new ModelNotFoundException(__('api.not_found'));
-        }
-
-        return $worker;
     }
 }

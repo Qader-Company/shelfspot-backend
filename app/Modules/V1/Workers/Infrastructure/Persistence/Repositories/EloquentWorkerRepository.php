@@ -49,16 +49,14 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
 
     public function create(array $attributes): Worker
     {
-        return DB::transaction(fn () => Worker::create($attributes));
+        return Worker::query()->create($attributes);
     }
 
     public function update(Worker $worker, array $attributes): Worker
     {
-        return DB::transaction(function () use ($worker, $attributes) {
-            $worker->update($attributes);
+        $worker->fill($attributes)->save();
 
-            return $worker;
-        });
+        return $worker;
     }
 
     public function delete(Worker $worker): void

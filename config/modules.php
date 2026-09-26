@@ -10,6 +10,7 @@ use App\Modules\V1\Companies\Infrastructure\Providers\CompaniesModuleServiceProv
 use App\Modules\V1\CompaniesWallets\Infrastructure\Providers\CompaniesWalletsModuleServiceProvider;
 use App\Modules\V1\CompanyAdmins\Infrastructure\Providers\CompanyUsersModuleServiceProvider;
 use App\Modules\V1\Coupons\Infrastructure\Providers\CouponsModuleServiceProvider;
+use App\Modules\V1\Payments\Infrastructure\Providers\PaymentsModuleServiceProvider;
 use App\Modules\V1\PlatformSettings\Infrastructure\Providers\PlatformSettingsModuleServiceProvider;
 use App\Modules\V1\Products\Infrastructure\Providers\ProductsModuleServiceProvider;
 use App\Modules\V1\Reports\Infrastructure\Providers\ReportsModuleServiceProvider;
@@ -95,6 +96,7 @@ return [
         CategoriesModuleServiceProvider::class,
         SubCategoriesModuleServiceProvider::class,
         ProductsModuleServiceProvider::class,
+        PaymentsModuleServiceProvider::class,
         PlatformSettingsModuleServiceProvider::class,
         ReportsModuleServiceProvider::class,
         ServicesModuleServiceProvider::class,

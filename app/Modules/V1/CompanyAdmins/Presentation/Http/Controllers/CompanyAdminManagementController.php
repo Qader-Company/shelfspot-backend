@@ -9,10 +9,10 @@ use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInte
 use App\Modules\V1\AccessControl\Presentation\Http\Controllers\AccessControlController;
 use App\Modules\V1\AccessControl\Presentation\Http\Requests\StoreRoleRequest;
 use App\Modules\V1\AccessControl\Presentation\Http\Requests\UpdateRoleRequest;
-use App\Modules\V1\AccessControl\Presentation\Http\Resources\ManagedAdminResource;
 use App\Modules\V1\CompanyAdmins\Application\Services\CompanyUserManagementService;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\StoreCompanyAdminRequest;
 use App\Modules\V1\CompanyAdmins\Presentation\Http\Requests\UpdateCompanyAdminRequest;
+use App\Modules\V1\CompanyAdmins\Presentation\Http\Resources\ManagedCompanyUserResource;
 use App\Modules\V1\Users\Domain\Models\User;
 
 class CompanyAdminManagementController extends AccessControlController
@@ -75,7 +75,7 @@ class CompanyAdminManagementController extends AccessControlController
     public function admins()
     {
         return ApiResponse::success(
-            ManagedAdminResource::collection(
+            ManagedCompanyUserResource::collection(
                 $this->companyUsers->users($this->companyId())
             )
         );
@@ -84,7 +84,7 @@ class CompanyAdminManagementController extends AccessControlController
     public function storeAdmin(StoreCompanyAdminRequest $request)
     {
         return ApiResponse::created(
-            new ManagedAdminResource(
+            new ManagedCompanyUserResource(
                 $this->companyUsers->create(
                     $this->companyId(),
                     $request->validated()
@@ -96,7 +96,7 @@ class CompanyAdminManagementController extends AccessControlController
     public function updateAdmin(UpdateCompanyAdminRequest $request, User $user)
     {
         return ApiResponse::updated(
-            new ManagedAdminResource(
+            new ManagedCompanyUserResource(
                 $this->companyUsers->updateFromCompanyPortal(
                     $this->companyId(),
                     $user,

@@ -26,3 +26,6 @@ Schedule::command('tasks:auto-accept-expired-review --limit=500')
 Schedule::command('notifications:health')
     ->everyMinute()
     ->withoutOverlapping();
+Schedule::command('notifications:prune')
+    ->dailyAt('02:00')
+    ->withoutOverlapping();

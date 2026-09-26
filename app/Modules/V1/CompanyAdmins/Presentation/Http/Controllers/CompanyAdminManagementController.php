@@ -46,19 +46,12 @@ class CompanyAdminManagementController extends AccessControlController
 
     public function roles()
     {
-        return $this->listRoles(
-            self::PORTAL,
-            $this->companyId()
-        );
+        return $this->listRoles(self::PORTAL, $this->companyId());
     }
 
     public function storeRole(StoreRoleRequest $request)
     {
-        return $this->createRole(
-            $request,
-            self::PORTAL,
-            $this->companyId()
-        );
+        return $this->createRole($request, self::PORTAL, $this->companyId());
     }
 
     public function updateRole(UpdateRoleRequest $request, int $roleId)

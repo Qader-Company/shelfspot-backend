@@ -8,17 +8,17 @@ use App\Modules\V1\Authentication\Infrastructure\Social\GoogleTokenVerifier;
 use App\Modules\V1\Authentication\Infrastructure\Social\Registrars\WorkerSocialRegistrar;
 use App\Modules\V1\Authentication\Infrastructure\Social\SocialPortalRegistrarManager;
 use App\Modules\V1\Authentication\Infrastructure\Social\SocialProviderManager;
-use App\Providers\AppServiceProvider;
 use Google\Client as GoogleClient;
+use Illuminate\Support\ServiceProvider;
 
-class AuthenticationModuleServiceProvider extends AppServiceProvider
+class AuthenticationModuleServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->app->bind(SocialAccountRepositoryInterface::class, EloquentSocialAccountRepository::class);
 
         $this->app->singleton(GoogleClient::class, function () {
-            $client = new GoogleClient();
+            $client = new GoogleClient;
             $client->setClientId(config('services.google.client_id'));
 
             return $client;

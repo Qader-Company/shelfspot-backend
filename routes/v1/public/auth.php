@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\FirebaseTestController;
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
@@ -63,13 +62,3 @@ Route::post('/reset-password', [ResetPasswordController::class, 'resetPassword']
         'abilities:'.TokenTypeEnum::RESET_PASSWORD_TOKEN->value,
         'throttle:auth-reset-password',
     ]);
-
-//if (app()->environment('local')) {
-    Route::post('/firebase/test', [FirebaseTestController::class, 'send'])
-        ->middleware([
-            'auth:sanctum',
-            'abilities:'.PortalTypeEnum::WORKER->value.',access',
-            'active.user',
-            'throttle:10,1',
-        ]);
-//}

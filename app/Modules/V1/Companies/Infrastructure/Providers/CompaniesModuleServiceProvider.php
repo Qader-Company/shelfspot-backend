@@ -1,13 +1,12 @@
 <?php
 
-
 namespace App\Modules\V1\Companies\Infrastructure\Providers;
 
 use App\Modules\V1\Companies\Domain\Repositories\CompanyRepositoryInterface;
 use App\Modules\V1\Companies\Infrastructure\Persistence\Repositories\EloquentCompanyRepository;
-use App\Providers\AppServiceProvider;
+use Illuminate\Support\ServiceProvider;
 
-class CompaniesModuleServiceProvider extends AppServiceProvider
+class CompaniesModuleServiceProvider extends ServiceProvider
 {
     public function register(): void
     {

@@ -16,9 +16,11 @@ use App\Modules\V1\Tasks\Presentation\Http\Requests\AvailableTaskWorkersRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskListResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
+use App\Modules\V1\Workers\Domain\Models\Worker;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
 use App\Modules\V1\Workers\Presentation\Http\Resources\WorkerResource;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\ValidationException;
 
 class AdminTaskController extends Controller
 {
@@ -100,7 +102,7 @@ class AdminTaskController extends Controller
     {
         $task = $adminReopenTaskUseCase->execute(
             task: $this->task($id),
-            worker: $this->workerRepository->getById($request->validated('worker_id')),
+            worker: $this->activeWorker((int) $request->validated('worker_id')),
             admin: $request->user(),
             reason: $request->validated('reason')
         );
@@ -110,7 +112,7 @@ class AdminTaskController extends Controller
 
     public function reassign(int $id, AdminReassignTaskRequest $request, AdminReassignTaskUseCase $adminReassignTaskUseCase)
     {
-        $worker = $this->workerRepository->getById($request->validated('worker_id'));
+        $worker = $this->activeWorker((int) $request->validated('worker_id'));
 
         $task = $adminReassignTaskUseCase->execute(
             task: $this->task($id),
@@ -141,6 +143,19 @@ class AdminTaskController extends Controller
         }
 
         return $task;
+    }
+
+    private function activeWorker(int $workerId): Worker
+    {
+        $worker = $this->workerRepository->getById($workerId);
+
+        if ($worker === null || ! $worker->is_active) {
+            throw ValidationException::withMessages([
+                'worker_id' => __('tasks.validation.reassign_active_worker_only'),
+            ]);
+        }
+
+        return $worker;
     }
 
     private function adminListRelations(): array

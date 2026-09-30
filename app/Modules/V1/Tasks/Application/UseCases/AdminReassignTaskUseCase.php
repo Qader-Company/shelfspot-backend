@@ -29,18 +29,22 @@ class AdminReassignTaskUseCase
 
             $fromStatus = $lockedTask->status;
 
-            Worker::query()->whereKey($worker->id)->lockForUpdate()->firstOrFail();
+            $lockedWorker = Worker::query()
+                ->whereKey($worker->id)
+                ->lockForUpdate()
+                ->first();
 
-            $workerHasActiveTask = $this->taskRepository->query()
-                ->where('assigned_worker_id', $worker->id)
-                ->whereIn('status', TaskStatusEnum::values(TaskStatusEnum::workerActiveStatuses()))
-                ->exists();
+            $workerHasActiveTask = $lockedWorker !== null
+                && $this->taskRepository->query()
+                    ->where('assigned_worker_id', $lockedWorker->id)
+                    ->whereIn('status', TaskStatusEnum::values(TaskStatusEnum::workerActiveStatuses()))
+                    ->exists();
 
-            CanReassignTaskRule::validate($lockedTask, $worker, $workerHasActiveTask);
+            CanReassignTaskRule::validate($lockedTask, $lockedWorker, $workerHasActiveTask);
 
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::REASSIGNED,
-                'assigned_worker_id' => $worker->id,
+                'assigned_worker_id' => $lockedWorker->id,
                 'accepted_at' => null,
                 'start_deadline_at' => null,
                 'start_deadline_extension_minutes' => null,
@@ -58,7 +62,7 @@ class AdminReassignTaskUseCase
             );
             $this->assignmentManager->assign(
                 $lockedTask,
-                $worker,
+                $lockedWorker,
                 TaskWorkerAssignmentTypeEnum::REASSIGNED,
                 $admin,
             );
@@ -67,8 +71,8 @@ class AdminReassignTaskUseCase
                 $lockedTask,
                 $fromStatus,
                 TaskStatusEnum::REASSIGNED,
-                $admin ?? $worker,
-                ['reassigned_worker_id' => $worker->id, 'assignment_type' => TaskWorkerAssignmentTypeEnum::REASSIGNED->value]
+                $admin ?? $lockedWorker,
+                ['reassigned_worker_id' => $lockedWorker->id, 'assignment_type' => TaskWorkerAssignmentTypeEnum::REASSIGNED->value]
             );
 
             return $lockedTask->refresh();

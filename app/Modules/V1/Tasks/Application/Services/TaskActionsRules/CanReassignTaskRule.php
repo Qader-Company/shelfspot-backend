@@ -18,7 +18,7 @@ class CanReassignTaskRule extends AbstractTaskActionRule
             message: __('tasks.validation.reassign_cancelled_only')
         );
 
-        if (! $worker->is_active) {
+        if ($worker === null || ! $worker->is_active) {
             throw ValidationException::withMessages(['worker' => __('tasks.validation.reassign_active_worker_only')]);
         }
 

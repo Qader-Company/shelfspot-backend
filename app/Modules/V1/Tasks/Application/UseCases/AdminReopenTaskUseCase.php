@@ -26,25 +26,29 @@ class AdminReopenTaskUseCase
         return DB::transaction(function () use ($task, $worker, $admin, $reason) {
             $lockedTask = $this->taskRepository->getByIdAndLockedForUpdate($task->id, ['services']);
 
-            Worker::query()->whereKey($worker->id)->lockForUpdate()->firstOrFail();
+            $lockedWorker = Worker::query()
+                ->whereKey($worker->id)
+                ->lockForUpdate()
+                ->first();
 
-            $workerHasActiveTask = $this->taskRepository->query()
-                ->where('assigned_worker_id', $worker->id)
-                ->whereIn('status', TaskStatusEnum::values(TaskStatusEnum::workerActiveStatuses()))
-                ->exists();
+            $workerHasActiveTask = $lockedWorker !== null
+                && $this->taskRepository->query()
+                    ->where('assigned_worker_id', $lockedWorker->id)
+                    ->whereIn('status', TaskStatusEnum::values(TaskStatusEnum::workerActiveStatuses()))
+                    ->exists();
 
-            CanReopenTaskRule::validate($lockedTask, $worker, $workerHasActiveTask);
+            CanReopenTaskRule::validate($lockedTask, $lockedWorker, $workerHasActiveTask);
 
             $fromStatus = $lockedTask->status;
             $previousWorkerId = $lockedTask->assigned_worker_id;
             $now = now();
-            $assignmentType = $previousWorkerId === $worker->id
+            $assignmentType = $previousWorkerId === $lockedWorker->id
                 ? TaskWorkerAssignmentTypeEnum::REOPENED_SAME_WORKER
                 : TaskWorkerAssignmentTypeEnum::REOPENED_REASSIGNED;
 
             $lockedTask->forceFill([
                 'status' => TaskStatusEnum::REOPENED,
-                'assigned_worker_id' => $worker->id,
+                'assigned_worker_id' => $lockedWorker->id,
                 'reopened_at' => $now,
                 'reopen_deadline_at' => $now->copy()->startOfDay()->addDays(2),
                 'reopen_reason' => $reason,
@@ -60,7 +64,7 @@ class AdminReopenTaskUseCase
             ])->save();
 
             $lockedTask->services()->update(['status' => TaskServiceStatusEnum::PENDING->value]);
-            $this->assignmentManager->assign($lockedTask, $worker, $assignmentType, $admin);
+            $this->assignmentManager->assign($lockedTask, $lockedWorker, $assignmentType, $admin);
 
             TaskStatusUpdated::dispatch(
                 $lockedTask,
@@ -71,7 +75,7 @@ class AdminReopenTaskUseCase
                     'actor_type' => 'admin',
                     'reason' => $reason,
                     'previous_worker_id' => $previousWorkerId,
-                    'assigned_worker_id' => $worker->id,
+                    'assigned_worker_id' => $lockedWorker->id,
                     'assignment_type' => $assignmentType->value,
                     'reopen_deadline_at' => $lockedTask->reopen_deadline_at?->toDateTimeString(),
                 ]

@@ -8,5 +8,4 @@ Route::controller(WorkerAccountController::class)->group(function () {
     Route::match(['put', 'patch'], '/profile', 'updateProfile');
     Route::delete('/profile', 'deleteAccount');
     Route::patch('/location', 'updateLocation');
-    Route::get('/tasks/nearby', 'nearbyTasks');
 });

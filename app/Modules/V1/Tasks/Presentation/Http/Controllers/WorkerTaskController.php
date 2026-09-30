@@ -116,7 +116,7 @@ class WorkerTaskController extends Controller
         );
 
         return ApiResponse::updated(
-            new TaskResource($task->loadMissing('store'))
+            new TaskResource($task->load($this->taskRepository->detailRelations()))
         );
     }
 
@@ -128,7 +128,9 @@ class WorkerTaskController extends Controller
             minutes: $request->minutes()
         );
 
-        return ApiResponse::updated(new TaskResource($task->loadMissing('store')));
+        return ApiResponse::updated(
+            new TaskResource($task->load($this->taskRepository->detailRelations()))
+        );
     }
 
     public function execute(int $id, StartTaskRequest $request, StartExecuteTaskUseCase $startTaskUseCase)
@@ -141,16 +143,8 @@ class WorkerTaskController extends Controller
         );
 
         return ApiResponse::updated(
-            new TaskResource(
-                $task->load([
-                    'store',
-                    'services.service.translations',
-                    'services.products.product',
-                    'services.products.product.translation',
-                    'services.submission',
-                    'assignedWorker',
-                ])
-            ));
+            new TaskResource($task->load($this->taskRepository->detailRelations()))
+        );
     }
 
     public function submitService(int $id, int $serviceId, SubmitTaskServiceRequest $request, SubmitTaskServiceUseCase $submitTaskServiceUseCase)

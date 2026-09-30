@@ -16,7 +16,20 @@ final readonly class PlatformSettingsService
     public function current(): array
     {
         return $this->cache->remember(
-            fn (): array => PlatformSettingsData::from(PlatformSetting::query()->firstOrCreate()),
+            fn (): array => PlatformSettingsData::from($this->settings()),
         );
+    }
+
+    public function update(array $attributes): PlatformSetting
+    {
+        $settings = $this->settings();
+        $settings->fill($attributes)->save();
+
+        return $settings->refresh();
+    }
+
+    private function settings(): PlatformSetting
+    {
+        return PlatformSetting::query()->firstOrCreate();
     }
 }

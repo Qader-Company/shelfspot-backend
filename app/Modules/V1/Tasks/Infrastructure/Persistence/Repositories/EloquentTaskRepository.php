@@ -117,7 +117,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             ->selectRaw($distanceSql.' as distance_km', [$latitude, $longitude, $latitude])
             ->whereRaw($distanceSql.' <= ?', [$latitude, $longitude, $latitude, $radiusKilometers])
             ->orderBy('id')
-            ->cursorPaginate(perPage:15, cursor: request()->query('cursor'));
+            ->cursorPaginate(perPage: 15, cursor: request()->query('cursor'));
     }
 
     public function assignedToWorker(int $workerId, array $filters = [], array $relations = [], array $relationsCount = [], string $paginationType = 'cursor'): LengthAwarePaginator|CursorPaginator
@@ -174,6 +174,17 @@ class EloquentTaskRepository implements TaskRepositoryInterface
         return $this->query($relations)
             ->whereKey($taskId)
             ->where('assigned_worker_id', $workerId)
+            ->first();
+    }
+
+    public function availableTaskById(int $taskId, string $executionDate, array $relations = []): ?Task
+    {
+        return $this->query($relations)
+            ->whereKey($taskId)
+            ->whereDate('date', $executionDate)
+            ->where('status', TaskStatusEnum::PENDING->value)
+            ->where('payment_status', TaskPaymentStatusEnum::CHARGED->value)
+            ->whereNull('assigned_worker_id')
             ->first();
     }
 

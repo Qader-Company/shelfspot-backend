@@ -41,6 +41,8 @@ interface TaskRepositoryInterface
 
     public function assignedTaskForWorker(int $taskId, int $workerId, array $relations = []): ?Task;
 
+    public function availableTaskById(int $taskId, string $executionDate, array $relations = []): ?Task;
+
     public function assignedToWorkerForAdmin(int $workerId, array $filters = [], array $relations = []): Collection;
 
     public function countAssignedToWorkerByStatus(int $workerId, TaskStatusEnum $status): int;

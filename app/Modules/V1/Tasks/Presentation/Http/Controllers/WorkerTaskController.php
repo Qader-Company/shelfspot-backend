@@ -18,8 +18,8 @@ use App\Modules\V1\Tasks\Presentation\Http\Requests\StartTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\SubmitTaskServiceRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\WorkerCancelTaskRequest;
 use App\Modules\V1\Tasks\Presentation\Http\Requests\WorkerMyTasksRequest;
-use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskListResource;
+use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskResource;
 use App\Modules\V1\Tasks\Presentation\Http\Resources\TaskServiceSubmissionResource;
 use App\Modules\V1\Workers\Application\Services\GeoDistanceCalculator;
 use App\Modules\V1\Workers\Domain\Models\Worker;
@@ -81,10 +81,30 @@ class WorkerTaskController extends Controller
         );
     }
 
-    public function show(int $id)
+    public function show(int $id, NearbyTaskRequest $request, GeoDistanceCalculator $geoDistanceCalculator)
     {
+        $worker = $this->worker($request);
+        $task = $this->taskRepository->assignedTaskForWorker(
+            taskId: $id,
+            workerId: $worker->id,
+            relations: $this->taskRepository->detailRelations(),
+        );
+
+        if ($task === null) {
+            $task = $this->availableTaskForWorker(
+                id: $id,
+                worker: $worker,
+                request: $request,
+                geoDistanceCalculator: $geoDistanceCalculator,
+            );
+        }
+
+        if ($task === null) {
+            throw new ModelNotFoundException(__('api.not_found'));
+        }
+
         return ApiResponse::success(new TaskResource(
-            $this->task($id, $this->taskRepository->detailRelations())
+            $task
         ));
     }
 
@@ -174,6 +194,43 @@ class WorkerTaskController extends Controller
         if (! $task) {
             throw new ModelNotFoundException(__('api.not_found'));
         }
+
+        return $task;
+    }
+
+    private function availableTaskForWorker(
+        int $id,
+        Worker $worker,
+        NearbyTaskRequest $request,
+        GeoDistanceCalculator $geoDistanceCalculator,
+    ): ?Task {
+        if ($worker->last_latitude === null || $worker->last_longitude === null) {
+            return null;
+        }
+
+        $executionDate = $request->validated('execution_date', now()->toDateString());
+        $task = $this->taskRepository->availableTaskById(
+            taskId: $id,
+            executionDate: $executionDate,
+            relations: $this->taskRepository->detailRelations(),
+        );
+
+        if ($task === null) {
+            return null;
+        }
+
+        $distance = $geoDistanceCalculator->haversineKilometers(
+            fromLatitude: (float) $worker->last_latitude,
+            fromLongitude: (float) $worker->last_longitude,
+            toLatitude: (float) $task->latitude,
+            toLongitude: (float) $task->longitude,
+        );
+
+        if ($distance > $request->radiusKilometers()) {
+            return null;
+        }
+
+        $task->setAttribute('distance_km', $distance);
 
         return $task;
     }

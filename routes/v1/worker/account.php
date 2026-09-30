@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::controller(WorkerAccountController::class)->group(function () {
     Route::get('/profile', 'profile');
-    Route::match(['put', 'patch'], '/profile', 'updateProfile');
+    Route::post('/profile', 'updateProfile');
     Route::delete('/profile', 'deleteAccount');
     Route::patch('/location', 'updateLocation');
 });

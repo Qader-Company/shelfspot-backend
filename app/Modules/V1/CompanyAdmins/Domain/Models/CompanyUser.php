@@ -7,7 +7,7 @@ use App\Modules\V1\Users\Domain\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[fillable(['company_id','user_id','is_owner', 'is_active'])]
+#[Fillable(['company_id', 'user_id', 'is_owner', 'is_active'])]
 class CompanyUser extends Model
 {
     public function user()

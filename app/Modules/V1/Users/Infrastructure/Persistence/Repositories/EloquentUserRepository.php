@@ -7,7 +7,6 @@ use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 
 class EloquentUserRepository implements UserRepositoryInterface
 {
-
     public function create(array $attributes): User
     {
         return User::Create($attributes);
@@ -16,6 +15,7 @@ class EloquentUserRepository implements UserRepositoryInterface
     public function update(User $user, array $attributes): User
     {
         $user->update($attributes);
+
         return $user;
     }
 

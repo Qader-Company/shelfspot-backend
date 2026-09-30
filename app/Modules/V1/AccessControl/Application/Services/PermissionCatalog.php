@@ -12,6 +12,7 @@ use InvalidArgumentException;
 class PermissionCatalog
 {
     public const ADMIN_PORTAL = 'admin';
+
     public const COMPANY_PORTAL = 'company';
 
     public static function cases(string $portal): array

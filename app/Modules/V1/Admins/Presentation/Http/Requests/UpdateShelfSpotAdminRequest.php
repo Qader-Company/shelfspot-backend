@@ -9,11 +9,15 @@ use Illuminate\Validation\Rule;
 
 class UpdateShelfSpotAdminRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
         $user = $this->route('user');
+
         return [
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => [

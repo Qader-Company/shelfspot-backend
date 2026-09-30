@@ -64,6 +64,7 @@ abstract class AccessControlController extends Controller
     protected function deleteRole(string $portal, int $roleId, ?int $companyId = null)
     {
         $this->accessControlRepository->deleteRole($portal, $companyId, $roleId);
+
         return ApiResponse::deleted();
     }
 }

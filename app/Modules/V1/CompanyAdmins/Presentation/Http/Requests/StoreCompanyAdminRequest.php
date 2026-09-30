@@ -9,7 +9,10 @@ use Illuminate\Validation\Rule;
 
 class StoreCompanyAdminRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {

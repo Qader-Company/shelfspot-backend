@@ -16,6 +16,7 @@ class EloquentAccessControlRepository implements AccessControlRepositoryInterfac
     public function permissions(string $portal, ?int $companyId = null): Collection
     {
         PermissionCatalog::sync($portal);
+
         return $this->permissionQuery($portal)->get();
     }
 

@@ -12,8 +12,7 @@ class SendOtpUseCase
     public function __construct(
         private UserRepositoryInterface $userRepository,
         private OtpService $otpService
-    ) {
-    }
+    ) {}
 
     public function execute(string $email, OtpPurposeEnum $otpPurpose, ?PortalTypeEnum $portal = null): void
     {

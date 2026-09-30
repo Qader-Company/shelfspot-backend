@@ -4,10 +4,10 @@ namespace App\Modules\V1\Authentication\Application\Mail;
 
 use App\Modules\V1\Authentication\Domain\ValueObjects\OtpPurposeEnum;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\SerializesModels;
 
 class OtpMail extends Mailable implements ShouldQueue
@@ -19,8 +19,7 @@ class OtpMail extends Mailable implements ShouldQueue
         public readonly OtpPurposeEnum $purpose,
         public readonly ?string $name = null,
         public readonly int $expiresInMinutes = 10,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

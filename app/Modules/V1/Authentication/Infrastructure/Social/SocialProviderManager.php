@@ -9,11 +9,9 @@ use InvalidArgumentException;
 class SocialProviderManager
 {
     /**
-     * @param array<string, SocialProviderVerifierInterface> $providers
+     * @param  array<string, SocialProviderVerifierInterface>  $providers
      */
-    public function __construct(private array $providers)
-    {
-    }
+    public function __construct(private array $providers) {}
 
     public function driver(SocialProviderEnum $provider): SocialProviderVerifierInterface
     {

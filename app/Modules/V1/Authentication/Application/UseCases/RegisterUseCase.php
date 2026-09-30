@@ -14,18 +14,15 @@ use Illuminate\Support\Facades\DB;
 
 class RegisterUseCase
 {
-
     public function __construct(
         private TokenIssuer $tokenIssuer,
         private OtpService $otpService
-    )
-    {
-    }
+    ) {}
 
     public function execute(array $attributes, PortalTypeEnum $userType): array
     {
-        return DB::transaction(function () use ($attributes, $userType){
-            $user = match ($userType){
+        return DB::transaction(function () use ($attributes, $userType) {
+            $user = match ($userType) {
                 PortalTypeEnum::COMPANY => $this->registerCompanyUser($attributes),
                 PortalTypeEnum::WORKER => $this->registerWorker($attributes),
             };
@@ -51,7 +48,6 @@ class RegisterUseCase
 
     }
 
-
     private function registerWorker(array $attributes): User
     {
         return app(CreateWorkerUseCase::class)->execute($attributes);
@@ -60,7 +56,7 @@ class RegisterUseCase
     private function registerCompanyUser(array $attributes): User
     {
         $company = app(CreateCompanyWithOwnerUseCase::class)->execute($attributes);
+
         return $company->users->first()->user;
     }
-
 }

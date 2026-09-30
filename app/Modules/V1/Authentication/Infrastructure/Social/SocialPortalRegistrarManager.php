@@ -10,11 +10,9 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 class SocialPortalRegistrarManager
 {
     /**
-     * @param array<string, SocialPortalRegistrarInterface> $registrars
+     * @param  array<string, SocialPortalRegistrarInterface>  $registrars
      */
-    public function __construct(private array $registrars)
-    {
-    }
+    public function __construct(private array $registrars) {}
 
     public function for(SocialProviderEnum $provider, PortalTypeEnum $portal): SocialPortalRegistrarInterface
     {

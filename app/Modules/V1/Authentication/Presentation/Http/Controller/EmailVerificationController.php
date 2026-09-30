@@ -2,11 +2,8 @@
 
 namespace App\Modules\V1\Authentication\Presentation\Http\Controller;
 
-
 use App\Facades\ApiResponse;
-use App\Modules\V1\Authentication\Application\UseCases\SendOtpUseCase;
 use App\Modules\V1\Authentication\Application\UseCases\VerifyEmailUseCase;
-use App\Modules\V1\Authentication\Presentation\Http\Requests\EmailValidationRequest;
 use App\Modules\V1\Authentication\Presentation\Http\Requests\OTPValidationRequest;
 use App\Modules\V1\Users\Application\Services\UserResourceResolver;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
@@ -33,5 +30,4 @@ class EmailVerificationController
             message: __('auth.verified_success')
         );
     }
-
 }

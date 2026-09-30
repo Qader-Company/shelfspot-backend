@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Modules\V1\Authentication\Presentation\Http\Requests;
+
 use App\Modules\V1\Companies\Presentation\Http\Requests\RegisterCompanyRequest;
-use App\Modules\V1\Workers\Presentation\Http\Requests\RegisterWorkerRequest;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
+use App\Modules\V1\Workers\Presentation\Http\Requests\RegisterWorkerRequest;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegisterRequest extends FormRequest
@@ -19,14 +21,15 @@ class RegisterRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         $type = $this->route('type');
+
         return match ($type) {
-            PortalTypeEnum::COMPANY->value => (new RegisterCompanyRequest())->rules(),
-            PortalTypeEnum::WORKER->value => (new RegisterWorkerRequest())->rules(),
+            PortalTypeEnum::COMPANY->value => (new RegisterCompanyRequest)->rules(),
+            PortalTypeEnum::WORKER->value => (new RegisterWorkerRequest)->rules(),
         };
     }
 }

@@ -1,13 +1,11 @@
 <?php
 
-
 namespace App\Modules\V1\Authentication\Domain\Services;
 
-use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Authentication\Domain\ValueObjects\TokenTypeEnum;
+use App\Modules\V1\Users\Domain\Models\User;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
 use Carbon\Carbon;
-
 
 class TokenIssuer
 {
@@ -18,11 +16,11 @@ class TokenIssuer
                 name: $portal->value,
                 abilities: [
                     $tokenType->value,
-                    $portal->value
+                    $portal->value,
                 ],
-                expiresAt: Carbon::now()->addMinutes(config('sanctum.' . $tokenType->value . '_token_TTL'))
+                expiresAt: Carbon::now()->addMinutes(config('sanctum.'.$tokenType->value.'_token_TTL'))
             )->plainTextToken,
-            'ttl' => config('sanctum.' . $tokenType->value . '_token_TTL'),
+            'ttl' => config('sanctum.'.$tokenType->value.'_token_TTL'),
         ];
     }
 

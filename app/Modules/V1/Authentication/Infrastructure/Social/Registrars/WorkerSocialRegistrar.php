@@ -15,8 +15,7 @@ class WorkerSocialRegistrar implements SocialPortalRegistrarInterface
     public function __construct(
         private CreateWorkerUseCase $createWorkerUseCase,
         private WorkerRepositoryInterface $workerRepository,
-    ) {
-    }
+    ) {}
 
     public function portal(): PortalTypeEnum
     {
@@ -59,7 +58,7 @@ class WorkerSocialRegistrar implements SocialPortalRegistrarInterface
     {
         return Validator::make(
             $attributes,
-            config('social_auth.portal_profile_creation_rules.' . $this->portal()->value, [])
+            config('social_auth.portal_profile_creation_rules.'.$this->portal()->value, [])
         )->validate();
     }
 }

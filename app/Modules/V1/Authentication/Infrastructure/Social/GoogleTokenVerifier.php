@@ -9,9 +9,7 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class GoogleTokenVerifier implements SocialProviderVerifierInterface
 {
-    public function __construct(private GoogleClient $client)
-    {
-    }
+    public function __construct(private GoogleClient $client) {}
 
     public function verify(string $token): SocialUserData
     {

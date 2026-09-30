@@ -39,6 +39,14 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
             ->first();
     }
 
+    public function getByIdAndLockedForUpdate(int $id, array $relations = []): ?Worker
+    {
+        return $this->query($relations)
+            ->whereKey($id)
+            ->lockForUpdate()
+            ->first();
+    }
+
     public function findByUserId(int $userId, array $relations = []): ?Worker
     {
         return Worker::query()

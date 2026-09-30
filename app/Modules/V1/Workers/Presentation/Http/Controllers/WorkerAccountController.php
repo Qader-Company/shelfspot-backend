@@ -5,8 +5,8 @@ namespace App\Modules\V1\Workers\Presentation\Http\Controllers;
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Modules\V1\Users\Application\Profiles\ProfileHandlerFactory;
-use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Users\Presentation\Http\Requests\UpdateProfileRequest;
+use App\Modules\V1\Workers\Application\UseCases\DeleteWorkerUseCase;
 use App\Modules\V1\Workers\Domain\Models\Worker;
 use App\Modules\V1\Workers\Domain\Repositories\WorkerRepositoryInterface;
 use App\Modules\V1\Workers\Presentation\Http\Requests\UpdateWorkerLocationRequest;
@@ -18,13 +18,13 @@ class WorkerAccountController extends Controller
 {
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
-        private readonly UserRepositoryInterface $userRepository,
         private readonly ProfileHandlerFactory $profileHandlerFactory,
     ) {}
 
     public function profile(Request $request)
     {
         $user = $request->user();
+
         return ApiResponse::success(
             $this->profileHandlerFactory
                 ->for($user)
@@ -42,11 +42,9 @@ class WorkerAccountController extends Controller
         );
     }
 
-    public function deleteAccount(Request $request)
+    public function deleteAccount(Request $request, DeleteWorkerUseCase $deleteWorkerUseCase)
     {
-        $this->userRepository->delete($request->user());
-
-        $this->workerRepository->delete($this->worker($request));
+        $deleteWorkerUseCase->execute($this->worker($request)->id);
 
         return ApiResponse::deleted();
     }

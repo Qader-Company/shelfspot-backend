@@ -34,6 +34,7 @@ return [
         'reassign_cancelled_only' => 'Only worker-cancelled, accepted, or reassigned tasks can be reassigned.',
         'reassign_active_worker_only' => 'Tasks can only be reassigned to an active worker.',
         'reassign_worker_busy' => 'This worker already has an in-progress task.',
+        'delete_worker_with_active_task' => 'A worker with an active task cannot be deleted.',
         'accept_completed_or_rejected_only' => 'Only completed or rejected tasks can be accepted by the company.',
         'reject_completed_only' => 'Only completed tasks can be rejected.',
         'reject_review_window_expired' => 'The review window has expired; this task can no longer be rejected.',

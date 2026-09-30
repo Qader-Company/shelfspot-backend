@@ -13,6 +13,8 @@ interface WorkerRepositoryInterface extends TrashableRepositoryInterface
 
     public function getById(int $id, array $relations = [], array $relationsCount = []): ?Worker;
 
+    public function getByIdAndLockedForUpdate(int $id, array $relations = []): ?Worker;
+
     public function findByUserId(int $userId, array $relations = []): ?Worker;
 
     public function create(array $attributes): Worker;

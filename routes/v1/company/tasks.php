@@ -11,7 +11,7 @@ Route::controller(CompanyTaskController::class)
         Route::post('/', 'store')
             ->middleware('permission:'.CompanyPermissionEnum::CREATE_TASK->value);
 
-        Route::patch('/{id}', 'update')
+        Route::post('/{id}', 'update')
             ->middleware('permission:'.CompanyPermissionEnum::EDIT_TASK->value);
 
         Route::post('/{id}/pay', 'pay')

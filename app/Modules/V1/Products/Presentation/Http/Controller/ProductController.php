@@ -4,9 +4,10 @@ namespace App\Modules\V1\Products\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
+use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Products\Application\Services\ProductExcelService;
 use App\Modules\V1\Products\Application\Services\ProductFilterOptionsService;
@@ -15,7 +16,6 @@ use App\Modules\V1\Products\Presentation\Http\Requests\ProductFilterOptionsReque
 use App\Modules\V1\Products\Presentation\Http\Requests\StoreProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Requests\UpdateProductRequest;
 use App\Modules\V1\Products\Presentation\Http\Resources\ProductResource;
-use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -28,8 +28,7 @@ class ProductController extends Controller
     public function __construct(
         private readonly ProductRepositoryInterface $productRepository,
         private readonly ProductExcelService $productExcelService,
-    ) {
-    }
+    ) {}
 
     public function index()
     {
@@ -38,7 +37,7 @@ class ProductController extends Controller
             ['search', 'active', 'brand_id', 'sub_brand_id', 'category_id', 'sub_category_id']
         );
         $products = $this->productRepository->getAll(
-            relations: ['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations', 'subCategory.translations'],
+            relations: ['media', 'translations', 'brand.media', 'brand.translations', 'subBrand.media', 'subBrand.translations', 'category.media', 'category.translations', 'subCategory.media', 'subCategory.translations'],
             filters: $filters
         );
 
@@ -48,7 +47,6 @@ class ProductController extends Controller
                 ->getData(true)
         );
     }
-
 
     public function filterOptions(ProductFilterOptionsRequest $request, ProductFilterOptionsService $productFilterOptionsService)
     {
@@ -63,8 +61,9 @@ class ProductController extends Controller
     {
         $product = $this->getProduct(
             $id,
-            ['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations', 'subCategory.translations']
+            ['media', 'translations', 'brand.media', 'brand.translations', 'subBrand.media', 'subBrand.translations', 'category.media', 'category.translations', 'subCategory.media', 'subCategory.translations']
         );
+
         return ApiResponse::success(new ProductResource($product));
     }
 
@@ -77,7 +76,7 @@ class ProductController extends Controller
         );
 
         return ApiResponse::created(
-            new ProductResource($product->load(['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations', 'subCategory.translations']))
+            new ProductResource($product->load(['media', 'translations', 'brand.media', 'brand.translations', 'subBrand.media', 'subBrand.translations', 'category.media', 'category.translations', 'subCategory.media', 'subCategory.translations']))
         );
     }
 
@@ -92,7 +91,7 @@ class ProductController extends Controller
         );
 
         return ApiResponse::updated(
-            new ProductResource($product->refresh()->load(['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations', 'subCategory.translations']))
+            new ProductResource($product->refresh()->load(['media', 'translations', 'brand.media', 'brand.translations', 'subBrand.media', 'subBrand.translations', 'category.media', 'category.translations', 'subCategory.media', 'subCategory.translations']))
         );
     }
 
@@ -101,9 +100,9 @@ class ProductController extends Controller
         $this->productRepository->delete(
             $this->getProduct($id)
         );
+
         return ApiResponse::deleted();
     }
-
 
     public function excelTemplate(): BinaryFileResponse
     {

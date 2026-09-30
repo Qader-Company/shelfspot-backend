@@ -284,6 +284,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             'company',
             'store',
             'assignedWorker.user',
+            'assignedWorker.media',
             'currentWorkerAssignment',
         ];
     }
@@ -316,6 +317,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
             'creator',
             'company',
             'assignedWorker.user',
+            'assignedWorker.media',
             'currentWorkerAssignment',
         ];
     }

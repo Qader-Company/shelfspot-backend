@@ -32,7 +32,7 @@ class AdminWorkerController extends Controller
     public function index(Request $request)
     {
         $workers = $this->workerRepository->getAll(
-            relations: ['user'],
+            relations: ['user', 'media'],
             filters: $this->acceptedFilters($request, [
                 'is_active',
                 'search',

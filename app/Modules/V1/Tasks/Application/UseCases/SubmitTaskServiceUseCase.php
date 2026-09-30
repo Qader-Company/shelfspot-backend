@@ -46,7 +46,7 @@ class SubmitTaskServiceUseCase
                 'status' => TaskServiceStatusEnum::COMPLETED,
             ])->save();
 
-            return $submission->refresh()->load(['taskService.service.translations', 'worker']);
+            return $submission->refresh()->load(['media', 'taskService.service.translations', 'worker']);
         });
     }
 

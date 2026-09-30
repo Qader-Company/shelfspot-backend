@@ -1,18 +1,19 @@
 <?php
+
 namespace App\Modules\V1\SubBrands\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
+use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\SubBrands\Application\Services\SubBrandExcelService;
 use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
 use App\Modules\V1\SubBrands\Presentation\Http\Requests\StoreSubBrandRequest;
 use App\Modules\V1\SubBrands\Presentation\Http\Requests\UpdateSubBrandRequest;
 use App\Modules\V1\SubBrands\Presentation\Http\Resources\SubBrandResource;
-use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -34,9 +35,10 @@ class SubBrandController extends Controller
             request(), ['name', 'active', 'brand_id']
         );
         $subBrands = $this->subBrandRepository->getAll(
-            relations: ['media', 'translations', 'brand.translations'],
+            relations: ['media', 'translations', 'brand.media', 'brand.translations'],
             filters: $filters
         );
+
         return ApiResponse::success(
             SubBrandResource::collection($subBrands)
                 ->response()
@@ -46,15 +48,19 @@ class SubBrandController extends Controller
 
     public function show(string $id)
     {
-        $subBrand = $this->getSubBrand($id, ['media', 'translations', 'brand.translations']);
+        $subBrand = $this->getSubBrand($id, ['media', 'translations', 'brand.media', 'brand.translations']);
+
         return ApiResponse::success(new SubBrandResource($subBrand));
     }
+
     public function store(StoreSubBrandRequest $request)
     {
         $data = $request->validated();
         $this->subBrandRepository->create($data, $data['logo'] ?? null);
+
         return ApiResponse::message(__('api.created'));
     }
+
     public function update(UpdateSubBrandRequest $request, string $id)
     {
         $data = $request->validated();
@@ -65,12 +71,15 @@ class SubBrandController extends Controller
             logo: $data['logo'] ?? null,
             logoAction: isset($data['logo_action']) ? SingleMediaUpdateActionEnum::from($data['logo_action']) : null,
         );
+
         return ApiResponse::message(__('api.updated'));
     }
+
     public function destroy(string $id)
     {
         $subBrand = $this->getSubBrand($id);
         $this->subBrandRepository->delete($subBrand);
+
         return ApiResponse::message(__('api.delete_queued'), Response::HTTP_ACCEPTED);
     }
 
@@ -110,6 +119,7 @@ class SubBrandController extends Controller
         if (is_null($subBrand)) {
             throw new ModelNotFoundException(__('subBrands.not_found'));
         }
+
         return $subBrand;
     }
 }

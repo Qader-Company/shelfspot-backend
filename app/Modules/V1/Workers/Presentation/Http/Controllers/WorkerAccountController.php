@@ -59,7 +59,7 @@ class WorkerAccountController extends Controller
             'location_updated_at' => now(),
         ]);
 
-        return ApiResponse::updated(new WorkerResource($worker->refresh()->load('user')));
+        return ApiResponse::updated(new WorkerResource($worker->refresh()->load(['user', 'media'])));
     }
 
     private function worker(Request $request): Worker

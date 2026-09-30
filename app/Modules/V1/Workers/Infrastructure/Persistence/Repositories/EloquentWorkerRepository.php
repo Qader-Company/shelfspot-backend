@@ -74,7 +74,7 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
 
     public function availableNearTask(float $latitude, float $longitude, float $radiusKilometers, array $boundingBox, ?int $limit = null): Collection
     {
-        $workers = $this->query(['user'])
+        $workers = $this->query(['user', 'media'])
             ->where('is_active', true)
             ->whereNotNull('last_latitude')
             ->whereNotNull('last_longitude')

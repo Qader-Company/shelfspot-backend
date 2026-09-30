@@ -4,15 +4,17 @@ namespace App\Modules\V1\Products\Presentation\Http\Requests;
 
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreProductRequest extends FormRequest
 {
-
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
@@ -33,7 +35,7 @@ class StoreProductRequest extends FormRequest
                 Rule::unique('products', 'sku')->where('company_id', $this->companyId()),
             ],
             'min_quantity' => ['sometimes', 'integer', 'min:1'],
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'is_active' => 'required|boolean',
         ];
     }

@@ -1,14 +1,20 @@
 <?php
+
 namespace App\Modules\V1\SubBrands\Presentation\Http\Requests;
 
-use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
 use App\Modules\Shared\Presentation\Http\Requests\Concerns\ValidatesSingleMediaUpdate;
+use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateSubBrandRequest extends FormRequest
 {
     use ValidatesSingleMediaUpdate;
-    public function authorize(): bool { return true; }
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         return [
@@ -16,7 +22,7 @@ class UpdateSubBrandRequest extends FormRequest
             'translations' => 'sometimes|array',
             'translations.en.name' => 'sometimes|required|string|max:255',
             'translations.ar.name' => 'sometimes|required|string|max:255',
-            'logo' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logo' => 'sometimes|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             ...$this->singleMediaActionRules('logo_action'),
             'is_active' => 'sometimes|boolean',
         ];
@@ -26,5 +32,4 @@ class UpdateSubBrandRequest extends FormRequest
     {
         return [$this->validateSingleMediaUpdate('logo', 'logo_action')];
     }
-
 }

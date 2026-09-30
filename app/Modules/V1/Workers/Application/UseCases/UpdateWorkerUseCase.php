@@ -48,7 +48,7 @@ class UpdateWorkerUseCase
                 $this->userAccessRevoker->revoke($worker->user);
             }
 
-            return $worker->refresh()->load('user');
+            return $worker->refresh()->load(['user', 'media']);
         });
     }
 }

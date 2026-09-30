@@ -4,16 +4,16 @@ namespace App\Modules\V1\Categories\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
+use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\Categories\Application\Services\CategoryExcelService;
 use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
 use App\Modules\V1\Categories\Presentation\Http\Requests\StoreCategoryRequest;
 use App\Modules\V1\Categories\Presentation\Http\Requests\UpdateCategoryRequest;
 use App\Modules\V1\Categories\Presentation\Http\Resources\CategoryResource;
-use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -27,9 +27,7 @@ class CategoryController extends Controller
     public function __construct(
         private readonly CategoryRepositoryInterface $categoryRepository,
         private readonly CategoryExcelService $categoryExcelService,
-    )
-    {
-    }
+    ) {}
 
     public function index()
     {
@@ -37,9 +35,10 @@ class CategoryController extends Controller
             request(), ['name', 'active', 'brand_id', 'sub_brand_id']
         );
         $categories = $this->categoryRepository->getAll(
-            relations: ['media', 'translations', 'brand.translations', 'subBrand.translations'],
+            relations: ['media', 'translations', 'brand.media', 'brand.translations', 'subBrand.media', 'subBrand.translations'],
             filters: $filters,
         );
+
         return ApiResponse::success(
             CategoryResource::collection($categories)
                 ->response()
@@ -49,13 +48,14 @@ class CategoryController extends Controller
 
     public function show(string $id)
     {
-        return ApiResponse::success(new CategoryResource($this->getCategory($id, ['media', 'translations', 'brand.translations', 'subBrand.translations'])));
+        return ApiResponse::success(new CategoryResource($this->getCategory($id, ['media', 'translations', 'brand.media', 'brand.translations', 'subBrand.media', 'subBrand.translations'])));
     }
 
     public function store(StoreCategoryRequest $request)
     {
         $data = $request->validated();
         $this->categoryRepository->create($data, $data['image'] ?? null);
+
         return ApiResponse::message(__('api.created'));
     }
 
@@ -68,15 +68,16 @@ class CategoryController extends Controller
             image: $data['image'] ?? null,
             imageAction: isset($data['image_action']) ? SingleMediaUpdateActionEnum::from($data['image_action']) : null,
         );
+
         return ApiResponse::message(__('api.updated'));
     }
 
     public function destroy(string $id)
     {
         $this->categoryRepository->delete($this->getCategory($id));
+
         return ApiResponse::message(__('api.delete_queued'), Response::HTTP_ACCEPTED);
     }
-
 
     public function excelTemplate(): BinaryFileResponse
     {

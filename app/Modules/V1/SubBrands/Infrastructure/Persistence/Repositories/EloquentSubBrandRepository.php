@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Modules\V1\SubBrands\Infrastructure\Persistence\Repositories;
 
-use App\Modules\Shared\Support\Traits\HasTranslation;
-use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
+use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\V1\SubBrands\Domain\Models\SubBrand;
 use App\Modules\V1\SubBrands\Domain\Repositories\SubBrandRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -23,6 +24,7 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
     {
         return ['categories', 'subCategories', 'products'];
     }
+
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)->paginate();
@@ -33,7 +35,7 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
         return $this->query($relations, $relationsCount)->find($id);
     }
 
-    public function create(array $attributes, UploadedFile $logo = null): SubBrand
+    public function create(array $attributes, ?UploadedFile $logo = null): SubBrand
     {
         return DB::transaction(function () use ($attributes, $logo) {
             $translations = $attributes['translations'] ?? [];
@@ -43,12 +45,15 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
             $subBrand = SubBrand::create($attributes);
             $this->fillTranslations($subBrand, $translations);
             $subBrand->save();
-            if ($logo) $subBrand->addMedia($logo)->toMediaCollection('logo');
+            if ($logo) {
+                $subBrand->addMedia($logo)->toMediaCollection('logo');
+            }
+
             return $subBrand;
         });
     }
 
-    public function update(SubBrand $subBrand, array $attributes, UploadedFile $logo = null, ?SingleMediaUpdateActionEnum $logoAction = null): SubBrand
+    public function update(SubBrand $subBrand, array $attributes, ?UploadedFile $logo = null, ?SingleMediaUpdateActionEnum $logoAction = null): SubBrand
     {
         return DB::transaction(function () use ($subBrand, $attributes, $logo, $logoAction) {
             $translations = $attributes['translations'] ?? [];
@@ -61,9 +66,9 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
             if ($logoAction === SingleMediaUpdateActionEnum::REMOVE) {
                 $subBrand->clearMediaCollection('logo');
             } elseif ($logo) {
-                $subBrand->clearMediaCollection('logo');
                 $subBrand->addMedia($logo)->toMediaCollection('logo');
             }
+
             return $subBrand;
         });
     }
@@ -78,15 +83,15 @@ class EloquentSubBrandRepository implements SubBrandRepositoryInterface
         return SubBrand::query()
             ->when(
                 $filters,
-                fn($q) => $q->filter($filters)
+                fn ($q) => $q->filter($filters)
             )
             ->when(
                 $relations,
-                fn($q) => $q->with($relations)
+                fn ($q) => $q->with($relations)
             )
             ->when(
                 $relationsCount,
-                fn($q) => $q->withCount($relationsCount)
+                fn ($q) => $q->withCount($relationsCount)
             );
     }
 }

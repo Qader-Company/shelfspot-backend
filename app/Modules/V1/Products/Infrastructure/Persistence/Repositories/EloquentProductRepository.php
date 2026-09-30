@@ -61,7 +61,6 @@ class EloquentProductRepository implements ProductRepositoryInterface
             if ($imageAction === SingleMediaUpdateActionEnum::REMOVE) {
                 $product->clearMediaCollection('image');
             } elseif ($image) {
-                $product->clearMediaCollection('image');
                 $product->addMedia($image)->toMediaCollection('image');
             }
 

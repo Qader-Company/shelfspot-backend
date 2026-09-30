@@ -2,15 +2,16 @@
 
 namespace App\Modules\V1\Categories\Presentation\Http\Resources;
 
+use App\Modules\Shared\Presentation\Http\Resources\Concerns\IncludesTranslations;
 use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
 use App\Modules\V1\SubBrands\Presentation\Http\Resources\SubBrandResource;
-use App\Modules\Shared\Presentation\Http\Resources\Concerns\IncludesTranslations;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CategoryResource extends JsonResource
 {
     use IncludesTranslations;
+
     public function toArray(Request $request): array
     {
         return [
@@ -23,17 +24,18 @@ class CategoryResource extends JsonResource
             'active' => (bool) $this->is_active,
             'image' => $this->whenLoaded(
                 'media',
-                $this->getMedia('image')->first()?->getUrl() ?? ''
+                fn () => $this->getFirstMediaUrl('image') ?: null,
+                null,
             ),
             'brand' => $this->whenLoaded(
                 relationship: 'brand',
-                value:fn() =>new BrandResource($this->brand)
+                value: fn () => new BrandResource($this->brand)
             ),
             'sub_brand' => $this->whenLoaded(
                 relationship: 'subBrand',
-                value:fn() =>new SubBrandResource($this->subBrand)
+                value: fn () => new SubBrandResource($this->subBrand)
             ),
-            'created_at' => $this->created_at
+            'created_at' => $this->created_at,
         ];
     }
 }

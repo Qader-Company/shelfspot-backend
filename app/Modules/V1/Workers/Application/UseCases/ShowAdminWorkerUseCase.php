@@ -14,20 +14,22 @@ class ShowAdminWorkerUseCase
     private const TASK_RELATIONS = [
         'store',
         'services.service.translations',
-        'services.products.product',
-        'services.submission',
-        'assignedWorker',
+        'services.media',
+        'services.products.product.media',
+        'services.products.product.translations',
+        'services.submission.media',
+        'assignedWorker.user',
+        'assignedWorker.media',
     ];
 
     public function __construct(
         private readonly WorkerRepositoryInterface $workerRepository,
         private readonly TaskRepositoryInterface $taskRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(int $workerId, array $taskFilters = []): Worker
     {
-        $worker = $this->workerRepository->getById($workerId, ['user']);
+        $worker = $this->workerRepository->getById($workerId, ['user', 'media']);
 
         if (! $worker) {
             throw new ModelNotFoundException(__('api.not_found'));

@@ -5,16 +5,19 @@ namespace App\Modules\V1\Products\Presentation\Http\Requests;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
 use App\Modules\Shared\Presentation\Http\Requests\Concerns\ValidatesSingleMediaUpdate;
 use App\Modules\Shared\Support\Rules\ExistsInCurrentCompany;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateProductRequest extends FormRequest
 {
     use ValidatesSingleMediaUpdate;
 
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
@@ -37,7 +40,7 @@ class UpdateProductRequest extends FormRequest
                     ->ignore($this->route('id')),
             ],
             'min_quantity' => ['sometimes', 'integer', 'min:1'],
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             ...$this->singleMediaActionRules('image_action'),
             'is_active' => 'sometimes|boolean',
         ];

@@ -4,16 +4,16 @@ namespace App\Modules\V1\SubCategories\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Domain\Repositories\TrashableRepositoryInterface;
+use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use App\Modules\Shared\Presentation\Http\Controllers\ManagesTrash;
+use App\Modules\Shared\Presentation\Http\Requests\ImportExcelRequest;
 use App\Modules\Shared\Support\Traits\Filterable;
 use App\Modules\V1\SubCategories\Application\Services\SubCategoryExcelService;
 use App\Modules\V1\SubCategories\Domain\Repositories\SubCategoryRepositoryInterface;
 use App\Modules\V1\SubCategories\Presentation\Http\Requests\StoreSubCategoryRequest;
 use App\Modules\V1\SubCategories\Presentation\Http\Requests\UpdateSubCategoryRequest;
 use App\Modules\V1\SubCategories\Presentation\Http\Resources\SubCategoryResource;
-use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -27,14 +27,12 @@ class SubCategoryController extends Controller
     public function __construct(
         private readonly SubCategoryRepositoryInterface $subCategoryRepository,
         private readonly SubCategoryExcelService $subCategoryExcelService,
-    )
-    {
-    }
+    ) {}
 
     public function index()
     {
         $filters = $this->acceptedFilters(request(), ['name', 'active', 'brand_id', 'sub_brand_id', 'category_id']);
-        $subCategories = $this->subCategoryRepository->getAll(relations: ['media', 'translations', 'brand.translations', 'subBrand.translations', 'category.translations'], filters: $filters);
+        $subCategories = $this->subCategoryRepository->getAll(relations: ['media', 'translations', 'brand.media', 'brand.translations', 'subBrand.media', 'subBrand.translations', 'category.media', 'category.translations'], filters: $filters);
 
         return ApiResponse::success(
             SubCategoryResource::collection($subCategories)
@@ -50,11 +48,15 @@ class SubCategoryController extends Controller
             relations: [
                 'media',
                 'translations',
+                'brand.media',
                 'brand.translations',
+                'subBrand.media',
                 'subBrand.translations',
-                'category.translations'
+                'category.media',
+                'category.translations',
             ]
         );
+
         return ApiResponse::success(
             new SubCategoryResource($subCategory)
         );
@@ -64,6 +66,7 @@ class SubCategoryController extends Controller
     {
         $data = $request->validated();
         $this->subCategoryRepository->create($data, $data['image'] ?? null);
+
         return ApiResponse::message(__('api.created'));
     }
 
@@ -76,15 +79,16 @@ class SubCategoryController extends Controller
             image: $data['image'] ?? null,
             imageAction: isset($data['image_action']) ? SingleMediaUpdateActionEnum::from($data['image_action']) : null,
         );
+
         return ApiResponse::message(__('api.updated'));
     }
 
     public function destroy(string $id)
     {
         $this->subCategoryRepository->delete($this->getSubCategory($id));
+
         return ApiResponse::message(__('api.delete_queued'), Response::HTTP_ACCEPTED);
     }
-
 
     public function excelTemplate(): BinaryFileResponse
     {

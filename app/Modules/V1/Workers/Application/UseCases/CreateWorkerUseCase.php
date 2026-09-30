@@ -13,8 +13,7 @@ class CreateWorkerUseCase
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly WorkerRepositoryInterface $workerRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(array $attributes): User
     {
@@ -40,7 +39,7 @@ class CreateWorkerUseCase
                 $worker->addMedia($attributes['image'])->toMediaCollection('image');
             }
 
-            return $user->load('worker');
+            return $user->load('worker.media');
         });
     }
 }

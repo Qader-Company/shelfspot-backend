@@ -9,6 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class BrandResource extends JsonResource
 {
     use IncludesTranslations;
+
     /**
      * Transform the resource into an array.
      *
@@ -25,11 +26,11 @@ class BrandResource extends JsonResource
             'translations' => $this->translationsWhenShowing($request),
             'logo' => $this->whenLoaded(
                 'media',
-                $this->getMedia('logo')->first()?->getUrl() ?? '',
-                ''
+                fn () => $this->getFirstMediaUrl('logo') ?: null,
+                null,
             ),
             'active' => (bool) $this->is_active,
-            'created_at' => $this->created_at
+            'created_at' => $this->created_at,
         ];
     }
 }

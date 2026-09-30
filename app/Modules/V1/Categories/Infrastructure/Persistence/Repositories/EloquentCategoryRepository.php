@@ -2,9 +2,9 @@
 
 namespace App\Modules\V1\Categories\Infrastructure\Persistence\Repositories;
 
-use App\Modules\Shared\Support\Traits\HasTranslation;
-use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
+use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\V1\Categories\Domain\Models\Category;
 use App\Modules\V1\Categories\Domain\Repositories\CategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -24,6 +24,7 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
     {
         return ['subCategories', 'products'];
     }
+
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)
@@ -35,7 +36,7 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
         return $this->query($relations, $relationsCount)->find($id);
     }
 
-    public function create(array $attributes, UploadedFile $image = null): Category
+    public function create(array $attributes, ?UploadedFile $image = null): Category
     {
         return DB::transaction(function () use ($attributes, $image) {
             $translations = $attributes['translations'] ?? [];
@@ -48,11 +49,12 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
             if ($image) {
                 $category->addMedia($image)->toMediaCollection('image');
             }
+
             return $category;
         });
     }
 
-    public function update(Category $category, array $attributes, UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): Category
+    public function update(Category $category, array $attributes, ?UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): Category
     {
         return DB::transaction(function () use ($category, $attributes, $image, $imageAction) {
             $translations = $attributes['translations'] ?? [];
@@ -65,9 +67,9 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
             if ($imageAction === SingleMediaUpdateActionEnum::REMOVE) {
                 $category->clearMediaCollection('image');
             } elseif ($image) {
-                $category->clearMediaCollection('image');
                 $category->addMedia($image)->toMediaCollection('image');
             }
+
             return $category;
         });
     }
@@ -82,15 +84,15 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
         return Category::query()
             ->when(
                 $filters,
-                fn($q) => $q->filter($filters)
+                fn ($q) => $q->filter($filters)
             )
             ->when(
                 $relations,
-                fn($q) => $q->with($relations)
+                fn ($q) => $q->with($relations)
             )
             ->when(
                 $relationsCount,
-                fn($q) => $q->withCount($relationsCount)
+                fn ($q) => $q->withCount($relationsCount)
             );
     }
 }

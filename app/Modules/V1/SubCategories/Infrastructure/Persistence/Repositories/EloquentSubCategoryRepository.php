@@ -2,9 +2,9 @@
 
 namespace App\Modules\V1\SubCategories\Infrastructure\Persistence\Repositories;
 
-use App\Modules\Shared\Support\Traits\HasTranslation;
-use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
 use App\Modules\Shared\Domain\ValueObjects\SingleMediaUpdateActionEnum;
+use App\Modules\Shared\Infrastructure\Persistence\Repositories\CascadesCatalogTrashActions;
+use App\Modules\Shared\Support\Traits\HasTranslation;
 use App\Modules\V1\SubCategories\Domain\Models\SubCategory;
 use App\Modules\V1\SubCategories\Domain\Repositories\SubCategoryRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -24,6 +24,7 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
     {
         return ['products'];
     }
+
     public function getAll(array $relations = [], array $relationsCount = [], array $filters = []): LengthAwarePaginator
     {
         return $this->query($relations, $relationsCount, $filters)->paginate();
@@ -34,7 +35,7 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
         return $this->query($relations, $relationsCount)->find($id);
     }
 
-    public function create(array $attributes, UploadedFile $image = null): SubCategory
+    public function create(array $attributes, ?UploadedFile $image = null): SubCategory
     {
         return DB::transaction(function () use ($attributes, $image) {
             $translations = $attributes['translations'] ?? [];
@@ -47,11 +48,12 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
             if ($image) {
                 $subCategory->addMedia($image)->toMediaCollection('image');
             }
+
             return $subCategory;
         });
     }
 
-    public function update(SubCategory $subCategory, array $attributes, UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): SubCategory
+    public function update(SubCategory $subCategory, array $attributes, ?UploadedFile $image = null, ?SingleMediaUpdateActionEnum $imageAction = null): SubCategory
     {
         return DB::transaction(function () use ($subCategory, $attributes, $image, $imageAction) {
             $translations = $attributes['translations'] ?? [];
@@ -64,9 +66,9 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
             if ($imageAction === SingleMediaUpdateActionEnum::REMOVE) {
                 $subCategory->clearMediaCollection('image');
             } elseif ($image) {
-                $subCategory->clearMediaCollection('image');
                 $subCategory->addMedia($image)->toMediaCollection('image');
             }
+
             return $subCategory;
         });
     }
@@ -81,15 +83,15 @@ class EloquentSubCategoryRepository implements SubCategoryRepositoryInterface
         return SubCategory::query()
             ->when(
                 $filters,
-                fn($q) => $q->filter($filters)
+                fn ($q) => $q->filter($filters)
             )
             ->when(
                 $relations,
-                fn($q) => $q->with($relations)
+                fn ($q) => $q->with($relations)
             )
             ->when(
                 $relationsCount,
-                fn($q) => $q->withCount($relationsCount)
+                fn ($q) => $q->withCount($relationsCount)
             );
     }
 }

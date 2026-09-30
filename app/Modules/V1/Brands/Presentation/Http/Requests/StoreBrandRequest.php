@@ -26,8 +26,8 @@ class StoreBrandRequest extends FormRequest
             'translations' => 'required|array',
             'translations.en.name' => 'required|string|max:255',
             'translations.ar.name' => 'required|string|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'is_active' => 'nullable|boolean'
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'is_active' => 'nullable|boolean',
         ];
     }
 }

@@ -2,17 +2,18 @@
 
 namespace App\Modules\V1\Products\Presentation\Http\Resources;
 
+use App\Modules\Shared\Presentation\Http\Resources\Concerns\IncludesTranslations;
 use App\Modules\V1\Brands\Presentation\Http\Resources\BrandResource;
 use App\Modules\V1\Categories\Presentation\Http\Resources\CategoryResource;
 use App\Modules\V1\SubBrands\Presentation\Http\Resources\SubBrandResource;
 use App\Modules\V1\SubCategories\Presentation\Http\Resources\SubCategoryResource;
-use App\Modules\Shared\Presentation\Http\Resources\Concerns\IncludesTranslations;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
     use IncludesTranslations;
+
     public function toArray(Request $request): array
     {
         return [
@@ -26,25 +27,29 @@ class ProductResource extends JsonResource
             'sku' => $this->sku,
             'barcode' => $this->barcode,
             'min_quantity' => (int) $this->min_quantity,
-            'image' => $this->getMedia('image')->first()?->getUrl(),
+            'image' => $this->whenLoaded(
+                'media',
+                fn () => $this->getFirstMediaUrl('image') ?: null,
+                null,
+            ),
             'active' => (bool) $this->is_active,
             'brand' => $this->whenLoaded(
                 relationship: 'brand',
-                value:fn() => new BrandResource($this->brand)
+                value: fn () => new BrandResource($this->brand)
             ),
             'sub_brand' => $this->whenLoaded(
                 relationship: 'subBrand',
-                value:fn() =>new SubBrandResource($this->subBrand)
+                value: fn () => new SubBrandResource($this->subBrand)
             ),
             'category' => $this->whenLoaded(
                 relationship: 'category',
-                value:fn() =>new CategoryResource($this->category)
+                value: fn () => new CategoryResource($this->category)
             ),
             'sub_category' => $this->whenLoaded(
                 relationship: 'subCategory',
-                value:fn() =>new SubCategoryResource($this->subCategory)
+                value: fn () => new SubCategoryResource($this->subCategory)
             ),
-            'created_at' => $this->created_at
+            'created_at' => $this->created_at,
         ];
     }
 }

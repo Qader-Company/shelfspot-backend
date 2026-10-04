@@ -4,6 +4,7 @@ namespace App\Modules\V1\Authentication\Infrastructure\Providers;
 
 use App\Modules\V1\Authentication\Domain\Contracts\SocialAccountRepositoryInterface;
 use App\Modules\V1\Authentication\Infrastructure\Persistence\Repositories\EloquentSocialAccountRepository;
+use App\Modules\V1\Authentication\Infrastructure\Social\AppleTokenVerifier;
 use App\Modules\V1\Authentication\Infrastructure\Social\GoogleTokenVerifier;
 use App\Modules\V1\Authentication\Infrastructure\Social\Registrars\WorkerSocialRegistrar;
 use App\Modules\V1\Authentication\Infrastructure\Social\SocialPortalRegistrarManager;
@@ -26,6 +27,7 @@ class AuthenticationModuleServiceProvider extends ServiceProvider
 
         $this->app->singleton(SocialProviderManager::class, fn ($app) => new SocialProviderManager([
             'google' => $app->make(GoogleTokenVerifier::class),
+            'apple' => $app->make(AppleTokenVerifier::class),
         ]));
 
         $this->app->singleton(SocialPortalRegistrarManager::class, fn ($app) => new SocialPortalRegistrarManager([

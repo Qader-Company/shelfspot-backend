@@ -10,6 +10,12 @@ return [
                 explode(',', env('GOOGLE_SOCIAL_AUTH_PORTALS', PortalTypeEnum::WORKER->value))
             )),
         ],
+        'apple' => [
+            'allowed_portals' => array_filter(array_map(
+                'trim',
+                explode(',', env('APPLE_SOCIAL_AUTH_PORTALS', PortalTypeEnum::WORKER->value))
+            )),
+        ],
     ],
 
     'portal_profile_rules' => [

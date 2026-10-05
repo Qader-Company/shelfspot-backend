@@ -47,7 +47,9 @@ The same FCM token can move safely between worker accounts on a shared device: a
 
 ### 2.1 Worker social login
 
-For worker Google login, keep the provider token and FCM token in separate fields:
+Worker Google and Apple social login accept only the provider identity token. Admin and company social login URLs return `404`.
+
+Replace `google` with `apple` in the URL for Apple login:
 
 ```http
 POST /api/v1/auth/worker/social/google/login
@@ -58,18 +60,17 @@ X-Authorization: <platform-api-key>
 
 ```json
 {
-  "token": "<google-id-token>",
-  "device_token": "<fcm-registration-token>",
-  "device_type": "ios",
-  "device_name": "iPhone 17"
+  "token": "<provider-id-token>"
 }
 ```
 
+New worker accounts are created from verified provider data without a phone number. Google supplies the name when available; Apple accounts use the email as the initial name. Profile details can be updated after login. Social login does not register an FCM device token.
+
 ### 2.2 Worker-only restriction
 
-`device_token`, `device_type`, and `device_name` are accepted only when the route portal is `worker`. Admin and company login requests containing any device field fail validation with `422` and never register an FCM token.
+`device_token`, `device_type`, and `device_name` are accepted only by worker email/password login. Admin and company email/password login requests containing any device field fail validation with `422` and never register an FCM token.
 
-There is no standalone device-token registration endpoint. If Firebase rotates the token during an authenticated session, keep the new value locally and include it on the worker's next login.
+There is no standalone device-token registration endpoint. If Firebase rotates the token during an authenticated session, keep the new value locally and include it on the worker's next email/password login.
 
 ## 3. Logout and device removal
 

@@ -7,7 +7,6 @@ use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
 use App\Modules\V1\Authentication\Infrastructure\Social\SocialPortalRegistrarManager;
 use App\Modules\V1\Authentication\Infrastructure\Social\SocialProviderManager;
-use App\Modules\V1\Users\Application\Services\DeviceTokenManager;
 use App\Modules\V1\Users\Application\Services\UserActivationChecker;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
@@ -22,10 +21,9 @@ class SocialLoginUseCase
         private SocialAccountRepositoryInterface $socialAccounts,
         private UserRepositoryInterface $users,
         private TokenIssuer $tokenIssuer,
-        private DeviceTokenManager $deviceTokens,
     ) {}
 
-    public function execute(SocialProviderEnum $provider, PortalTypeEnum $portal, string $token, array $attributes = []): array
+    public function execute(SocialProviderEnum $provider, PortalTypeEnum $portal, string $token): array
     {
         $registrar = $this->registrars->for($provider, $portal);
         $socialUser = $this->providers->driver($provider)->verify($token);
@@ -34,7 +32,7 @@ class SocialLoginUseCase
             throw new UnauthorizedHttpException('', __('auth.credentials_mismatch'));
         }
 
-        $user = DB::transaction(function () use ($provider, $portal, $socialUser, $attributes, $registrar) {
+        $user = DB::transaction(function () use ($provider, $portal, $socialUser, $registrar) {
             $socialAccount = $this->socialAccounts->find($provider, $socialUser->providerUserId);
             $user = $socialAccount?->user;
 
@@ -46,14 +44,14 @@ class SocialLoginUseCase
             }
 
             if (! $user) {
-                $user = $registrar->register($socialUser->email, $attributes['name'] ?? $socialUser->name, $attributes);
+                $user = $registrar->register($socialUser->email, $socialUser->name, []);
             }
 
             if ($user->type !== $portal) {
                 throw new UnauthorizedHttpException('', __('auth.credentials_mismatch'));
             }
 
-            $user = $registrar->ensureProfile($user, $attributes);
+            $user = $registrar->ensureProfile($user, []);
 
             if (! $user->email_verified_at) {
                 $this->users->update($user, ['email_verified_at' => now()]);
@@ -68,10 +66,6 @@ class SocialLoginUseCase
 
         if (! UserActivationChecker::isActive($user, $portal)) {
             throw new UnauthorizedHttpException('', __('auth.credentials_mismatch'));
-        }
-
-        if ($portal === PortalTypeEnum::WORKER) {
-            $this->deviceTokens->registerWorkerDevice($user, $attributes);
         }
 
         return array_merge(['user' => $user], $this->tokenIssuer->refreshToken($user, $portal));

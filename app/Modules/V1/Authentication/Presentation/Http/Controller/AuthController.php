@@ -57,8 +57,7 @@ class AuthController extends Controller
         $data = $socialLoginUseCase->execute(
             $socialProvider,
             $portalType,
-            $request->validated('token'),
-            $request->safe()->except('token')
+            $request->validated('token')
         );
 
         $data['user'] = UserResourceResolver::resolve(

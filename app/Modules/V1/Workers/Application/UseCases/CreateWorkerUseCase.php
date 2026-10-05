@@ -27,7 +27,7 @@ class CreateWorkerUseCase
 
             $worker = $this->workerRepository->create([
                 'user_id' => $user->id,
-                'phone' => $attributes['phone'],
+                'phone' => $attributes['phone'] ?? null,
                 'is_active' => true,
                 'last_latitude' => $attributes['latitude'] ?? null,
                 'last_longitude' => $attributes['longitude'] ?? null,

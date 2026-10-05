@@ -39,6 +39,15 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
     ],
 
+    'apple' => [
+        'client_ids' => array_values(array_filter([
+            trim((string) env('APPLE_BUNDLE_ID', '')),
+            trim((string) env('APPLE_SERVICE_ID', '')),
+        ])),
+        'issuer' => 'https://appleid.apple.com',
+        'keys_url' => 'https://appleid.apple.com/auth/keys',
+    ],
+
     'firebase' => [
         'credentials' => env('FIREBASE_CREDENTIALS'),
         'credentials_base64' => env('FIREBASE_CREDENTIALS_BASE64'),

@@ -47,7 +47,7 @@ The same FCM token can move safely between worker accounts on a shared device: a
 
 ### 2.1 Worker social login
 
-Worker Google and Apple social login accept only the provider identity token. Admin and company social login URLs return `404`.
+Worker Google and Apple social login accept the provider identity token plus the same optional device fields as email/password login. The device is registered only after successful authentication for an active worker.
 
 Replace `google` with `apple` in the URL for Apple login:
 
@@ -60,17 +60,20 @@ X-Authorization: <platform-api-key>
 
 ```json
 {
-  "token": "<provider-id-token>"
+  "token": "<provider-id-token>",
+  "device_token": "<fcm-registration-token>",
+  "device_type": "android",
+  "device_name": "Samsung S24"
 }
 ```
 
-New worker accounts are created from verified provider data without a phone number. Google supplies the name when available; Apple accounts use the email as the initial name. Profile details can be updated after login. Social login does not register an FCM device token.
+New worker accounts are created from verified provider data without a phone number. Google supplies the name when available; Apple accounts use the email as the initial name. Profile details can be updated after login. All device fields may be omitted, null, or empty. When supplied, `device_type` and `device_name` require a non-empty `device_token`.
 
 ### 2.2 Worker-only restriction
 
-`device_token`, `device_type`, and `device_name` are accepted only by worker email/password login. Admin and company email/password login requests containing any device field fail validation with `422` and never register an FCM token.
+`device_token`, `device_type`, and `device_name` are accepted only by worker email/password, Google, and Apple login. Admin and company email/password login requests containing non-empty device fields fail validation with `422` and never register an FCM token.
 
-There is no standalone device-token registration endpoint. If Firebase rotates the token during an authenticated session, keep the new value locally and include it on the worker's next email/password login.
+There is no standalone device-token registration endpoint. If Firebase rotates the token during an authenticated session, keep the new value locally and include it on the worker's next email/password, Google, or Apple login.
 
 ## 3. Logout and device removal
 
@@ -234,6 +237,7 @@ Before worker login
     -> request notification permission when appropriate
     -> Firebase getToken() when permission/setup allows it
     -> include device_token/device_type/device_name in POST /auth/worker/login
+       or POST /auth/worker/social/{google|apple}/login
 
 Worker login succeeds
     -> load REST notifications and unread count
@@ -241,7 +245,7 @@ Worker login succeeds
 
 Firebase token rotates
     -> keep the new token locally
-    -> include it on the next worker login
+    -> include it on the next worker email/password, Google, or Apple login
 
 FCM or Reverb notification arrives
     -> deduplicate by notification_id
@@ -260,6 +264,8 @@ Worker logs out
 - [ ] Fresh install permission accepted.
 - [ ] Fresh install permission denied without crashing or blocking login.
 - [ ] Worker login with a device token registers the device.
+- [ ] Worker Google and Apple login register optional device tokens.
+- [ ] Worker Google and Apple login succeed without device fields or with empty/null device fields.
 - [ ] Worker login without notification permission still succeeds.
 - [ ] Company/admin login rejects device fields.
 - [ ] A rotated token is included on the next worker login.

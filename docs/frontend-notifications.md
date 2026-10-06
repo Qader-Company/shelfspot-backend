@@ -63,7 +63,7 @@ Content-Type: application/json
 }
 ```
 
-The three device fields are optional and accepted only by worker email/password login. Google and Apple social login accept only the provider identity `token` and do not register device tokens. Admin and company email/password login requests that contain device fields are rejected. There is no separate registration endpoint. If Firebase rotates the token during an active session, the backend receives the new value on the worker's next email/password login.
+The three device fields are optional and accepted by worker email/password login and worker Google/Apple social login. For social login, send the provider identity `token` plus the same optional device fields to `/api/v1/auth/worker/social/{google|apple}/login`. Device fields are stored only after successful authentication for an active worker. Admin and company email/password login requests that contain device fields are rejected. There is no separate registration endpoint. If Firebase rotates the token during an active session, the backend receives the new value on the worker's next email/password, Google, or Apple login.
 
 Include `{ "device_token": "<fcm-token>" }` in the existing logout request so the backend removes the device before revoking the access token.
 

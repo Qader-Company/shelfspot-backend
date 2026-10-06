@@ -368,6 +368,23 @@ Response:
 ### Notes
 Use the worker access token with routes under `/api/v1/worker/*`. Obtain the FCM token before login and include it when available. Device fields are accepted only on worker login and are stored only after a successful, verified login. There is no separate device-token registration endpoint.
 
+## Endpoint: Worker Google or Apple Login
+- **Method:** POST
+- **URLs:** `/api/v1/auth/worker/social/google/login`, `/api/v1/auth/worker/social/apple/login`
+- **Auth:** Public, with `X-Authorization` platform API key
+
+### Request Body
+```json
+{
+  "token": "provider-id-token (required)",
+  "device_token": "fcm-registration-token (optional, max:512)",
+  "device_type": "android",
+  "device_name": "Test phone"
+}
+```
+
+All three device fields are optional and may be omitted, null, or empty. A non-empty `device_type` must be `android` or `ios`, and `device_name` has a maximum of 255 characters. Non-empty device metadata requires a non-empty `device_token`. The device is registered only after successful authentication for an active worker. Login returns the user and access/refresh tokens as usual.
+
 ## Endpoint: Refresh Worker Token
 - **Method:** POST
 - **URL:** /api/v1/auth/worker/refresh

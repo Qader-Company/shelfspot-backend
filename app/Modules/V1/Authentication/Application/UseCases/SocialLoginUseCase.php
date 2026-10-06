@@ -7,6 +7,7 @@ use App\Modules\V1\Authentication\Domain\Services\TokenIssuer;
 use App\Modules\V1\Authentication\Domain\ValueObjects\SocialProviderEnum;
 use App\Modules\V1\Authentication\Infrastructure\Social\SocialPortalRegistrarManager;
 use App\Modules\V1\Authentication\Infrastructure\Social\SocialProviderManager;
+use App\Modules\V1\Users\Application\Services\DeviceTokenManager;
 use App\Modules\V1\Users\Application\Services\UserActivationChecker;
 use App\Modules\V1\Users\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\V1\Users\Domain\ValueObjects\PortalTypeEnum;
@@ -21,10 +22,15 @@ class SocialLoginUseCase
         private SocialAccountRepositoryInterface $socialAccounts,
         private UserRepositoryInterface $users,
         private TokenIssuer $tokenIssuer,
+        private DeviceTokenManager $deviceTokens,
     ) {}
 
-    public function execute(SocialProviderEnum $provider, PortalTypeEnum $portal, string $token): array
-    {
+    public function execute(
+        SocialProviderEnum $provider,
+        PortalTypeEnum $portal,
+        string $token,
+        array $deviceAttributes = [],
+    ): array {
         $registrar = $this->registrars->for($provider, $portal);
         $socialUser = $this->providers->driver($provider)->verify($token);
 
@@ -66,6 +72,10 @@ class SocialLoginUseCase
 
         if (! UserActivationChecker::isActive($user, $portal)) {
             throw new UnauthorizedHttpException('', __('auth.credentials_mismatch'));
+        }
+
+        if ($portal === PortalTypeEnum::WORKER) {
+            $this->deviceTokens->registerWorkerDevice($user, $deviceAttributes);
         }
 
         return array_merge(['user' => $user], $this->tokenIssuer->refreshToken($user, $portal));

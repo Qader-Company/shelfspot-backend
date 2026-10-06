@@ -57,7 +57,8 @@ class AuthController extends Controller
         $data = $socialLoginUseCase->execute(
             $socialProvider,
             $portalType,
-            $request->validated('token')
+            $request->validated('token'),
+            $request->safe()->only(['device_token', 'device_type', 'device_name']),
         );
 
         $data['user'] = UserResourceResolver::resolve(

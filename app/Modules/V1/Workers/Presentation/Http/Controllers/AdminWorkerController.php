@@ -51,7 +51,7 @@ class AdminWorkerController extends Controller
             name: $user->name,
             email: $user->email,
             password: $attributes['password'],
-        )->onQueue(config('notifications.queues.normal'));
+        );
 
         return ApiResponse::created(new WorkerResource($user));
     }
@@ -65,9 +65,19 @@ class AdminWorkerController extends Controller
 
     public function update(UpdateWorkerRequest $request, int $worker, UpdateWorkerUseCase $updateWorkerUseCase)
     {
-        return ApiResponse::updated(new WorkerResource(
-            $updateWorkerUseCase->execute($worker, $request->validated())
-        ));
+        $attributes = $request->validated();
+        $worker = $updateWorkerUseCase->execute($worker, $attributes);
+
+        if (array_key_exists('password', $attributes)) {
+            SendWorkerCredentialsEmailJob::dispatch(
+                name: $worker->user->name,
+                email: $worker->user->email,
+                password: $attributes['password'],
+                passwordUpdated: true,
+            );
+        }
+
+        return ApiResponse::updated(new WorkerResource($worker));
     }
 
     public function destroy(int $worker, DeleteWorkerUseCase $deleteWorkerUseCase)

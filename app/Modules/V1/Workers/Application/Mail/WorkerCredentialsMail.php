@@ -17,12 +17,15 @@ class WorkerCredentialsMail extends Mailable
         public readonly string $email,
         public readonly string $password,
         public readonly string $applicationUrl,
+        public readonly bool $passwordUpdated = false,
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your '.config('app.name').' worker account',
+            subject: $this->passwordUpdated
+                ? 'Your '.config('app.name').' worker password has been updated'
+                : 'Your '.config('app.name').' worker account',
         );
     }
 

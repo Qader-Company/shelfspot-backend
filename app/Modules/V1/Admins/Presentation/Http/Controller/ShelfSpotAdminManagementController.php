@@ -4,6 +4,7 @@ namespace App\Modules\V1\Admins\Presentation\Http\Controller;
 
 use App\Facades\ApiResponse;
 use App\Modules\Shared\Support\Traits\Filterable;
+use App\Modules\V1\AccessControl\Application\Jobs\SendAdminCredentialsEmailJob;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
 use App\Modules\V1\AccessControl\Presentation\Http\Controllers\AccessControlController;
@@ -73,19 +74,38 @@ class ShelfSpotAdminManagementController extends AccessControlController
 
     public function storeAdmin(StoreShelfSpotAdminRequest $request)
     {
+        $attributes = $request->validated();
+        $user = $this->adminManagement->create($attributes);
+
+        SendAdminCredentialsEmailJob::dispatch(
+            name: $user->name,
+            email: $user->email,
+            password: $attributes['password'],
+            portal: self::PORTAL,
+        );
+
         return ApiResponse::created(
-            new ShelfSpotAdminResource(
-                $this->adminManagement->create($request->validated())
-            )
+            new ShelfSpotAdminResource($user)
         );
     }
 
     public function updateAdmin(UpdateShelfSpotAdminRequest $request, User $user)
     {
+        $attributes = $request->validated();
+        $user = $this->adminManagement->update($user, $attributes);
+
+        if (array_key_exists('password', $attributes)) {
+            SendAdminCredentialsEmailJob::dispatch(
+                name: $user->name,
+                email: $user->email,
+                password: $attributes['password'],
+                portal: self::PORTAL,
+                passwordUpdated: true,
+            );
+        }
+
         return ApiResponse::updated(
-            new ShelfSpotAdminResource(
-                $this->adminManagement->update($user, $request->validated())
-            )
+            new ShelfSpotAdminResource($user)
         );
     }
 

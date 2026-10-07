@@ -4,6 +4,7 @@ namespace App\Modules\V1\CompanyAdmins\Presentation\Http\Controllers;
 
 use App\Facades\ApiResponse;
 use App\Modules\Shared\Domain\Contracts\TenantContextInterface;
+use App\Modules\V1\AccessControl\Application\Jobs\SendAdminCredentialsEmailJob;
 use App\Modules\V1\AccessControl\Application\Services\PermissionCatalog;
 use App\Modules\V1\AccessControl\Domain\Repositories\AccessControlRepositoryInterface;
 use App\Modules\V1\AccessControl\Presentation\Http\Controllers\AccessControlController;
@@ -83,26 +84,38 @@ class CompanyAdminManagementController extends AccessControlController
 
     public function storeAdmin(StoreCompanyAdminRequest $request)
     {
+        $attributes = $request->validated();
+        $user = $this->companyUsers->create($this->companyId(), $attributes);
+
+        SendAdminCredentialsEmailJob::dispatch(
+            name: $user->name,
+            email: $user->email,
+            password: $attributes['password'],
+            portal: self::PORTAL,
+        );
+
         return ApiResponse::created(
-            new ManagedCompanyUserResource(
-                $this->companyUsers->create(
-                    $this->companyId(),
-                    $request->validated()
-                )
-            )
+            new ManagedCompanyUserResource($user)
         );
     }
 
     public function updateAdmin(UpdateCompanyAdminRequest $request, User $user)
     {
+        $attributes = $request->validated();
+        $user = $this->companyUsers->updateFromCompanyPortal($this->companyId(), $user, $attributes);
+
+        if (array_key_exists('password', $attributes)) {
+            SendAdminCredentialsEmailJob::dispatch(
+                name: $user->name,
+                email: $user->email,
+                password: $attributes['password'],
+                portal: self::PORTAL,
+                passwordUpdated: true,
+            );
+        }
+
         return ApiResponse::updated(
-            new ManagedCompanyUserResource(
-                $this->companyUsers->updateFromCompanyPortal(
-                    $this->companyId(),
-                    $user,
-                    $request->validated()
-                )
-            )
+            new ManagedCompanyUserResource($user)
         );
     }
 

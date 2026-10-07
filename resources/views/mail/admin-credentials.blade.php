@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your admin account</title>
+</head>
+<body style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 480px; margin: 0 auto; padding: 24px;">
+    <p>Hello {{ $name }},</p>
+    @if ($passwordUpdated)
+        <p>Your {{ $portal === 'company' ? 'company admin' : 'admin' }} account password has been updated. Use the following details to sign in:</p>
+    @else
+        <p>Your {{ $portal === 'company' ? 'company admin' : 'admin' }} account has been created. Use the following details to sign in:</p>
+    @endif
+    <p style="margin: 24px 0; padding: 16px; background: #f6f8fa; border-radius: 6px;">
+        <strong>Email:</strong> {{ $email }}<br>
+        <strong>Password:</strong> {{ $password }}
+    </p>
+    <p style="font-size: 13px; color: #666; margin-top: 32px;">For your security, change your password after you sign in.</p>
+</body>
+</html>

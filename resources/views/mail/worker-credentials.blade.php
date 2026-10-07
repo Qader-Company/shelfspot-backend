@@ -7,7 +7,11 @@
 </head>
 <body style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 480px; margin: 0 auto; padding: 24px;">
     <p>Hello {{ $name }},</p>
-    <p>Your worker account has been created. Use the following details to sign in:</p>
+    @if ($passwordUpdated)
+        <p>Your worker account password has been updated. Use the following details to sign in:</p>
+    @else
+        <p>Your worker account has been created. Use the following details to sign in:</p>
+    @endif
     <p style="margin: 24px 0; padding: 16px; background: #f6f8fa; border-radius: 6px;">
         <strong>Email:</strong> {{ $email }}<br>
         <strong>Password:</strong> {{ $password }}

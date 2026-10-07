@@ -7,6 +7,8 @@ The following account-management endpoints email credentials to the account's sa
 | Create account | `POST /api/v1/company/access-control/admins` | `POST /api/v1/admin/access-control/admins` |
 | Update password | `PUT` or `PATCH /api/v1/company/access-control/admins/{user}` | `PUT` or `PATCH /api/v1/admin/access-control/admins/{user}` |
 
+Worker accounts follow the same behavior through `POST /api/v1/admin/workers` (creation) and `POST /api/v1/admin/workers/{worker}` (updates). Creation sends the submitted credentials, and updates send credentials only when the validated request includes `password`. Worker password updates require a matching `password_confirmation`. If an update changes the email too, the email goes to the new address. `SendWorkerCredentialsEmailJob` uses the same encrypted queue, after-commit dispatch, and three delivery attempts. Worker emails include the application link configured by `WORKER_APP_URL`.
+
 Creation emails include the account name, email address, and submitted password. Updates send an email only when the validated request includes `password`. If the same update changes the email address, the credentials go to the updated address. Profile, status, email, or role edits without a password do not send credentials.
 
 Emails are dispatched after the account transaction commits. Validation failures, rejected account changes, and rolled-back transactions do not send emails. Passwords remain hashed in the users table and are excluded from API responses.

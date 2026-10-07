@@ -21,7 +21,11 @@ class SendWorkerCredentialsEmailJob implements ShouldBeEncrypted, ShouldQueue
         private readonly string $name,
         private readonly string $email,
         private readonly string $password,
-    ) {}
+        private readonly bool $passwordUpdated = false,
+    ) {
+        $this->onQueue(config('notifications.queues.normal'));
+        $this->afterCommit();
+    }
 
     public function handle(): void
     {
@@ -30,6 +34,7 @@ class SendWorkerCredentialsEmailJob implements ShouldBeEncrypted, ShouldQueue
             email: $this->email,
             password: $this->password,
             applicationUrl: config('app.worker_app_url'),
+            passwordUpdated: $this->passwordUpdated ?? false,
         ));
     }
 }

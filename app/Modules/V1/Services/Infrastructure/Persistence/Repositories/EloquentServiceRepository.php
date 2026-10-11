@@ -46,7 +46,7 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
     public function update(Service $service, array $attributes): Service
     {
         return DB::transaction(function () use ($service, $attributes) {
-            $translations = Arr::Pull($attributes, 'translations');
+            $translations = Arr::pull($attributes, 'translations', []);
             $service->update($attributes);
             $this->fillTranslations($service, $translations);
             return $service;

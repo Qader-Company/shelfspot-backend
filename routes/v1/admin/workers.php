@@ -16,7 +16,7 @@ Route::controller(AdminWorkerController::class)->group(function () {
     Route::post('/', 'store')->middleware('permission:'.AdminPermissionEnum::CREATE_WORKER->value);
     Route::post('/bulk-delete', 'bulkDelete')->middleware('permission:'.AdminPermissionEnum::DELETE_WORKER->value);
     Route::get('/{worker}', 'show')->middleware('permission:'.AdminPermissionEnum::VIEW_WORKER->value);
-    Route::post('/{worker}', 'update')->middleware('permission:'.AdminPermissionEnum::EDIT_WORKER->value);
+    Route::put('/{worker}', 'update')->middleware('permission:'.AdminPermissionEnum::EDIT_WORKER->value);
     Route::delete('/{worker}', 'destroy')->middleware('permission:'.AdminPermissionEnum::DELETE_WORKER->value);
 
 });
